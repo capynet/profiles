@@ -15,8 +15,6 @@ export default function Home() {
                     <button type="submit">Signin with Google</button>
                 </form>
 
-
-
             </main>
         </div>
     );
