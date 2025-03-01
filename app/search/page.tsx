@@ -1,7 +1,10 @@
-import {embed, prompt} from "@/services/ia";
+import {indexDocumentForRAG, prompt} from "@/services/ia";
+
 
 export default async function Search() {
-    const answer = prompt("De que color es el cielo? dame una respuesta corta.")
-    //const answer = embed("escribe la palabra hola")
-    return <p>{answer}</p>;
+    const documentText = "Este es un documento largo que necesitamos procesar para RAG...";
+    indexDocumentForRAG(documentText, {title: "Documento de ejemplo", source: "wiki", author: "Usuario123"});
+
+
+    return <p>No devuelve nada visible. Solo indexa</p>;
 }
