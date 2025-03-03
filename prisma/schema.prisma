@@ -1,65 +1,16 @@
-generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["metrics"]
-}
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// NextAuth Models with exact field names from documentation
-model users {
-  id            Int        @id @default(autoincrement())
-  name          String?    @db.VarChar(255)
-  email         String?    @db.VarChar(255)
-  emailVerified DateTime?  @map("emailVerified") @db.Timestamptz
-  image         String?    @db.Text
-  accounts      accounts[]
-  sessions      sessions[]
-  profile       Profile?
-}
-
-model accounts {
-  id                Int     @id @default(autoincrement())
-  userId            Int     @map("userId")
-  type              String  @db.VarChar(255)
-  provider          String  @db.VarChar(255)
-  providerAccountId String  @map("providerAccountId") @db.VarChar(255)
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        BigInt?
-  id_token          String? @db.Text
-  scope             String?
-  session_state     String?
-  token_type        String?
-
-  user users @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model sessions {
-  id           Int      @id @default(autoincrement())
-  userId       Int      @map("userId")
-  expires      DateTime @db.Timestamptz
-  sessionToken String   @map("sessionToken") @db.VarChar(255)
-  user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model verification_token {
-  identifier String   @db.Text
-  expires    DateTime @db.Timestamptz
-  token      String   @db.Text
-
-  @@id([identifier, token])
+generator client {
+  provider = "prisma-client-js"
 }
 
 // Your existing models
 model Profile {
   id             Int                    @id @default(autoincrement())
-  userId         Int                    @unique
+  userId         String                 @unique
   name           String
   price          Float
   age            Int
@@ -72,7 +23,7 @@ model Profile {
   createdAt      DateTime               @default(now())
   paymentMethods ProfilePaymentMethod[]
   languages      ProfileLanguage[]
-  user           users                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PaymentMethod {
@@ -103,4 +54,75 @@ model ProfileLanguage {
   languageId Int
 
   @@id([profileId, languageId])
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile   Profile?
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
 }

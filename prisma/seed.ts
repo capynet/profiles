@@ -1,41 +1,15 @@
 import {PrismaClient} from '@prisma/client'
+import seedLanguages from './seeders/languages'
+import seedPaymentMethods from './seeders/paymentMethods'
+import seedProfiles from './seeders/profiles'
 
 const prisma = new PrismaClient()
 
 async function main() {
-    const languages = [
-        {name: 'English'},
-        {name: 'Spanish'},
-        {name: 'French'},
-        {name: 'Germany'},
-        {name: 'Italian'}
-    ]
-
-    const paymentMethods = [
-        {name: 'Cash'},
-        {name: 'Card'},
-        {name: 'Bizum'}
-    ]
-
-    console.log('Migrating languages...')
-    for (const language of languages) {
-        await prisma.language.upsert({
-            where: {name: language.name},
-            update: {},
-            create: {name: language.name}
-        })
-    }
-    console.log('✅ Languages init finished')
-
-    console.log('Migrating payment methods...')
-    for (const method of paymentMethods) {
-        await prisma.paymentMethod.upsert({
-            where: {name: method.name},
-            update: {},
-            create: {name: method.name}
-        })
-    }
-    console.log('✅ Payment method  init finished')
+    // Ejecutar seeders en orden
+    await seedLanguages(prisma)
+    await seedPaymentMethods(prisma)
+    await seedProfiles(prisma)
 }
 
 main()

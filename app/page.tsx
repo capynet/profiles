@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { auth, signOut } from "@/auth";
+import {auth, signOut} from "@/auth";
 
 export default async function Home() {
     const session = await auth();
@@ -26,7 +26,7 @@ export default async function Home() {
                             <form
                                 action={async () => {
                                     "use server";
-                                    await signOut({ redirectTo: "/" });
+                                    await signOut({redirectTo: "/"});
                                 }}
                                 className="mt-4"
                             >
@@ -38,6 +38,9 @@ export default async function Home() {
                                 </button>
                             </form>
                         </div>
+
+                        <Link href="/profile/edit"> Profile </Link>
+
                     </>
                 ) : (
                     <>
