@@ -1,5 +1,5 @@
 import {redirect} from 'next/navigation';
-import ProfileFormWithActions from '@/components/ProfileFormWithActions';
+import ProfileForm from '@/components/ProfileForm';
 import {DataService} from '@/services/dataService';
 import {auth} from '@/auth';
 
@@ -24,7 +24,7 @@ export default async function EditProfilePage() {
 
     return (
         <div className="container mx-auto py-8">
-            <ProfileFormWithActions profile={profile} isEditing={true}/>
+            <ProfileForm profile={profile} isEditing={true}/>
         </div>
     );
 }

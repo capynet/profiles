@@ -1,6 +1,6 @@
 import {redirect} from 'next/navigation';
 import {auth} from '@/auth';
-import ProfileFormWithActions from "@/components/ProfileFormWithActions";
+import ProfileForm from "@/components/ProfileForm";
 import {DataService} from '@/services/dataService';
 
 export const metadata = {
@@ -24,7 +24,7 @@ export default async function CreateProfilePage() {
 
     return (
         <div className="container mx-auto py-8">
-            <ProfileFormWithActions/>
+            <ProfileForm/>
         </div>
     );
 }

@@ -1,11 +1,27 @@
 -- CreateTable
+CREATE TABLE "ProfileImage" (
+    "id" SERIAL NOT NULL,
+    "profileId" INTEGER NOT NULL,
+    "mediumUrl" TEXT NOT NULL,
+    "mediumCdnUrl" TEXT,
+    "mediumStorageKey" TEXT NOT NULL,
+    "thumbnailUrl" TEXT,
+    "thumbnailCdnUrl" TEXT,
+    "thumbnailStorageKey" TEXT,
+    "highQualityUrl" TEXT,
+    "highQualityCdnUrl" TEXT,
+    "highQualityStorageKey" TEXT,
+
+    CONSTRAINT "ProfileImage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Profile" (
     "id" SERIAL NOT NULL,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
     "age" INTEGER NOT NULL,
-    "image" TEXT,
     "description" TEXT NOT NULL,
     "latitude" DOUBLE PRECISION NOT NULL,
     "longitude" DOUBLE PRECISION NOT NULL,
@@ -129,6 +145,9 @@ CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Authenticator_credentialID_key" ON "Authenticator"("credentialID");
+
+-- AddForeignKey
+ALTER TABLE "ProfileImage" ADD CONSTRAINT "ProfileImage_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "Profile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Profile" ADD CONSTRAINT "Profile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
