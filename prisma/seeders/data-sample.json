@@ -1,0 +1,202 @@
+[
+  {
+    "user": {
+      "name": "Laura Martínez",
+      "email": "laura.martinez@ejemplo.com",
+      "image": "https://picsum.photos/seed/user1/200/200",
+      "emailVerified": "2023-12-01T10:00:00Z"
+    },
+    "profile": {
+      "name": "Laura Martínez",
+      "price": 25,
+      "age": 28,
+      "paymentMethods": [1, 2, 3],
+      "languages": [1, 2],
+      "image": "https://picsum.photos/seed/1/800/1000",
+      "description": "Profesional con más de 15 años de experiencia en peluquería y estilismo. Especialista en cortes modernos y colorimetría avanzada. Ofrece servicio a domicilio.",
+      "location": [36.7213, -4.4217],
+      "address": "Malaga centro",
+      "updatedAt": "2024-02-06T12:00:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Miguel Ángel Sánchez",
+      "email": "miguel.sanchez@ejemplo.com",
+      "image": "https://picsum.photos/seed/user2/200/200",
+      "emailVerified": "2023-11-15T09:30:00Z"
+    },
+    "profile": {
+      "name": "Miguel Ángel Sánchez",
+      "price": 45,
+      "age": 32,
+      "paymentMethods": [2, 3],
+      "languages": [1, 2, 4],
+      "image": "https://picsum.photos/seed/2/800/1000",
+      "description": "Joven emprendedor especializado en servicios de alojamiento y cuidado personalizado. Instalaciones modernas con supervisión 24/7 y atención personalizada para clientes.",
+      "location": [36.7320, -4.4753],
+      "address": "Avenida Plutarco 24, 29010 Málaga",
+      "updatedAt": "2024-02-05T15:30:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Carmen Rodríguez",
+      "email": "carmen.rodriguez@ejemplo.com",
+      "image": "https://picsum.photos/seed/user3/200/200",
+      "emailVerified": "2023-12-10T14:20:00Z"
+    },
+    "profile": {
+      "name": "Carmen Rodríguez",
+      "price": 35,
+      "age": 45,
+      "paymentMethods": [1, 2, 3],
+      "languages": [5, 3, 1],
+      "image": "https://picsum.photos/seed/3/800/1000",
+      "description": "Profesional sanitaria con más de 25 años de experiencia. Especialista en medicina de urgencias y traumatología. Disponible para consultas las 24 horas.",
+      "location": [36.7214, -4.3601],
+      "address": "Calle Jamaica 8, 29017 Málaga",
+      "updatedAt": "2024-02-04T09:15:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Carlos Fernández",
+      "email": "carlos.fernandez@ejemplo.com",
+      "image": "https://picsum.photos/seed/user4/200/200",
+      "emailVerified": "2024-01-05T11:45:00Z"
+    },
+    "profile": {
+      "name": "Carlos Fernández",
+      "price": 15,
+      "age": 30,
+      "paymentMethods": [1, 3],
+      "languages": [1],
+      "image": "https://picsum.photos/seed/4/800/1000",
+      "description": "Entrenador personal con especialización en actividades al aire libre. Ofrece servicios personalizados adaptados a cada cliente. Documenta cada sesión con fotografías de seguimiento.",
+      "location": [36.7141, -4.4428],
+      "address": "Calle La Hoz 3, 29002 Málaga",
+      "updatedAt": "2024-02-04T16:45:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Elena Gómez",
+      "email": "elena.gomez@ejemplo.com",
+      "image": "https://picsum.photos/seed/user5/200/200",
+      "emailVerified": "2023-10-20T16:30:00Z"
+    },
+    "profile": {
+      "name": "Elena Gómez",
+      "price": 30,
+      "age": 40,
+      "paymentMethods": [1, 2],
+      "languages": [4, 2],
+      "image": "https://picsum.photos/seed/5/800/1000",
+      "description": "Nutricionista especializada en alimentación orgánica y natural. Proporciona asesoramiento personalizado y planes nutricionales a medida. Trabaja con productos frescos y locales.",
+      "location": [36.7062, -4.4405],
+      "address": "Avenida de Velázquez 126, 29004 Málaga",
+      "updatedAt": "2024-02-04T11:20:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Javier López",
+      "email": "javier.lopez@ejemplo.com",
+      "image": "https://picsum.photos/seed/user6/200/200",
+      "emailVerified": "2023-11-30T09:10:00Z"
+    },
+    "profile": {
+      "name": "Javier López",
+      "price": 40,
+      "age": 52,
+      "paymentMethods": [1, 2, 3],
+      "languages": [1, 3],
+      "image": "https://picsum.photos/seed/6/800/1000",
+      "description": "Psicólogo especializado en modificación de conducta con décadas de experiencia. Ofrece terapias individuales y grupales. Preparador mental para deportistas de élite.",
+      "location": [36.7368, -4.4063],
+      "address": "Camino de Suárez 92, 29011 Málaga",
+      "updatedAt": "2024-02-04T14:00:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Sofía Navarro",
+      "email": "sofia.navarro@ejemplo.com",
+      "image": "https://picsum.photos/seed/user7/200/200",
+      "emailVerified": "2024-01-15T13:45:00Z"
+    },
+    "profile": {
+      "name": "Sofía Navarro",
+      "price": 70,
+      "age": 35,
+      "paymentMethods": [2],
+      "languages": [1, 2, 3],
+      "image": "https://picsum.photos/seed/7/800/1000",
+      "description": "Esteticista profesional especializada en tratamientos de bienestar y belleza premium. Ofrece servicios de aromaterapia, masajes y tratamientos faciales con productos de lujo.",
+      "location": [36.7447, -4.4605],
+      "address": "Calle Navarro Ledesma 168, 29010 Málaga",
+      "updatedAt": "2024-02-04T17:30:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Alejandro Torres",
+      "email": "alejandro.torres@ejemplo.com",
+      "image": "https://picsum.photos/seed/user8/200/200",
+      "emailVerified": "2023-12-20T08:30:00Z"
+    },
+    "profile": {
+      "name": "Alejandro Torres",
+      "price": 50,
+      "age": 42,
+      "paymentMethods": [2, 3],
+      "languages": [1, 2, 3, 4, 5],
+      "image": "https://picsum.photos/seed/8/800/1000",
+      "description": "Médico especialista con formación internacional. Experto en diagnóstico por imagen y medicina interna. Cuenta con un equipo multicultural y laboratorio propio para análisis rápidos.",
+      "location": [36.6240, -4.4994],
+      "address": "Avenida de los Manantiales 12, 29620 Torremolinos",
+      "updatedAt": "2024-02-06T08:45:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Lucía Moreno",
+      "email": "lucia.moreno@ejemplo.com",
+      "image": "https://picsum.photos/seed/user9/200/200",
+      "emailVerified": "2024-01-10T10:15:00Z"
+    },
+    "profile": {
+      "name": "Lucía Moreno",
+      "price": 20,
+      "age": 29,
+      "paymentMethods": [1, 3],
+      "languages": [2],
+      "image": "https://picsum.photos/seed/9/800/1000",
+      "description": "Asistente personal a domicilio con enfoque en el cuidado y atención personalizada. Realiza visitas diarias, gestiona medicaciones y proporciona compañía de calidad.",
+      "location": [36.7283, -4.3921],
+      "address": "Calle Olmos 5, 29018 Málaga",
+      "updatedAt": "2024-02-05T10:15:00Z"
+    }
+  },
+  {
+    "user": {
+      "name": "Daniel García",
+      "email": "daniel.garcia@ejemplo.com",
+      "image": "https://picsum.photos/seed/user10/200/200",
+      "emailVerified": "2023-11-05T16:20:00Z"
+    },
+    "profile": {
+      "name": "Daniel García",
+      "price": 45,
+      "age": 38,
+      "paymentMethods": [2, 3],
+      "languages": [5],
+      "image": "https://picsum.photos/seed/10/800/1000",
+      "description": "Fisioterapeuta especializado en rehabilitación física. Ofrece tratamientos de hidroterapia, electroestimulación y terapia manual. Experto en recuperación postoperatoria y lesiones deportivas.",
+      "location": [36.7266, -4.4394],
+      "address": "Avenida Juan Sebastián Elcano 157, 29017 Málaga",
+      "updatedAt": "2024-02-06T13:20:00Z"
+    }
+  }
+]
