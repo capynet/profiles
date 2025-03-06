@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type {NextConfig} from "next";
 
 const nextConfig: NextConfig = {
     experimental: {
@@ -8,16 +8,18 @@ const nextConfig: NextConfig = {
         },
     },
     images: {
-        domains: ['localhost', 'example.com'],
         remotePatterns: [
             {
-                protocol: 'https',
-                hostname: '**',
+                protocol: 'http',
+                hostname: 'localhost',
             },
+            {
+                protocol: 'https',
+                hostname: 'storage.googleapis.com',
+            }
         ],
     },
-    reactStrictMode: true,
-    swcMinify: true,
+    reactStrictMode: true
 };
 
 export default nextConfig;
