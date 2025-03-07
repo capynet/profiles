@@ -17,6 +17,11 @@ export type ValidationResult = {
     errors?: Record<string, string[]>;
 };
 
+interface ServiceError extends Error {
+    errors?: ValidationError[];
+    message: string;
+}
+
 function validateFormData(formData: FormData): ValidationResult {
     const errors: Record<string, string[]> = {};
 
@@ -161,14 +166,15 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
 
         revalidatePath('/profile');
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error in createProfile action:', error);
 
-        if (error.message?.includes('Validation error')) {
-            const errors: Record<string, string[]> = {};
-            const validationErrors = error.errors as ValidationError[];
+        const serviceError = error as ServiceError;
 
-            validationErrors.forEach(err => {
+        if (serviceError.message?.includes('Validation error') && serviceError.errors) {
+            const errors: Record<string, string[]> = {};
+
+            serviceError.errors.forEach(err => {
                 const field = err.path[0];
                 if (!errors[field]) {
                     errors[field] = [];
@@ -182,7 +188,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         return {
             success: false,
             errors: {
-                form: [`An unexpected error occurred: ${error?.message || 'Unknown error'}`]
+                form: [`An unexpected error occurred: ${serviceError?.message || 'Unknown error'}`]
             }
         };
     }
@@ -251,14 +257,15 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
 
         revalidatePath('/profile');
         return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error updating profile:', error);
 
-        if (error.message.includes('Validation error')) {
-            const errors: Record<string, string[]> = {};
-            const validationErrors = error.errors as ValidationError[];
+        const serviceError = error as ServiceError;
 
-            validationErrors.forEach(err => {
+        if (serviceError.message?.includes('Validation error') && serviceError.errors) {
+            const errors: Record<string, string[]> = {};
+
+            serviceError.errors.forEach(err => {
                 const field = err.path[0];
                 if (!errors[field]) {
                     errors[field] = [];
