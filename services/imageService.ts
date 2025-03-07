@@ -21,13 +21,16 @@ export interface ProcessedImage {
 
 // Initialize Google Cloud Storage
 // @todo extract?
+const credentials = JSON.parse(process.env.GOOGLE_CLOUD_KEY_JSON);
+
 const storage = new Storage({
-    keyFilename: process.env.GOOGLE_CLOUD_KEY_FILE,
+    credentials,
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
 });
 
 const bucket = storage.bucket(process.env.GOOGLE_CLOUD_BUCKET_NAME);
-const cdnBaseUrl = process.env.GOOGLE_CLOUD_CDN_BASE_URL;
+// @todo implement CDN.
+const cdnBaseUrl = false;
 
 export const ImageService = {
     /**
