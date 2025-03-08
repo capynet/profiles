@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useMemo } from 'react';
-import { GoogleMap, useLoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useLoadScript, InfoWindow, MarkerF } from '@react-google-maps/api';
 import ProfileMapCard from './ProfileMapCard';
 
 interface ProfileImage {
@@ -27,6 +27,7 @@ interface Profile {
 interface ProfileMapProps {
     profiles: Profile[];
     apiKey: string;
+    mapId?: string; // Optional Map ID for advanced features
 }
 
 const mapContainerStyle = {
@@ -37,11 +38,11 @@ const mapContainerStyle = {
 // List of libraries to use with Google Maps
 const libraries: ("places" | "drawing" | "geometry" | "localContext" | "visualization")[] = [];
 
-export default function ProfileMap({ profiles, apiKey }: ProfileMapProps) {
+export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps) {
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
     const mapRef = useRef<google.maps.Map | null>(null);
 
-    // Load the Google Maps script using the hook instead of the component
+    // Load the Google Maps script using the hook
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: apiKey,
         libraries,
@@ -72,7 +73,7 @@ export default function ProfileMap({ profiles, apiKey }: ProfileMapProps) {
     }, []);
 
     if (loadError) {
-        return <div className="p-4 text-red-500">Error loading maps</div>;
+        return <div className="p-4 text-red-500">Error loading maps: {loadError.message}</div>;
     }
 
     if (!isLoaded) {
@@ -83,6 +84,8 @@ export default function ProfileMap({ profiles, apiKey }: ProfileMapProps) {
         );
     }
 
+    // Since we can't use AdvancedMarkerElement without a Map ID, we'll use the MarkerF component
+    // MarkerF is the functional version of Marker in @react-google-maps/api
     return (
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
@@ -91,12 +94,24 @@ export default function ProfileMap({ profiles, apiKey }: ProfileMapProps) {
             onLoad={onLoad}
             onUnmount={onUnmount}
             onClick={() => setSelectedProfile(null)}
+            options={{
+                mapId: mapId, // This is needed for Advanced Markers, but we'll fall back to regular markers
+            }}
         >
             {profiles.map(profile => (
-                <Marker
+                <MarkerF
                     key={profile.id}
                     position={{ lat: profile.latitude, lng: profile.longitude }}
                     onClick={() => setSelectedProfile(profile)}
+                    icon={{
+                        path: "M12,2C8.13,2 5,5.13 5,9c0,5.25 7,13 7,13s7,-7.75 7,-13c0,-3.87 -3.13,-7 -7,-7zM12,11.5c-1.38,0 -2.5,-1.12 -2.5,-2.5s1.12,-2.5 2.5,-2.5 2.5,1.12 2.5,2.5 -1.12,2.5 -2.5,2.5z",
+                        fillColor: "#4F46E5",
+                        fillOpacity: 1,
+                        strokeWeight: 1,
+                        strokeColor: "#FFFFFF",
+                        scale: 1.5,
+                        anchor: new google.maps.Point(12, 22),
+                    }}
                 />
             ))}
 

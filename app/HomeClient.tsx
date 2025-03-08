@@ -40,10 +40,11 @@ interface HomeClientProps {
     initialProfiles: Profile[];
     languages: Language[];
     paymentMethods: PaymentMethod[];
-    googleMapsApiKey: string; // Add this prop
+    googleMapsApiKey: string;
+    googleMapsId?: string; // Add Map ID
 }
 
-export default function HomeClient({ initialProfiles, languages, paymentMethods, googleMapsApiKey }: HomeClientProps) {
+export default function HomeClient({ initialProfiles, languages, paymentMethods, googleMapsApiKey, googleMapsId }: HomeClientProps) {
     const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
     const [loading, setLoading] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -168,6 +169,7 @@ export default function HomeClient({ initialProfiles, languages, paymentMethods,
                                         <ProfileMap
                                             profiles={profiles}
                                             apiKey={googleMapsApiKey}
+                                            mapId={googleMapsId}
                                         />
                                     </div>
                                 )
