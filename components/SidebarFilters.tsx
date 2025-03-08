@@ -178,6 +178,7 @@ export default function SidebarFilters({
                         onMinChange={setMinPrice}
                         onMaxChange={setMaxPrice}
                         label="Precio (€)"
+                        showInputs={false}
                     />
 
                     {/* Age Range Slider */}
@@ -190,6 +191,7 @@ export default function SidebarFilters({
                         onMinChange={setMinAge}
                         onMaxChange={setMaxAge}
                         label="Edad"
+                        showInputs={false}
                     />
 
                     {/* Languages */}
