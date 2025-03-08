@@ -70,6 +70,7 @@ export default function ProfileMap({ profiles, apiKey }: ProfileMapProps) {
                 zoom={12}
                 onLoad={onLoad}
                 onUnmount={onUnmount}
+                onClick={() => setSelectedProfile(null)}
             >
                 {profiles.map(profile => (
                     <Marker
