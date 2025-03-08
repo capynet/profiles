@@ -67,7 +67,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
     console.log('createProfile action started');
 
     const session = await auth();
-    if (!session) {
+    if (!session  || !session.user) {
         console.log('No session found, user not authenticated');
         return {
             success: false,
