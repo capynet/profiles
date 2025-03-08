@@ -14,6 +14,11 @@
   }
 }
 
+/* Forzar la barra de desplazamiento para evitar flickering */
+html {
+  overflow-y: scroll;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
