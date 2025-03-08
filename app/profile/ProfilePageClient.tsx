@@ -126,7 +126,7 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
 
                 <div className="mt-4 flex flex-wrap gap-4">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Métodos de Pago</h2>
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Payment methods</h2>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {profile.paymentMethods.map(({paymentMethod}) => (
                                 <span
@@ -137,13 +137,13 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
                                 </span>
                             ))}
                             {profile.paymentMethods.length === 0 && (
-                                <span className="text-gray-500 dark:text-gray-400">No hay métodos de pago registrados</span>
+                                <span className="text-gray-500 dark:text-gray-400">No hay Payment methods registrados</span>
                             )}
                         </div>
                     </div>
 
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Idiomas</h2>
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Languages</h2>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {profile.languages.map(({language}) => (
                                 <span
@@ -154,7 +154,7 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
                                 </span>
                             ))}
                             {profile.languages.length === 0 && (
-                                <span className="text-gray-500 dark:text-gray-400">No hay idiomas registrados</span>
+                                <span className="text-gray-500 dark:text-gray-400">No hay Languages registrados</span>
                             )}
                         </div>
                     </div>

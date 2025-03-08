@@ -77,7 +77,7 @@ export default function ProfileCard({
 
                 {languages.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">IDIOMAS</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">LANGUAGES</h4>
                         <div className="flex flex-wrap gap-1">
                             {languages.map(({language}) => (
                                 <span
@@ -88,7 +88,7 @@ export default function ProfileCard({
                                 </span>
                             ))}
                             {languages.length === 0 && (
-                                <span className="text-xs text-gray-500">No hay idiomas registrados</span>
+                                <span className="text-xs text-gray-500">No languages available</span>
                             )}
                         </div>
                     </div>
@@ -96,7 +96,7 @@ export default function ProfileCard({
 
                 {paymentMethods.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">MÉTODOS DE PAGO</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1"></h4>
                         <div className="flex flex-wrap gap-1">
                             {paymentMethods.map(({paymentMethod}) => (
                                 <span

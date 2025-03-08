@@ -63,17 +63,12 @@ async function createUserAndProfile(prisma: PrismaClient, data: any) {
         }
     })
 
-    // Crear imágenes múltiples si están presentes
     if (data.profile.images && Array.isArray(data.profile.images)) {
-        // Eliminar imágenes existentes si hay
         await prisma.profileImage.deleteMany({
             where: { profileId: profile.id }
         });
 
-        // Crear nuevas imágenes
         for (const imageData of data.profile.images) {
-            // Simular proceso de subida a Google Cloud Storage
-            // En un entorno real, aquí cargarías la imagen a GCS y obtendrías la cdnUrl
             const gcsBaseUrl = "https://storage.googleapis.com/sample-bucket";
             const cdnUrl = `${gcsBaseUrl}/${imageData.storageKey}`;
 
@@ -81,27 +76,23 @@ async function createUserAndProfile(prisma: PrismaClient, data: any) {
                 data: {
                     profileId: profile.id,
                     url: imageData.url,
-                    cdnUrl: cdnUrl, // URL generado "simulando" Google Cloud Storage
+                    cdnUrl: cdnUrl,
                     storageKey: imageData.storageKey
                 }
             });
         }
     }
 
-    // Asociar idiomas
     await associateLanguages(prisma, profile.id, data.profile.languages || [])
 
-    // Asociar métodos de pago
     await associatePaymentMethods(prisma, profile.id, data.profile.paymentMethods || [])
 }
 
 async function associateLanguages(prisma: PrismaClient, profileId: number, languageIds: number[]) {
-    // Primero eliminar asociaciones existentes
     await prisma.profileLanguage.deleteMany({
         where: { profileId }
     });
 
-    // Crear nuevas asociaciones
     for (const langId of languageIds) {
         await prisma.profileLanguage.create({
             data: {
@@ -113,12 +104,10 @@ async function associateLanguages(prisma: PrismaClient, profileId: number, langu
 }
 
 async function associatePaymentMethods(prisma: PrismaClient, profileId: number, methodIds: number[]) {
-    // Primero eliminar asociaciones existentes
     await prisma.profilePaymentMethod.deleteMany({
         where: { profileId }
     });
 
-    // Crear nuevas asociaciones
     for (const methodId of methodIds) {
         await prisma.profilePaymentMethod.create({
             data: {

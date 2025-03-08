@@ -219,7 +219,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                             if (longitudeInput) longitudeInput.value = '-3.7038';
                             if (addressInput) addressInput.value = '123 Test Street, 28001, Madrid';
 
-                            // Seleccionar algunos métodos de pago y lenguajes aleatoriamente
+                            // Seleccionar algunos Payment methods y lenguajes aleatoriamente
                             if (paymentMethods.length > 0) {
                                 const randomPaymentMethods = paymentMethods
                                     .slice(0, Math.min(2, paymentMethods.length))

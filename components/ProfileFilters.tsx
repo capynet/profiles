@@ -129,7 +129,7 @@ export default function ProfileFilters({ languages, paymentMethods }: ProfileFil
                         maxValue={maxPrice}
                         onMinChange={setMinPrice}
                         onMaxChange={setMaxPrice}
-                        label="Precio (€)"
+                        label="Price (€)"
                         showInputs={false}
                     />
 
@@ -142,13 +142,13 @@ export default function ProfileFilters({ languages, paymentMethods }: ProfileFil
                         maxValue={maxAge}
                         onMinChange={setMinAge}
                         onMaxChange={setMaxAge}
-                        label="Edad"
+                        label="Age"
                         showInputs={false}
                     />
 
                     {/* Languages */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Idiomas</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Languages</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             {languages.map(language => (
                                 <div key={language.id} className="flex items-center">
@@ -172,7 +172,7 @@ export default function ProfileFilters({ languages, paymentMethods }: ProfileFil
 
                     {/* Payment Methods */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Métodos de Pago</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment methods</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             {paymentMethods.map(method => (
                                 <div key={method.id} className="flex items-center">
@@ -200,7 +200,7 @@ export default function ProfileFilters({ languages, paymentMethods }: ProfileFil
                             onClick={handleFilter}
                             className="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
-                            Aplicar Filtros
+                            Apply filters
                         </button>
                         <button
                             onClick={handleReset}
@@ -228,12 +228,12 @@ export default function ProfileFilters({ languages, paymentMethods }: ProfileFil
                         )}
                         {minAge && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
-                                Edad min: {minAge}
+                                Age min: {minAge}
                             </span>
                         )}
                         {maxAge && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
-                                Edad max: {maxAge}
+                                Age max: {maxAge}
                             </span>
                         )}
                         {selectedLanguages.length > 0 && (

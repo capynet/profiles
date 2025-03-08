@@ -81,11 +81,6 @@ export default function Header({ user }: HeaderProps) {
                                 {/* Dropdown Menu */}
                                 {isMenuOpen && (
                                     <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                                        <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-                                            {user.email}
-                                        </div>
-
-                                        <div className="border-t border-gray-100 dark:border-gray-700"></div>
 
                                         <Link
                                             href="/profile"

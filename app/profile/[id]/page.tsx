@@ -134,7 +134,7 @@ export default async function ProfileDetailPage({params}: ProfilePageProps) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
                         {/* Languages */}
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Idiomas</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Languages</h2>
                             <div className="flex flex-wrap gap-2">
                                 {profile.languages.map(({language}) => (
                                     <span
@@ -145,14 +145,14 @@ export default async function ProfileDetailPage({params}: ProfilePageProps) {
                                     </span>
                                 ))}
                                 {profile.languages.length === 0 && (
-                                    <span className="text-gray-500 dark:text-gray-400">No hay idiomas registrados</span>
+                                    <span className="text-gray-500 dark:text-gray-400">No languages available</span>
                                 )}
                             </div>
                         </div>
 
                         {/* Payment Methods */}
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Métodos de Pago</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Payment methods</h2>
                             <div className="flex flex-wrap gap-2">
                                 {profile.paymentMethods.map(({paymentMethod}) => (
                                     <span
@@ -163,7 +163,7 @@ export default async function ProfileDetailPage({params}: ProfilePageProps) {
                                     </span>
                                 ))}
                                 {profile.paymentMethods.length === 0 && (
-                                    <span className="text-gray-500 dark:text-gray-400">No hay métodos de pago registrados</span>
+                                    <span className="text-gray-500 dark:text-gray-400">No hay Payment methods registrados</span>
                                 )}
                             </div>
                         </div>
