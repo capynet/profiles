@@ -1,10 +1,11 @@
+// prisma/seeders/languages.ts
 import { PrismaClient } from '@prisma/client'
 
 const languages = [
     { name: 'English' },
     { name: 'Spanish' },
     { name: 'French' },
-    { name: 'Germany' },
+    { name: 'German' },
     { name: 'Italian' }
 ]
 

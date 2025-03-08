@@ -1,39 +1,36 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Profile } from '@prisma/client';
-import { createProfile, updateProfile } from '@/app/profile/actions';
+import {useEffect, useState} from 'react';
+import {useRouter} from 'next/navigation';
+import Image from 'next/image';
+import {Profile, ProfileImage} from '@prisma/client';
+import {createProfile, updateProfile} from '@/app/profile/actions';
 
-type Language = {
-    id: number;
-    name: string;
+type ProfileWithRelations = Profile & {
+    paymentMethods: { paymentMethodId: number }[];
+    languages: { languageId: number }[];
+    images: ProfileImage[];
 };
 
-type PaymentMethod = {
-    id: number;
-    name: string;
-};
-
-type ProfileFormWithActionsProps = {
-    profile?: Profile & {
-        paymentMethods: { paymentMethodId: number }[];
-        languages: { languageId: number }[];
-    };
+type ProfileFormProps = {
+    profile?: ProfileWithRelations;
     isEditing?: boolean;
 };
 
-export default function ProfileFormWithActions({
-                                                   profile,
-                                                   isEditing = false
-                                               }: ProfileFormWithActionsProps) {
-    const [languages, setLanguages] = useState<Language[]>([]);
-    const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+export default function ProfileForm({profile, isEditing = false}: ProfileFormProps) {
+    const [languages, setLanguages] = useState<{ id: number; name: string }[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string }[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Image state
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+    const [existingImages, setExistingImages] = useState<ProfileImage[]>([]);
+
     const router = useRouter();
 
     useEffect(() => {
@@ -59,6 +56,7 @@ export default function ProfileFormWithActions({
                 if (profile) {
                     setSelectedLanguages(profile.languages.map(l => l.languageId));
                     setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
+                    setExistingImages(profile.images || []);
                 }
             } catch (error) {
                 console.error('Error fetching form data:', error);
@@ -86,6 +84,41 @@ export default function ProfileFormWithActions({
         );
     };
 
+    // Handle file selection
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        const newFiles = Array.from(e.target.files);
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+
+        // Create preview URLs for the selected files
+        newFiles.forEach(file => {
+            const fileUrl = URL.createObjectURL(file);
+            setPreviewUrls(prev => [...prev, fileUrl]);
+        });
+    };
+
+    // Remove a selected file
+    const removeSelectedFile = (index: number) => {
+        setSelectedFiles(prev => {
+            const updatedFiles = [...prev];
+            updatedFiles.splice(index, 1);
+            return updatedFiles;
+        });
+
+        setPreviewUrls(prev => {
+            const updatedUrls = [...prev];
+            URL.revokeObjectURL(updatedUrls[index]); // Free up memory
+            updatedUrls.splice(index, 1);
+            return updatedUrls;
+        });
+    };
+
+    // Remove an existing image
+    const removeExistingImage = (imageId: number) => {
+        setExistingImages(prev => prev.filter(img => img.id !== imageId));
+    };
+
     const handleSubmit = async (formData: FormData) => {
         setIsSubmitting(true);
         setErrors({});
@@ -95,21 +128,29 @@ export default function ProfileFormWithActions({
 
         // Copy existing form data
         for (const [key, value] of formData.entries()) {
-            if (key !== 'languages' && key !== 'paymentMethods') {
+            if (key !== 'languages' && key !== 'paymentMethods' && key !== 'images') {
                 updatedFormData.append(key, value);
             }
         }
 
-        // Add selected languages - converting to numbers
+        // Add selected languages
         selectedLanguages.forEach(languageId => {
-            // Asegurarse de que el ID se envía como número
-            updatedFormData.append('languages', languageId);
+            updatedFormData.append('languages', languageId.toString());
         });
 
-        // Add selected payment methods - converting to numbers
+        // Add selected payment methods
         selectedPaymentMethods.forEach(paymentMethodId => {
-            // Asegurarse de que el ID se envía como número
-            updatedFormData.append('paymentMethods', paymentMethodId);
+            updatedFormData.append('paymentMethods', paymentMethodId.toString());
+        });
+
+        // Add image files
+        selectedFiles.forEach(file => {
+            updatedFormData.append('images', file);
+        });
+
+        // Add existing images storage keys
+        existingImages.forEach(image => {
+            updatedFormData.append('existingImages', image.mediumStorageKey);
         });
 
         try {
@@ -117,11 +158,15 @@ export default function ProfileFormWithActions({
                 const result = await updateProfile(profile.id, updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
+                } else {
+                    router.push('/profile');
                 }
             } else {
                 const result = await createProfile(updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
+                } else {
+                    router.push('/profile');
                 }
             }
         } catch (error) {
@@ -159,6 +204,49 @@ export default function ProfileFormWithActions({
             </div>
 
             <form action={handleSubmit} className="p-8">
+
+                <div className="md:col-span-2 mt-4">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            // Rellenar campos básicos
+                            const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+                            const priceInput = document.querySelector('input[name="price"]') as HTMLInputElement;
+                            const ageInput = document.querySelector('input[name="age"]') as HTMLInputElement;
+                            const descriptionInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+                            const latitudeInput = document.querySelector('input[name="latitude"]') as HTMLInputElement;
+                            const longitudeInput = document.querySelector('input[name="longitude"]') as HTMLInputElement;
+                            const addressInput = document.querySelector('input[name="address"]') as HTMLInputElement;
+
+                            if (nameInput) nameInput.value = 'Test User';
+                            if (priceInput) priceInput.value = '50.00';
+                            if (ageInput) ageInput.value = '30';
+                            if (descriptionInput) descriptionInput.value = 'This is a test profile description with some sample text for testing purposes.';
+                            if (latitudeInput) latitudeInput.value = '40.4168';
+                            if (longitudeInput) longitudeInput.value = '-3.7038';
+                            if (addressInput) addressInput.value = '123 Test Street, 28001, Madrid';
+
+                            // Seleccionar algunos métodos de pago y lenguajes aleatoriamente
+                            if (paymentMethods.length > 0) {
+                                const randomPaymentMethods = paymentMethods
+                                    .slice(0, Math.min(2, paymentMethods.length))
+                                    .map(pm => pm.id);
+                                setSelectedPaymentMethods(randomPaymentMethods);
+                            }
+
+                            if (languages.length > 0) {
+                                const randomLanguages = languages
+                                    .slice(0, Math.min(3, languages.length))
+                                    .map(lang => lang.id);
+                                setSelectedLanguages(randomLanguages);
+                            }
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                    >
+                        Fill Test Data
+                    </button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -203,17 +291,87 @@ export default function ProfileFormWithActions({
                         {errors.age && <p className="mt-1 text-sm text-red-600 font-medium">{errors.age[0]}</p>}
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Image (URL)</label>
+                    {/* Multiple image upload field */}
+                    <div className="md:col-span-2 space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Profile Images</label>
                         <input
-                            type="text"
-                            name="image"
-                            defaultValue={profile?.image || ''}
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleFileChange}
                             className={inputClassName}
-                            placeholder="https://example.com/image.jpg"
                         />
-                        {errors.image && <p className="mt-1 text-sm text-red-600 font-medium">{errors.image[0]}</p>}
+                        <p className="text-xs text-gray-500">
+                            Images will be converted to WebP, resized to 352x576px (9:16 ratio), and stored in Google Cloud Storage.
+                        </p>
+                        {errors.images && <p className="mt-1 text-sm text-red-600 font-medium">{errors.images[0]}</p>}
                     </div>
+
+                    {/* Preview of selected files */}
+                    {previewUrls.length > 0 && (
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">New Images Preview</label>
+                            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                                {previewUrls.map((url, index) => (
+                                    <div key={`new-${index}`} className="relative aspect-[9/16] w-28 rounded-md overflow-hidden">
+                                        <div className="h-full w-full relative">
+                                            <Image
+                                                src={url}
+                                                alt={`New image ${index + 1}`}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, 112px"
+                                                className="object-cover"
+                                                priority
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeSelectedFile(index)}
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10"
+                                            aria-label="Remove image"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Display existing images */}
+                    {existingImages.length > 0 && (
+                        <div className="md:col-span-2 space-y-2">
+                            <label className="block text-sm font-medium text-gray-700">Current Images</label>
+                            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                                {existingImages.map((image) => (
+                                    <div key={`existing-${image.id}`} className="relative aspect-[9/16] w-28 rounded-md overflow-hidden">
+                                        <div className="h-full w-full relative">
+                                            <Image
+                                                src={image.mediumUrl}
+                                                alt={`Profile image ${image.id}`}
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, 112px"
+                                                className="object-cover"
+                                                priority
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeExistingImage(image.id)}
+                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10"
+                                            aria-label="Remove image"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="md:col-span-2 space-y-2">
                         <label className="block text-sm font-medium text-gray-700">Description</label>

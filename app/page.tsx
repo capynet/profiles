@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {auth, signOut} from "@/auth";
 
 export default async function Home() {
@@ -16,10 +17,12 @@ export default async function Home() {
                             </p>
 
                             {session.user.image && (
-                                <img
+                                <Image
                                     src={session.user.image}
                                     alt="Profile Picture"
-                                    className="w-24 h-24 rounded-full border-4 border-blue-500 mt-2"
+                                    width={96}
+                                    height={96}
+                                    className="rounded-full border-4 border-blue-500 mt-2"
                                 />
                             )}
 

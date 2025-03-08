@@ -1,4 +1,4 @@
-import {indexDocumentForRAG, prompt} from "@/services/ia";
+import {indexDocumentForRAG} from "@/services/ia";
 
 
 export default async function Search() {

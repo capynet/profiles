@@ -1,3 +1,4 @@
+// prisma/seeders/profiles.ts
 import {PrismaClient} from '@prisma/client'
 import fs from 'fs'
 import path from 'path'
@@ -62,6 +63,31 @@ async function createUserAndProfile(prisma: PrismaClient, data: any) {
         }
     })
 
+    // Crear imágenes múltiples si están presentes
+    if (data.profile.images && Array.isArray(data.profile.images)) {
+        // Eliminar imágenes existentes si hay
+        await prisma.profileImage.deleteMany({
+            where: { profileId: profile.id }
+        });
+
+        // Crear nuevas imágenes
+        for (const imageData of data.profile.images) {
+            // Simular proceso de subida a Google Cloud Storage
+            // En un entorno real, aquí cargarías la imagen a GCS y obtendrías la cdnUrl
+            const gcsBaseUrl = "https://storage.googleapis.com/sample-bucket";
+            const cdnUrl = `${gcsBaseUrl}/${imageData.storageKey}`;
+
+            await prisma.profileImage.create({
+                data: {
+                    profileId: profile.id,
+                    url: imageData.url,
+                    cdnUrl: cdnUrl, // URL generado "simulando" Google Cloud Storage
+                    storageKey: imageData.storageKey
+                }
+            });
+        }
+    }
+
     // Asociar idiomas
     await associateLanguages(prisma, profile.id, data.profile.languages || [])
 
@@ -69,85 +95,36 @@ async function createUserAndProfile(prisma: PrismaClient, data: any) {
     await associatePaymentMethods(prisma, profile.id, data.profile.paymentMethods || [])
 }
 
-async function createProfileWithRelations(prisma: PrismaClient, profileData: any) {
-    // Crear usuario para el perfil
-    const userEmail = `${profileData.name.toLowerCase().replace(/\s+/g, '.')}@example.com`
-
-    const user = await prisma.user.upsert({
-        where: {email: userEmail},
-        update: {},
-        create: {
-            email: userEmail,
-            name: profileData.name
-        }
-    })
-
-    // Crear perfil
-    const profile = await prisma.profile.upsert({
-        where: {userId: user.id},
-        update: {
-            name: profileData.name,
-            price: profileData.price,
-            age: profileData.age,
-            image: profileData.image,
-            description: profileData.description,
-            latitude: profileData.location[0],
-            longitude: profileData.location[1],
-            address: profileData.address,
-            updatedAt: new Date(profileData.updatedAt || new Date())
-        },
-        create: {
-            userId: user.id,
-            name: profileData.name,
-            price: profileData.price,
-            age: profileData.age,
-            image: profileData.image,
-            description: profileData.description,
-            latitude: profileData.location[0],
-            longitude: profileData.location[1],
-            address: profileData.address,
-            updatedAt: new Date(profileData.updatedAt || new Date()),
-            createdAt: new Date()
-        }
-    })
-
-    await associateLanguages(prisma, profile.id, profileData.languages || [])
-
-    await associatePaymentMethods(prisma, profile.id, profileData.paymentMethods || [])
-}
-
 async function associateLanguages(prisma: PrismaClient, profileId: number, languageIds: number[]) {
+    // Primero eliminar asociaciones existentes
+    await prisma.profileLanguage.deleteMany({
+        where: { profileId }
+    });
+
+    // Crear nuevas asociaciones
     for (const langId of languageIds) {
-        await prisma.profileLanguage.upsert({
-            where: {
-                profileId_languageId: {
-                    profileId: profileId,
-                    languageId: langId
-                }
-            },
-            update: {},
-            create: {
+        await prisma.profileLanguage.create({
+            data: {
                 profileId: profileId,
                 languageId: langId
             }
-        })
+        });
     }
 }
 
 async function associatePaymentMethods(prisma: PrismaClient, profileId: number, methodIds: number[]) {
+    // Primero eliminar asociaciones existentes
+    await prisma.profilePaymentMethod.deleteMany({
+        where: { profileId }
+    });
+
+    // Crear nuevas asociaciones
     for (const methodId of methodIds) {
-        await prisma.profilePaymentMethod.upsert({
-            where: {
-                profileId_paymentMethodId: {
-                    profileId: profileId,
-                    paymentMethodId: methodId
-                }
-            },
-            update: {},
-            create: {
+        await prisma.profilePaymentMethod.create({
+            data: {
                 profileId: profileId,
                 paymentMethodId: methodId
             }
-        })
+        });
     }
 }
