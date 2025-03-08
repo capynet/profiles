@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProfileCard from '@/components/ProfileCard';
-import ProfileFilters from '@/components/ProfileFilters';
+import SidebarFilters from '@/components/SidebarFilters';
 
 interface ProfileImage {
     id: number;
@@ -44,6 +44,7 @@ interface HomeClientProps {
 export default function HomeClient({ initialProfiles, languages, paymentMethods }: HomeClientProps) {
     const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
     const [loading, setLoading] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const searchParams = useSearchParams();
 
     // Fetch profiles based on filters
@@ -72,42 +73,65 @@ export default function HomeClient({ initialProfiles, languages, paymentMethods 
 
     return (
         <div className="container mx-auto py-8 px-4">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Encuentra Perfiles</h1>
-                <ProfileFilters languages={languages} paymentMethods={paymentMethods} />
+            {/* Mobile Filter Toggle Button */}
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Encuentra Perfiles</h1>
+
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="md:hidden px-3 py-2 bg-indigo-600 text-white rounded-md flex items-center space-x-2 hover:bg-indigo-700 transition-colors"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                    <span>Filtros</span>
+                </button>
             </div>
 
-            {loading ? (
-                <div className="flex justify-center items-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-                </div>
-            ) : (
-                <>
-                    {profiles.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            {profiles.map(profile => (
-                                <ProfileCard
-                                    key={profile.id}
-                                    id={profile.id}
-                                    name={profile.name}
-                                    age={profile.age}
-                                    price={profile.price}
-                                    description={profile.description}
-                                    address={profile.address}
-                                    images={profile.images}
-                                    languages={profile.languages}
-                                    paymentMethods={profile.paymentMethods}
-                                />
-                            ))}
+            <div className="flex flex-col md:flex-row gap-6">
+                {/* Sidebar Filters */}
+                <SidebarFilters
+                    languages={languages}
+                    paymentMethods={paymentMethods}
+                    isOpen={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                />
+
+                {/* Main Content */}
+                <div className="flex-1">
+                    {loading ? (
+                        <div className="flex justify-center items-center h-64">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
                         </div>
                     ) : (
-                        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-                            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No se encontraron perfiles</h3>
-                            <p className="text-gray-600 dark:text-gray-400">Intenta modificar los filtros de búsqueda</p>
-                        </div>
+                        <>
+                            {profiles.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {profiles.map(profile => (
+                                        <ProfileCard
+                                            key={profile.id}
+                                            id={profile.id}
+                                            name={profile.name}
+                                            age={profile.age}
+                                            price={profile.price}
+                                            description={profile.description}
+                                            address={profile.address}
+                                            images={profile.images}
+                                            languages={profile.languages}
+                                            paymentMethods={profile.paymentMethods}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
+                                    <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No se encontraron perfiles</h3>
+                                    <p className="text-gray-600 dark:text-gray-400">Intenta modificar los filtros de búsqueda</p>
+                                </div>
+                            )}
+                        </>
                     )}
-                </>
-            )}
+                </div>
+            </div>
         </div>
     );
 }

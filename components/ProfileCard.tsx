@@ -97,7 +97,7 @@ export default function ProfileCard({
                     <div className="mb-3">
                         <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Métodos de Pago</h4>
                         <div className="flex flex-wrap gap-1">
-                            {paymentMethods.slice(0, 3).map(({ paymentMethod }) => (
+                            {paymentMethods.map(({ paymentMethod }) => (
                                 <span
                                     key={paymentMethod.id}
                                     className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs"
@@ -105,11 +105,6 @@ export default function ProfileCard({
                   {paymentMethod.name}
                 </span>
                             ))}
-                            {paymentMethods.length > 3 && (
-                                <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded text-xs">
-                  +{paymentMethods.length - 3}
-                </span>
-                            )}
                         </div>
                     </div>
                 )}
