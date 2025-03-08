@@ -11,7 +11,7 @@ export const metadata = {
 export default async function CreateProfilePage() {
     const session = await auth();
 
-    if (!session) {
+    if (!session || !session.user) {
         redirect('/login');
     }
 
