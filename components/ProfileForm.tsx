@@ -176,19 +176,19 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
         }
     };
 
-    const inputClassName = "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900";
+    const inputClassName = "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white";
     const checkboxClassName = "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded";
 
     if (isLoading) {
         return (
-            <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden p-8">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden p-6">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <svg className="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <p className="mt-2 text-gray-600">Loading form data...</p>
+                        <p className="mt-2 text-gray-600 dark:text-gray-300">Loading form data...</p>
                     </div>
                 </div>
             </div>
@@ -196,15 +196,8 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
     }
 
     return (
-        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="px-8 py-6 bg-indigo-50 border-b border-indigo-100">
-                <h1 className="text-2xl font-bold text-indigo-800">
-                    {isEditing ? 'Editing your profile' : 'Creating your profile'}
-                </h1>
-            </div>
-
-            <form action={handleSubmit} className="p-8">
-
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <form action={handleSubmit} className="p-6">
                 <div className="md:col-span-2 mt-4">
                     <button
                         type="button"
@@ -241,15 +234,15 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                                 setSelectedLanguages(randomLanguages);
                             }
                         }}
-                        className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-gray-300 mb-6"
+                        className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 mb-6"
                     >
                         Fill Test Data
                     </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                         <input
                             type="text"
                             name="name"
@@ -261,7 +254,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Price</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span className="text-gray-500 sm:text-sm">€</span>
@@ -279,7 +272,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Age</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Age</label>
                         <input
                             type="number"
                             name="age"
@@ -293,7 +286,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
 
                     {/* Multiple image upload field */}
                     <div className="md:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Profile Images</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Profile Images</label>
                         <input
                             type="file"
                             multiple
@@ -301,7 +294,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                             onChange={handleFileChange}
                             className={inputClassName}
                         />
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                             Images will be converted to WebP, resized to 352x576px (9:16 ratio), and stored in Google Cloud Storage.
                         </p>
                         {errors.images && <p className="mt-1 text-sm text-red-600 font-medium">{errors.images[0]}</p>}
@@ -310,7 +303,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     {/* Preview of selected files */}
                     {previewUrls.length > 0 && (
                         <div className="md:col-span-2 space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">New Images Preview</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Images Preview</label>
                             <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
                                 {previewUrls.map((url, index) => (
                                     <div key={`new-${index}`} className="relative aspect-[9/16] w-28 rounded-md overflow-hidden">
@@ -343,7 +336,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     {/* Display existing images */}
                     {existingImages.length > 0 && (
                         <div className="md:col-span-2 space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">Current Images</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Images</label>
                             <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
                                 {existingImages.map((image) => (
                                     <div key={`existing-${image.id}`} className="relative aspect-[9/16] w-28 rounded-md overflow-hidden">
@@ -374,7 +367,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     )}
 
                     <div className="md:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                         <textarea
                             rows={4}
                             name="description"
@@ -387,14 +380,14 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
 
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
-                            <div className="flex-grow h-px bg-gray-200"></div>
-                            <span className="px-3 text-sm font-medium text-gray-500">Location</span>
-                            <div className="flex-grow h-px bg-gray-200"></div>
+                            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
+                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Location</span>
+                            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Latitude</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
                         <input
                             type="number"
                             step="any"
@@ -407,7 +400,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Longitude</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
                         <input
                             type="number"
                             step="any"
@@ -420,7 +413,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     </div>
 
                     <div className="md:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">Address</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
                         <input
                             type="text"
                             name="address"
@@ -433,15 +426,15 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
 
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
-                            <div className="flex-grow h-px bg-gray-200"></div>
-                            <span className="px-3 text-sm font-medium text-gray-500">Additional Information</span>
-                            <div className="flex-grow h-px bg-gray-200"></div>
+                            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
+                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Additional Information</span>
+                            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Payment Methods</label>
-                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 rounded-md">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Methods</label>
+                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
                             {paymentMethods.length > 0 ? (
                                 paymentMethods.map(method => (
                                     <div key={method.id} className="flex items-center">
@@ -452,21 +445,21 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                                             onChange={() => handlePaymentMethodChange(method.id)}
                                             className={checkboxClassName}
                                         />
-                                        <label htmlFor={`payment-method-${method.id}`} className="ml-2 text-sm text-gray-700">
+                                        <label htmlFor={`payment-method-${method.id}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                             {method.name}
                                         </label>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-sm text-gray-500 col-span-2 py-2">No payment methods available</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">No payment methods available</div>
                             )}
                         </div>
                         {errors.paymentMethods && <p className="mt-1 text-sm text-red-600 font-medium">{errors.paymentMethods[0]}</p>}
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
-                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 rounded-md">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Languages</label>
+                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
                             {languages.length > 0 ? (
                                 languages.map(language => (
                                     <div key={language.id} className="flex items-center">
@@ -477,24 +470,24 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                                             onChange={() => handleLanguageChange(language.id)}
                                             className={checkboxClassName}
                                         />
-                                        <label htmlFor={`language-${language.id}`} className="ml-2 text-sm text-gray-700">
+                                        <label htmlFor={`language-${language.id}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                                             {language.name}
                                         </label>
                                     </div>
                                 ))
                             ) : (
-                                <div className="text-sm text-gray-500 col-span-2 py-2">No languages available</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">No languages available</div>
                             )}
                         </div>
                         {errors.languages && <p className="mt-1 text-sm text-red-600 font-medium">{errors.languages[0]}</p>}
                     </div>
                 </div>
 
-                <div className="flex justify-end space-x-4 mt-10 pt-6 border-t border-gray-200">
+                <div className="flex justify-end space-x-4 mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <button
                         type="button"
                         onClick={() => router.back()}
-                        className="px-6 py-2.5 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                         Cancel
                     </button>

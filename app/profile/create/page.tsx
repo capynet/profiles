@@ -23,7 +23,8 @@ export default async function CreateProfilePage() {
     }
 
     return (
-        <div className="container mx-auto py-8">
+        <div className="container mx-auto py-8 px-4">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-6">Create Your Profile</h1>
             <ProfileForm/>
         </div>
     );

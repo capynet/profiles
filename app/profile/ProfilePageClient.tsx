@@ -42,11 +42,11 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
     // If profile is undefined or null, show a message with a link to create one
     if (!profile) {
         return (
-            <div className="container mx-auto py-8 px-4">
-                <div className="max-w-2xl mx-auto">
-                    <h1 className="text-2xl font-bold mb-4">No tienes un perfil creado</h1>
-                    <p className="mb-6">Crea tu perfil para comenzar a ofrecer tus servicios.</p>
-                    <Link href="/profile/create" className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+                <div className="text-center py-8">
+                    <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">No tienes un perfil creado</h1>
+                    <p className="mb-6 text-gray-600 dark:text-gray-400">Crea tu perfil para comenzar a ofrecer tus servicios.</p>
+                    <Link href="/profile/create" className="px-4 py-2 text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
                         Crear Perfil
                     </Link>
                 </div>
@@ -68,14 +68,14 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
     };
 
     return (
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+            <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold">{profile.name}</h1>
-                        <p className="text-sm text-gray-500">{profile.age} años</p>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{profile.age} años</p>
                     </div>
-                    <div className="text-xl font-bold text-green-600">
+                    <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
                         ${profile.price.toFixed(2)}
                     </div>
                 </div>
@@ -83,7 +83,7 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
                 {/* Display image gallery with responsive image loading */}
                 {profile.images && profile.images.length > 0 ? (
                     <div className="mb-6">
-                        <h2 className="text-lg font-semibold mb-3">Gallery</h2>
+                        <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Gallery</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                             {profile.images.map(image => (
                                 <div
@@ -105,56 +105,56 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
                         </div>
                     </div>
                 ) : (
-                    <div className="mb-6 bg-gray-100 rounded-lg p-8 text-center text-gray-500">
+                    <div className="mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-8 text-center text-gray-500 dark:text-gray-400">
                         <p>No images available</p>
                     </div>
                 )}
 
                 <div className="mt-4">
-                    <h2 className="text-lg font-semibold">Descripción</h2>
-                    <p className="mt-2 text-gray-600">{profile.description}</p>
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Descripción</h2>
+                    <p className="mt-2 text-gray-600 dark:text-gray-300">{profile.description}</p>
                 </div>
 
                 {/* Rest of your profile information */}
                 <div className="mt-4">
-                    <h2 className="text-lg font-semibold">Ubicación</h2>
-                    <p className="mt-2 text-gray-600">{profile.address}</p>
-                    <div className="mt-1 text-sm text-gray-500">
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Ubicación</h2>
+                    <p className="mt-2 text-gray-600 dark:text-gray-300">{profile.address}</p>
+                    <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         Lat: {profile.latitude}, Long: {profile.longitude}
                     </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-4">
                     <div>
-                        <h2 className="text-lg font-semibold">Métodos de Pago</h2>
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Métodos de Pago</h2>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {profile.paymentMethods.map(({paymentMethod}) => (
                                 <span
                                     key={paymentMethod.id}
-                                    className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
+                                    className="px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 rounded text-sm"
                                 >
                                     {paymentMethod.name}
                                 </span>
                             ))}
                             {profile.paymentMethods.length === 0 && (
-                                <span className="text-gray-500">No hay métodos de pago registrados</span>
+                                <span className="text-gray-500 dark:text-gray-400">No hay métodos de pago registrados</span>
                             )}
                         </div>
                     </div>
 
                     <div>
-                        <h2 className="text-lg font-semibold">Idiomas</h2>
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Idiomas</h2>
                         <div className="mt-2 flex flex-wrap gap-2">
                             {profile.languages.map(({language}) => (
                                 <span
                                     key={language.id}
-                                    className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm"
+                                    className="px-2 py-1 bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-100 rounded text-sm"
                                 >
                                     {language.name}
                                 </span>
                             ))}
                             {profile.languages.length === 0 && (
-                                <span className="text-gray-500">No hay idiomas registrados</span>
+                                <span className="text-gray-500 dark:text-gray-400">No hay idiomas registrados</span>
                             )}
                         </div>
                     </div>
@@ -163,7 +163,7 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
                 <div className="mt-6 flex justify-end">
                     <Link
                         href="/profile/edit"
-                        className="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+                        className="px-4 py-2 text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
                     >
                         Editar Perfil
                     </Link>
