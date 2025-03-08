@@ -9,12 +9,16 @@ export default async function Home() {
         DataService.getProfiles() // No filters for initial load
     ]);
 
+    // Get Google Maps API key from environment variable
+    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+
     return (
         <div className="container mx-auto py-8 px-4">
             <HomeClient
                 initialProfiles={initialProfiles}
                 languages={languages}
                 paymentMethods={paymentMethods}
+                googleMapsApiKey={googleMapsApiKey}
             />
         </div>
     );
