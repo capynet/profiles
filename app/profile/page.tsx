@@ -22,5 +22,9 @@ export default async function ProfilePage() {
 
     console.log('Server: Found profile?', !!profile);
 
-    return <ProfilePageClient profile={profile} />;
+    return (
+        <div className="container mx-auto py-8 px-4">
+            <ProfilePageClient profile={profile} />
+        </div>
+    );
 }
