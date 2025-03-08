@@ -32,10 +32,7 @@ export default function ProfileCard({
                                         languages,
                                         paymentMethods,
                                     }: ProfileCardProps) {
-    // Get thumbnail or medium image for display
-    const imageUrl = images.length > 0
-        ? images[0].thumbnailUrl || images[0].mediumUrl
-        : '/api/placeholder/352/576';
+    const imageUrl = images.length > 0 ? images[0].mediumUrl : '/api/placeholder/352/576';
 
     // Truncate description
     const truncatedDescription = description.length > 120
@@ -78,7 +75,7 @@ export default function ProfileCard({
                     <div className="mb-3">
                         <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Idiomas</h4>
                         <div className="flex flex-wrap gap-1">
-                            {languages.map(({ language }) => (
+                            {languages.map(({language}) => (
                                 <span
                                     key={language.id}
                                     className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs"
@@ -97,7 +94,7 @@ export default function ProfileCard({
                     <div className="mb-3">
                         <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Métodos de Pago</h4>
                         <div className="flex flex-wrap gap-1">
-                            {paymentMethods.map(({ paymentMethod }) => (
+                            {paymentMethods.map(({paymentMethod}) => (
                                 <span
                                     key={paymentMethod.id}
                                     className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs"
