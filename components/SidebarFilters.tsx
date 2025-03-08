@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import RangeSlider from './RangeSlider';
 
 interface Language {
     id: number;
@@ -36,6 +37,12 @@ export default function SidebarFilters({
     const [maxAge, setMaxAge] = useState<string>('');
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
+
+    // Price and age limits for sliders
+    const priceMin = 0;
+    const priceMax = 500;
+    const ageMin = 18;
+    const ageMax = 100;
 
     // Initialize filters from URL params
     useEffect(() => {
@@ -145,8 +152,8 @@ export default function SidebarFilters({
                         Filtros
                         {activeFiltersCount > 0 && (
                             <span className="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">
-                {activeFiltersCount}
-              </span>
+                                {activeFiltersCount}
+                            </span>
                         )}
                     </h2>
                     <button
@@ -161,63 +168,29 @@ export default function SidebarFilters({
                 </div>
 
                 <div className="p-4 space-y-6">
-                    {/* Price Range */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Precio (€)</h3>
-                        <div className="flex space-x-2">
-                            <div className="w-1/2">
-                                <label htmlFor="minPrice" className="sr-only">Precio mínimo</label>
-                                <input
-                                    type="number"
-                                    id="minPrice"
-                                    placeholder="Min"
-                                    value={minPrice}
-                                    onChange={(e) => setMinPrice(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white text-sm"
-                                />
-                            </div>
-                            <div className="w-1/2">
-                                <label htmlFor="maxPrice" className="sr-only">Precio máximo</label>
-                                <input
-                                    type="number"
-                                    id="maxPrice"
-                                    placeholder="Max"
-                                    value={maxPrice}
-                                    onChange={(e) => setMaxPrice(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white text-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    {/* Price Range Slider */}
+                    <RangeSlider
+                        min={priceMin}
+                        max={priceMax}
+                        step={5}
+                        minValue={minPrice}
+                        maxValue={maxPrice}
+                        onMinChange={setMinPrice}
+                        onMaxChange={setMaxPrice}
+                        label="Precio (€)"
+                    />
 
-                    {/* Age Range */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Edad</h3>
-                        <div className="flex space-x-2">
-                            <div className="w-1/2">
-                                <label htmlFor="minAge" className="sr-only">Edad mínima</label>
-                                <input
-                                    type="number"
-                                    id="minAge"
-                                    placeholder="Min"
-                                    value={minAge}
-                                    onChange={(e) => setMinAge(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white text-sm"
-                                />
-                            </div>
-                            <div className="w-1/2">
-                                <label htmlFor="maxAge" className="sr-only">Edad máxima</label>
-                                <input
-                                    type="number"
-                                    id="maxAge"
-                                    placeholder="Max"
-                                    value={maxAge}
-                                    onChange={(e) => setMaxAge(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white text-sm"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    {/* Age Range Slider */}
+                    <RangeSlider
+                        min={ageMin}
+                        max={ageMax}
+                        step={1}
+                        minValue={minAge}
+                        maxValue={maxAge}
+                        onMinChange={setMinAge}
+                        onMaxChange={setMaxAge}
+                        label="Edad"
+                    />
 
                     {/* Languages */}
                     <div>
@@ -291,33 +264,33 @@ export default function SidebarFilters({
                         <div className="flex flex-wrap gap-2">
                             {minPrice && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                  Min: {minPrice}€
-                </span>
+                                    Min: {minPrice}€
+                                </span>
                             )}
                             {maxPrice && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                  Max: {maxPrice}€
-                </span>
+                                    Max: {maxPrice}€
+                                </span>
                             )}
                             {minAge && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                  Edad min: {minAge}
-                </span>
+                                    Edad min: {minAge}
+                                </span>
                             )}
                             {maxAge && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                  Edad max: {maxAge}
-                </span>
+                                    Edad max: {maxAge}
+                                </span>
                             )}
                             {selectedLanguages.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs">
-                  {selectedLanguages.length} idioma(s)
-                </span>
+                                    {selectedLanguages.length} idioma(s)
+                                </span>
                             )}
                             {selectedPaymentMethods.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">
-                  {selectedPaymentMethods.length} método(s) de pago
-                </span>
+                                    {selectedPaymentMethods.length} método(s) de pago
+                                </span>
                             )}
                         </div>
                     </div>
