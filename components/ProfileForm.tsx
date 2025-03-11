@@ -1,10 +1,20 @@
 'use client';
 
-import {useEffect, useState} from 'react';
-import {useRouter} from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {Profile, ProfileImage} from '@prisma/client';
-import {createProfile, updateProfile} from '@/app/profile/actions';
+import { Profile, ProfileImage } from '@prisma/client';
+import { createProfile, updateProfile } from '@/app/profile/actions';
+import ImageCropModal from './ImageCropModal';
+import SortableImageGallery from './SortableImageGallery';
+
+// Define interfaces outside the component
+interface ImageToProcess {
+    id: string;
+    file: File;
+    url: string;
+    processed: boolean;
+}
 
 type ProfileWithRelations = Profile & {
     paymentMethods: { paymentMethodId: number }[];
@@ -17,22 +27,32 @@ type ProfileFormProps = {
     isEditing?: boolean;
 };
 
-export default function ProfileForm({profile, isEditing = false}: ProfileFormProps) {
+export default function ProfileForm({ profile, isEditing = false }: ProfileFormProps) {
+    const router = useRouter();
+
+    // Form data states
     const [languages, setLanguages] = useState<{ id: number; name: string }[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string }[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string[]>>({});
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    // Image state
+    // UI control states
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string[]>>({});
+    const [cropModalOpen, setCropModalOpen] = useState(false);
+
+    // Image states
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [previewUrls, setPreviewUrls] = useState<string[]>([]);
     const [existingImages, setExistingImages] = useState<ProfileImage[]>([]);
+    const [imagesToProcess, setImagesToProcess] = useState<ImageToProcess[]>([]);
 
-    const router = useRouter();
+    // Image ordering states
+    const [newImageItems, setNewImageItems] = useState<{id: string, url: string}[]>([]);
+    const [existingImageItems, setExistingImageItems] = useState<{id: number, url: string}[]>([]);
 
+    // Initialize form data on load
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
@@ -68,6 +88,33 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
         fetchData();
     }, [profile]);
 
+    // Initialize existingImageItems from existingImages
+    useEffect(() => {
+        if (existingImages.length > 0) {
+            const items = existingImages.map(img => ({
+                id: img.id,
+                url: img.mediumUrl
+            }));
+            setExistingImageItems(items);
+        } else {
+            setExistingImageItems([]);
+        }
+    }, [existingImages]);
+
+    // Initialize newImageItems from previewUrls
+    useEffect(() => {
+        if (previewUrls.length > 0) {
+            const items = previewUrls.map((url, index) => ({
+                id: `new-${index}`,
+                url: url
+            }));
+            setNewImageItems(items);
+        } else {
+            setNewImageItems([]);
+        }
+    }, [previewUrls]);
+
+    // Form input handlers
     const handleLanguageChange = (languageId: number) => {
         setSelectedLanguages(prev =>
             prev.includes(languageId)
@@ -84,41 +131,155 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
         );
     };
 
-    // Handle file selection
+    // Image handlers
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
 
         const newFiles = Array.from(e.target.files);
-        setSelectedFiles(prev => [...prev, ...newFiles]);
 
-        // Create preview URLs for the selected files
-        newFiles.forEach(file => {
-            const fileUrl = URL.createObjectURL(file);
-            setPreviewUrls(prev => [...prev, fileUrl]);
-        });
+        // Create image processing objects with unique IDs
+        const newImagesToProcess = newFiles.map(file => ({
+            id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            file,
+            url: URL.createObjectURL(file),
+            processed: false
+        }));
+
+        // Replace the list of images to process with only the new images
+        // This ensures only new images appear in the crop modal
+        // while preserving previously cropped images in selectedFiles and previewUrls
+        setImagesToProcess(newImagesToProcess);
+
+        // Open the crop modal
+        setCropModalOpen(true);
     };
 
-    // Remove a selected file
-    const removeSelectedFile = (index: number) => {
+    // Handle crop completion for a specific image
+    const handleCropComplete = useCallback((croppedBlob: Blob, imageId: string) => {
+        // Create a File from the cropped Blob
+        const croppedFile = new File(
+            [croppedBlob],
+            `cropped-image-${Date.now()}.jpg`,
+            { type: 'image/jpeg' }
+        );
+
+        // Add the cropped file to selectedFiles (maintaining previously selected files)
+        setSelectedFiles(prev => [...prev, croppedFile]);
+
+        // Create preview URL for the cropped image
+        const previewUrl = URL.createObjectURL(croppedBlob);
+        setPreviewUrls(prev => [...prev, previewUrl]);
+
+        // Mark this image as processed
+        setImagesToProcess(prev =>
+            prev.map(img =>
+                img.id === imageId
+                    ? { ...img, processed: true }
+                    : img
+            )
+        );
+    }, []);
+
+    // Handle closing the crop modal
+    const handleCloseCropModal = useCallback(() => {
+        // Check if there are any unprocessed images
+        const hasUnprocessedImages = imagesToProcess.some(img => !img.processed);
+
+        if (hasUnprocessedImages) {
+            // Confirm before closing if there are unprocessed images
+            if (window.confirm('You have unprocessed images. Are you sure you want to close?')) {
+                // Close modal and clean up
+                cleanupAndCloseCropModal();
+            }
+        } else {
+            // If all images are processed, just close
+            cleanupAndCloseCropModal();
+        }
+
+        // We want to keep processed images in the form,
+        // so we only clear the imagesToProcess list for the next batch
+        setImagesToProcess([]);
+    }, [imagesToProcess]);
+
+    // Helper function to clean up URLs and close modal
+    const cleanupAndCloseCropModal = () => {
+        // Clean up object URLs only for the images in the modal (not affecting preview URLs)
+        imagesToProcess.forEach(img => {
+            // Only revoke URLs for images that weren't processed, as processed images
+            // already have their URLs stored in the previewUrls array
+            if (!img.processed) {
+                URL.revokeObjectURL(img.url);
+            }
+        });
+
+        // Close modal
+        setCropModalOpen(false);
+    };
+
+    // Image removal handlers
+    const removeNewImage = (id: string) => {
+        const indexToRemove = newImageItems.findIndex(item => item.id === id);
+        if (indexToRemove === -1) return;
+
+        // Find the corresponding URL to revoke
+        const urlToRevoke = previewUrls[indexToRemove];
+
+        // Update arrays
         setSelectedFiles(prev => {
-            const updatedFiles = [...prev];
-            updatedFiles.splice(index, 1);
-            return updatedFiles;
+            const newFiles = [...prev];
+            newFiles.splice(indexToRemove, 1);
+            return newFiles;
         });
 
         setPreviewUrls(prev => {
-            const updatedUrls = [...prev];
-            URL.revokeObjectURL(updatedUrls[index]); // Free up memory
-            updatedUrls.splice(index, 1);
-            return updatedUrls;
+            const newUrls = [...prev];
+            URL.revokeObjectURL(urlToRevoke); // Free up memory
+            newUrls.splice(indexToRemove, 1);
+            return newUrls;
         });
     };
 
-    // Remove an existing image
-    const removeExistingImage = (imageId: number) => {
-        setExistingImages(prev => prev.filter(img => img.id !== imageId));
+    const removeExistingImage = (id: number) => {
+        setExistingImages(prev => prev.filter(img => img.id !== id));
     };
 
+    // Image reordering handlers
+    const handleNewImagesReorder = (reorderedImages: {id: string, url: string}[]) => {
+        // Create new arrays based on the reordered IDs
+        const newPreviewUrls: string[] = [];
+        const newSelectedFiles: File[] = [];
+
+        reorderedImages.forEach(item => {
+            const originalIndex = parseInt(item.id.replace('new-', ''));
+            if (!isNaN(originalIndex) && originalIndex >= 0 && originalIndex < previewUrls.length) {
+                newPreviewUrls.push(previewUrls[originalIndex]);
+                newSelectedFiles.push(selectedFiles[originalIndex]);
+            }
+        });
+
+        // Update the state
+        setPreviewUrls(newPreviewUrls);
+        setSelectedFiles(newSelectedFiles);
+        setNewImageItems(reorderedImages);
+    };
+
+    const handleExistingImagesReorder = (reorderedImages: {id: number, url: string}[]) => {
+        // Create a new array of ProfileImage objects in the new order
+        const newExistingImages: ProfileImage[] = [];
+
+        reorderedImages.forEach(item => {
+            const originalImage = existingImages.find(img => img.id === item.id);
+            if (originalImage) {
+                newExistingImages.push(originalImage);
+            }
+        });
+
+        // Update the state
+        setExistingImages(newExistingImages);
+        setExistingImageItems(reorderedImages);
+    };
+
+    // Form submission handler
     const handleSubmit = async (formData: FormData) => {
         setIsSubmitting(true);
         setErrors({});
@@ -143,7 +304,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
             updatedFormData.append('paymentMethods', paymentMethodId.toString());
         });
 
-        // Add image files
+        // Add cropped image files
         selectedFiles.forEach(file => {
             updatedFormData.append('images', file);
         });
@@ -176,9 +337,45 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
         }
     };
 
+    // Helper function to fill test data
+    const fillTestData = () => {
+        const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+        const priceInput = document.querySelector('input[name="price"]') as HTMLInputElement;
+        const ageInput = document.querySelector('input[name="age"]') as HTMLInputElement;
+        const descriptionInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+        const latitudeInput = document.querySelector('input[name="latitude"]') as HTMLInputElement;
+        const longitudeInput = document.querySelector('input[name="longitude"]') as HTMLInputElement;
+        const addressInput = document.querySelector('input[name="address"]') as HTMLInputElement;
+
+        if (nameInput) nameInput.value = 'Test User';
+        if (priceInput) priceInput.value = '50.00';
+        if (ageInput) ageInput.value = '30';
+        if (descriptionInput) descriptionInput.value = 'This is a test profile description with some sample text for testing purposes.';
+        if (latitudeInput) latitudeInput.value = '40.4168';
+        if (longitudeInput) longitudeInput.value = '-3.7038';
+        if (addressInput) addressInput.value = '123 Test Street, 28001, Madrid';
+
+        // Select random payment methods and languages
+        if (paymentMethods.length > 0) {
+            const randomPaymentMethods = paymentMethods
+                .slice(0, Math.min(2, paymentMethods.length))
+                .map(pm => pm.id);
+            setSelectedPaymentMethods(randomPaymentMethods);
+        }
+
+        if (languages.length > 0) {
+            const randomLanguages = languages
+                .slice(0, Math.min(3, languages.length))
+                .map(lang => lang.id);
+            setSelectedLanguages(randomLanguages);
+        }
+    };
+
+    // Define CSS classes
     const inputClassName = "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white";
     const checkboxClassName = "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded";
 
+    // Render loading state
     if (isLoading) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden p-6">
@@ -195,52 +392,23 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
         );
     }
 
+    // Main form render
     return (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
             <form action={handleSubmit} className="p-6">
-                <div className="md:col-span-2 mt-4">
+                {/* Test data button */}
+                <div className="md:col-span-2 mt-4 mb-6">
                     <button
                         type="button"
-                        onClick={() => {
-                            // Rellenar campos básicos
-                            const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-                            const priceInput = document.querySelector('input[name="price"]') as HTMLInputElement;
-                            const ageInput = document.querySelector('input[name="age"]') as HTMLInputElement;
-                            const descriptionInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
-                            const latitudeInput = document.querySelector('input[name="latitude"]') as HTMLInputElement;
-                            const longitudeInput = document.querySelector('input[name="longitude"]') as HTMLInputElement;
-                            const addressInput = document.querySelector('input[name="address"]') as HTMLInputElement;
-
-                            if (nameInput) nameInput.value = 'Test User';
-                            if (priceInput) priceInput.value = '50.00';
-                            if (ageInput) ageInput.value = '30';
-                            if (descriptionInput) descriptionInput.value = 'This is a test profile description with some sample text for testing purposes.';
-                            if (latitudeInput) latitudeInput.value = '40.4168';
-                            if (longitudeInput) longitudeInput.value = '-3.7038';
-                            if (addressInput) addressInput.value = '123 Test Street, 28001, Madrid';
-
-                            // Seleccionar algunos Payment methods y lenguajes aleatoriamente
-                            if (paymentMethods.length > 0) {
-                                const randomPaymentMethods = paymentMethods
-                                    .slice(0, Math.min(2, paymentMethods.length))
-                                    .map(pm => pm.id);
-                                setSelectedPaymentMethods(randomPaymentMethods);
-                            }
-
-                            if (languages.length > 0) {
-                                const randomLanguages = languages
-                                    .slice(0, Math.min(3, languages.length))
-                                    .map(lang => lang.id);
-                                setSelectedLanguages(randomLanguages);
-                            }
-                        }}
-                        className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800 mb-6"
+                        onClick={fillTestData}
+                        className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800"
                     >
                         Fill Test Data
                     </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Basic information fields */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                         <input
@@ -284,88 +452,115 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                         {errors.age && <p className="mt-1 text-sm text-red-600 font-medium">{errors.age[0]}</p>}
                     </div>
 
-                    {/* Multiple image upload field */}
+                    {/* Image upload field */}
                     <div className="md:col-span-2 space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Profile Images</label>
-                        <input
-                            type="file"
-                            multiple
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className={inputClassName}
-                        />
+                        <div
+                            className="relative"
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const dropzone = e.currentTarget.querySelector('.dropzone');
+                                if (dropzone) {
+                                    dropzone.classList.add('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-indigo-300', 'dark:border-indigo-700');
+                                    dropzone.classList.add('scale-[1.02]');
+                                }
+                            }}
+                            onDragLeave={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const dropzone = e.currentTarget.querySelector('.dropzone');
+                                if (dropzone) {
+                                    dropzone.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-indigo-300', 'dark:border-indigo-700');
+                                    dropzone.classList.remove('scale-[1.02]');
+                                }
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const dropzone = e.currentTarget.querySelector('.dropzone');
+                                if (dropzone) {
+                                    dropzone.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-indigo-300', 'dark:border-indigo-700');
+                                    dropzone.classList.remove('scale-[1.02]');
+                                }
+
+                                // Process dropped files
+                                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                    const files = Array.from(e.dataTransfer.files);
+                                    // Filter for only image files
+                                    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+                                    if (imageFiles.length > 0) {
+                                        // Create image processing objects with unique IDs
+                                        const newImagesToProcess = imageFiles.map(file => ({
+                                            id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                            file,
+                                            url: URL.createObjectURL(file),
+                                            processed: false
+                                        }));
+
+                                        // Add to the modal for processing
+                                        setImagesToProcess(newImagesToProcess);
+                                        setCropModalOpen(true);
+                                    }
+                                }
+                            }}
+                        >
+                            <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleFileChange}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+                                aria-label="Choose profile images"
+                            />
+                            <div className="dropzone w-full px-4 py-8 flex flex-col items-center justify-center space-y-3 text-sm font-medium rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform active:scale-[0.98] active:bg-indigo-50 dark:active:bg-indigo-900/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <div className="text-center">
+                                    <span className="font-medium text-indigo-600 dark:text-indigo-400">Click to upload</span> or drag and drop
+                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    PNG, JPG, GIF up to 10MB
+                                </p>
+                            </div>
+                        </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Images will be converted to WebP, resized to 352x576px (9:16 ratio), and stored in Google Cloud Storage.
+                            Images will be cropped to a 9:16 ratio, converted to WebP, and stored in Google Cloud Storage.
                         </p>
                         {errors.images && <p className="mt-1 text-sm text-red-600 font-medium">{errors.images[0]}</p>}
                     </div>
 
-                    {/* Preview of selected files */}
-                    {previewUrls.length > 0 && (
+                    {/* New images gallery */}
+                    {newImageItems.length > 0 && (
                         <div className="md:col-span-2 space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Images Preview</label>
-                            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-                                {previewUrls.map((url, index) => (
-                                    <div key={`new-${index}`} className="relative aspect-[9/16] w-28 rounded-md overflow-hidden">
-                                        <div className="h-full w-full relative">
-                                            <Image
-                                                src={url}
-                                                alt={`New image ${index + 1}`}
-                                                fill
-                                                sizes="(max-width: 768px) 100vw, 112px"
-                                                className="object-cover"
-                                                priority
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeSelectedFile(index)}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10"
-                                            aria-label="Remove image"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                New Images Preview <span className="text-xs text-gray-500 dark:text-gray-400">(drag to reorder, first image is main)</span>
+                            </label>
+                            <SortableImageGallery
+                                images={newImageItems}
+                                onReorder={handleNewImagesReorder}
+                                onRemove={removeNewImage}
+                            />
                         </div>
                     )}
 
-                    {/* Display existing images */}
-                    {existingImages.length > 0 && (
+                    {/* Existing images gallery */}
+                    {existingImageItems.length > 0 && (
                         <div className="md:col-span-2 space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Images</label>
-                            <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-                                {existingImages.map((image) => (
-                                    <div key={`existing-${image.id}`} className="relative aspect-[9/16] w-28 rounded-md overflow-hidden">
-                                        <div className="h-full w-full relative">
-                                            <Image
-                                                src={image.mediumUrl}
-                                                alt={`Profile image ${image.id}`}
-                                                fill
-                                                sizes="(max-width: 768px) 100vw, 112px"
-                                                className="object-cover"
-                                                priority
-                                            />
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeExistingImage(image.id)}
-                                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 z-10"
-                                            aria-label="Remove image"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Current Images <span className="text-xs text-gray-500 dark:text-gray-400">(drag to reorder, first image is main)</span>
+                            </label>
+                            <SortableImageGallery
+                                images={existingImageItems}
+                                onReorder={handleExistingImagesReorder}
+                                onRemove={removeExistingImage}
+                            />
                         </div>
                     )}
 
+                    {/* Description field */}
                     <div className="md:col-span-2 space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                         <textarea
@@ -378,6 +573,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                         {errors.description && <p className="mt-1 text-sm text-red-600 font-medium">{errors.description[0]}</p>}
                     </div>
 
+                    {/* Location section */}
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
@@ -424,6 +620,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                         {errors.address && <p className="mt-1 text-sm text-red-600 font-medium">{errors.address[0]}</p>}
                     </div>
 
+                    {/* Additional Info section */}
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
@@ -432,6 +629,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                         </div>
                     </div>
 
+                    {/* Payment Methods */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Methods</label>
                         <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
@@ -457,6 +655,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                         {errors.paymentMethods && <p className="mt-1 text-sm text-red-600 font-medium">{errors.paymentMethods[0]}</p>}
                     </div>
 
+                    {/* Languages */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Languages</label>
                         <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
@@ -483,6 +682,7 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     </div>
                 </div>
 
+                {/* Form actions */}
                 <div className="flex justify-end space-x-4 mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
                     <button
                         type="button"
@@ -498,17 +698,27 @@ export default function ProfileForm({profile, isEditing = false}: ProfileFormPro
                     >
                         {isSubmitting ? (
                             <span className="flex items-center">
-                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Saving...
-                            </span>
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </span>
                         ) : (
                             isEditing ? 'Update' : 'Create'
                         )}
                     </button>
                 </div>
+
+                {/* Crop Modal */}
+                {cropModalOpen && imagesToProcess.length > 0 && (
+                    <ImageCropModal
+                        imagesToProcess={imagesToProcess}
+                        onCropComplete={handleCropComplete}
+                        onClose={handleCloseCropModal}
+                        aspectRatio={9/16}
+                    />
+                )}
             </form>
         </div>
     );
