@@ -7,6 +7,7 @@ interface ImageItem {
     id: string | number;
     url: string;
     isPrimary?: boolean;
+    isNew?: boolean;
 }
 
 interface SortableImageGalleryProps {
@@ -117,6 +118,13 @@ export default function SortableImageGallery({
                     {image.isPrimary && (
                         <div className="absolute top-1 left-1 bg-indigo-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-sm">
                             Main
+                        </div>
+                    )}
+
+                    {/* New image badge */}
+                    {image.isNew && (
+                        <div className="absolute top-1 left-1 bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-sm" style={{ left: image.isPrimary ? '3.5rem' : '1rem' }}>
+                            New
                         </div>
                     )}
 

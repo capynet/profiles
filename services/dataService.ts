@@ -37,7 +37,11 @@ export const DataService = {
                     languages: {include: {language: true}},
                     paymentMethods: {include: {paymentMethod: true}},
                     user: {select: {name: true, email: true}},
-                    images: true
+                    images: {
+                        orderBy: {
+                            position: 'asc'
+                        }
+                    }
                 }
             });
         } catch (error) {
@@ -45,7 +49,6 @@ export const DataService = {
             return [];
         }
     },
-
 
     async createProfile(data: Prisma.ProfileCreateInput & { processedImages?: ProcessedImage[] }) {
         try {
@@ -100,14 +103,16 @@ export const DataService = {
                 }
             }
 
-            // Handle images if they exist
+            // Handle images if they exist - with position for order
             if (processedImages && processedImages.length > 0) {
                 console.log('Adding images:', processedImages.length);
 
-                for (const img of processedImages) {
+                for (let position = 0; position < processedImages.length; position++) {
+                    const img = processedImages[position];
                     await prisma.profileImage.create({
                         data: {
                             profileId: profile.id,
+                            position,
                             // Medium quality (default)
                             mediumUrl: img.mediumUrl,
                             mediumCdnUrl: img.mediumCdnUrl,
@@ -131,7 +136,11 @@ export const DataService = {
                 include: {
                     languages: {include: {language: true}},
                     paymentMethods: {include: {paymentMethod: true}},
-                    images: true
+                    images: {
+                        orderBy: {
+                            position: 'asc'
+                        }
+                    }
                 }
             });
         } catch (error) {
@@ -185,7 +194,7 @@ export const DataService = {
                     await ImageService.deleteImage(img.mediumStorageKey);
                 }
 
-                // Delete image records from database
+                // Delete image records from database for those being deleted
                 if (imagesToDelete.length > 0) {
                     await tx.profileImage.deleteMany({
                         where: {
@@ -195,33 +204,13 @@ export const DataService = {
                     });
                 }
 
-                // Add new images if available
-                if (processedImages && processedImages.length > 0) {
-                    await tx.profileImage.createMany({
-                        data: processedImages.map(img => ({
-                            profileId,
-                            // Medium quality (default)
-                            mediumUrl: img.mediumUrl,
-                            mediumCdnUrl: img.mediumCdnUrl,
-                            mediumStorageKey: img.mediumStorageKey,
-                            // Thumbnail version
-                            thumbnailUrl: img.thumbnailUrl,
-                            thumbnailCdnUrl: img.thumbnailCdnUrl,
-                            thumbnailStorageKey: img.thumbnailStorageKey,
-                            // High quality version
-                            highQualityUrl: img.highQualityUrl,
-                            highQualityCdnUrl: img.highQualityCdnUrl,
-                            highQualityStorageKey: img.highQualityStorageKey
-                        }))
-                    });
-                }
-
                 // First, update the basic profile data
                 const updatedProfile = await tx.profile.update({
                     where: {id: profileId},
                     data: restProfileData as Prisma.ProfileUpdateInput
                 });
 
+                // Handle language relationships
                 // Delete existing language relationships
                 await tx.profileLanguage.deleteMany({
                     where: {profileId}
@@ -237,6 +226,7 @@ export const DataService = {
                     });
                 }
 
+                // Handle payment method relationships
                 // Delete existing payment method relationships
                 await tx.profilePaymentMethod.deleteMany({
                     where: {profileId}
@@ -252,13 +242,84 @@ export const DataService = {
                     });
                 }
 
+                // CAMBIOS PARA MANTENER EL ORDEN DE LAS IMÁGENES
+
+                // Eliminar las imágenes existentes para recrearlas con orden
+                if (imagesToKeep && imagesToKeep.length > 0) {
+                    await tx.profileImage.deleteMany({
+                        where: {
+                            profileId,
+                            mediumStorageKey: {
+                                in: imagesToKeep
+                            }
+                        }
+                    });
+
+                    // Recrear las imágenes existentes con el orden correcto
+                    for (let position = 0; position < imagesToKeep.length; position++) {
+                        const storageKey = imagesToKeep[position];
+                        const existingImage = existingImages.find(img => img.mediumStorageKey === storageKey);
+
+                        if (existingImage) {
+                            await tx.profileImage.create({
+                                data: {
+                                    profileId,
+                                    position, // Usar la posición basada en el orden del array
+                                    // Medium quality (default)
+                                    mediumUrl: existingImage.mediumUrl,
+                                    mediumCdnUrl: existingImage.mediumCdnUrl,
+                                    mediumStorageKey: existingImage.mediumStorageKey,
+                                    // Thumbnail version
+                                    thumbnailUrl: existingImage.thumbnailUrl,
+                                    thumbnailCdnUrl: existingImage.thumbnailCdnUrl,
+                                    thumbnailStorageKey: existingImage.thumbnailStorageKey,
+                                    // High quality version
+                                    highQualityUrl: existingImage.highQualityUrl,
+                                    highQualityCdnUrl: existingImage.highQualityCdnUrl,
+                                    highQualityStorageKey: existingImage.highQualityStorageKey
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // Agregar nuevas imágenes continuando el orden
+                if (processedImages && processedImages.length > 0) {
+                    let nextPosition = (imagesToKeep?.length || 0);
+
+                    for (const img of processedImages) {
+                        await tx.profileImage.create({
+                            data: {
+                                profileId,
+                                position: nextPosition++, // Incrementar la posición para cada imagen
+                                // Medium quality (default)
+                                mediumUrl: img.mediumUrl,
+                                mediumCdnUrl: img.mediumCdnUrl,
+                                mediumStorageKey: img.mediumStorageKey,
+                                // Thumbnail version
+                                thumbnailUrl: img.thumbnailUrl,
+                                thumbnailCdnUrl: img.thumbnailCdnUrl,
+                                thumbnailStorageKey: img.thumbnailStorageKey,
+                                // High quality version
+                                highQualityUrl: img.highQualityUrl,
+                                highQualityCdnUrl: img.highQualityCdnUrl,
+                                highQualityStorageKey: img.highQualityStorageKey
+                            }
+                        });
+                    }
+                }
+
                 // Return the updated profile with all related data
                 return tx.profile.findUnique({
                     where: {id: profileId},
                     include: {
                         languages: {include: {language: true}},
                         paymentMethods: {include: {paymentMethod: true}},
-                        images: true
+                        images: {
+                            orderBy: {
+                                position: 'asc'
+                            }
+                        }
                     }
                 });
             });

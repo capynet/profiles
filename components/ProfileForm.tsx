@@ -52,6 +52,9 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
     const [newImageItems, setNewImageItems] = useState<{id: string, url: string}[]>([]);
     const [existingImageItems, setExistingImageItems] = useState<{id: number, url: string}[]>([]);
 
+    // Combined image list state for unified gallery
+    const [unifiedImageItems, setUnifiedImageItems] = useState<{id: string | number, url: string, isPrimary?: boolean, isNew?: boolean}[]>([]);
+
     // Initialize form data on load
     useEffect(() => {
         const fetchData = async () => {
@@ -113,6 +116,76 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
             setNewImageItems([]);
         }
     }, [previewUrls]);
+
+    // Create a unified list whenever either list changes
+    useEffect(() => {
+        // Si ya tenemos una lista unificada, mantener el orden existente pero actualizar los datos
+        if (unifiedImageItems.length > 0) {
+            // Create maps for quick lookup
+            const existingMap = new Map(existingImageItems.map(item => [item.id, item]));
+            const newMap = new Map(newImageItems.map(item => [item.id, item]));
+
+            // First, try to update existing items while maintaining order
+            const updatedList = unifiedImageItems.map(item => {
+                if (item.isNew && typeof item.id === 'string') {
+                    // Check if this new image still exists
+                    if (newMap.has(item.id)) {
+                        const updatedItem = newMap.get(item.id);
+                        return { ...item, url: updatedItem?.url || item.url };
+                    }
+                    return null; // This item was removed
+                } else if (!item.isNew && typeof item.id === 'number') {
+                    // Check if this existing image still exists
+                    if (existingMap.has(item.id)) {
+                        const updatedItem = existingMap.get(item.id);
+                        return { ...item, url: updatedItem?.url || item.url };
+                    }
+                    return null; // This item was removed
+                }
+                return null;
+            }).filter(Boolean) as typeof unifiedImageItems;
+
+            // Add any new items that weren't in the original list
+            const existingIds = new Set(updatedList.filter(item => !item.isNew).map(item => item.id));
+            const newIds = new Set(updatedList.filter(item => item.isNew).map(item => item.id));
+
+            existingImageItems.forEach(item => {
+                if (!existingIds.has(item.id)) {
+                    updatedList.push({ ...item, isNew: false });
+                }
+            });
+
+            newImageItems.forEach(item => {
+                if (!newIds.has(item.id)) {
+                    updatedList.push({ ...item, isNew: true });
+                }
+            });
+
+            // Ensure the primary image is correctly marked
+            if (updatedList.length > 0) {
+                updatedList.forEach((item, index) => {
+                    item.isPrimary = index === 0;
+                });
+            }
+
+            setUnifiedImageItems(updatedList);
+        } else {
+            // If we don't have a unified list yet, create one from scratch
+            const combinedList = [
+                ...existingImageItems.map(item => ({ ...item, isNew: false })),
+                ...newImageItems.map(item => ({ ...item, isNew: true }))
+            ];
+
+            // Mark the first image as primary
+            if (combinedList.length > 0) {
+                combinedList.forEach((item, index) => {
+                    item.isPrimary = index === 0;
+                });
+            }
+
+            setUnifiedImageItems(combinedList);
+        }
+    }, [existingImageItems, newImageItems]);
 
     // Form input handlers
     const handleLanguageChange = (languageId: number) => {
@@ -216,70 +289,95 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
         setCropModalOpen(false);
     };
 
-    // Image removal handlers
-    const removeNewImage = (id: string) => {
-        const indexToRemove = newImageItems.findIndex(item => item.id === id);
-        if (indexToRemove === -1) return;
+    // Unified image removal handler
+    const removeUnifiedImage = (id: string | number) => {
+        if (typeof id === 'string' && id.startsWith('new-')) {
+            // Remove a new image
+            const indexToRemove = parseInt(id.replace('new-', ''));
+            if (isNaN(indexToRemove) || indexToRemove < 0 || indexToRemove >= previewUrls.length) return;
 
-        // Find the corresponding URL to revoke
-        const urlToRevoke = previewUrls[indexToRemove];
+            // Find the corresponding URL to revoke
+            const urlToRevoke = previewUrls[indexToRemove];
 
-        // Update arrays
-        setSelectedFiles(prev => {
-            const newFiles = [...prev];
-            newFiles.splice(indexToRemove, 1);
-            return newFiles;
-        });
+            // Update arrays
+            setSelectedFiles(prev => {
+                const newFiles = [...prev];
+                newFiles.splice(indexToRemove, 1);
+                return newFiles;
+            });
 
-        setPreviewUrls(prev => {
-            const newUrls = [...prev];
-            URL.revokeObjectURL(urlToRevoke); // Free up memory
-            newUrls.splice(indexToRemove, 1);
-            return newUrls;
-        });
+            setPreviewUrls(prev => {
+                const newUrls = [...prev];
+                URL.revokeObjectURL(urlToRevoke); // Free up memory
+                newUrls.splice(indexToRemove, 1);
+                return newUrls;
+            });
+        } else if (typeof id === 'number') {
+            // Remove an existing image
+            setExistingImages(prev => prev.filter(img => img.id !== id));
+        }
+
+        // Also remove from unified list
+        setUnifiedImageItems(prev => prev.filter(item => item.id !== id));
     };
 
-    const removeExistingImage = (id: number) => {
-        setExistingImages(prev => prev.filter(img => img.id !== id));
-    };
+    // Unified image reordering handler that allows complete mixing of image types
+    const handleUnifiedImagesReorder = (reorderedImages: {id: string | number, url: string, isPrimary?: boolean, isNew?: boolean}[]) => {
+        // Create mappings to the original indices
+        const newImageIndexMap = new Map<string, number>();
 
-    // Image reordering handlers
-    const handleNewImagesReorder = (reorderedImages: {id: string, url: string}[]) => {
-        // Create new arrays based on the reordered IDs
-        const newPreviewUrls: string[] = [];
-        const newSelectedFiles: File[] = [];
+        // Build index maps for new images (we need to know original indices)
+        newImageItems.forEach((item, index) => {
+            newImageIndexMap.set(item.id as string, index);
+        });
 
+        // Create new empty arrays for the reordered data
+        const newSelectedFilesReordered: File[] = [];
+        const newPreviewUrlsReordered: string[] = [];
+        const newExistingImagesReordered: ProfileImage[] = [];
+
+        // Process each image in the reordered array to rebuild our data structures
         reorderedImages.forEach(item => {
-            const originalIndex = parseInt(item.id.replace('new-', ''));
-            if (!isNaN(originalIndex) && originalIndex >= 0 && originalIndex < previewUrls.length) {
-                newPreviewUrls.push(previewUrls[originalIndex]);
-                newSelectedFiles.push(selectedFiles[originalIndex]);
+            if (item.isNew && typeof item.id === 'string') {
+                // This is a new image
+                const originalIndex = newImageIndexMap.get(item.id);
+
+                if (originalIndex !== undefined && originalIndex >= 0 && originalIndex < selectedFiles.length) {
+                    // Add this file and preview URL to our new arrays
+                    newSelectedFilesReordered.push(selectedFiles[originalIndex]);
+                    newPreviewUrlsReordered.push(previewUrls[originalIndex]);
+                }
+            } else if (!item.isNew && typeof item.id === 'number') {
+                // This is an existing image
+                const originalImage = existingImages.find(img => img.id === item.id);
+                if (originalImage) {
+                    newExistingImagesReordered.push(originalImage);
+                }
             }
         });
 
-        // Update the state
-        setPreviewUrls(newPreviewUrls);
-        setSelectedFiles(newSelectedFiles);
-        setNewImageItems(reorderedImages);
+        // Now update all our state variables with the reordered data
+        setSelectedFiles(newSelectedFilesReordered);
+        setPreviewUrls(newPreviewUrlsReordered);
+        setExistingImages(newExistingImagesReordered);
+
+        // Also rebuild our items arrays to keep them in sync
+        const newImageItemsReordered = reorderedImages
+            .filter(item => item.isNew && typeof item.id === 'string')
+            .map(item => ({ id: item.id as string, url: item.url }));
+
+        const existingImageItemsReordered = reorderedImages
+            .filter(item => !item.isNew && typeof item.id === 'number')
+            .map(item => ({ id: item.id as number, url: item.url }));
+
+        setNewImageItems(newImageItemsReordered);
+        setExistingImageItems(existingImageItemsReordered);
+
+        // Update the unified list
+        setUnifiedImageItems(reorderedImages);
     };
 
-    const handleExistingImagesReorder = (reorderedImages: {id: number, url: string}[]) => {
-        // Create a new array of ProfileImage objects in the new order
-        const newExistingImages: ProfileImage[] = [];
-
-        reorderedImages.forEach(item => {
-            const originalImage = existingImages.find(img => img.id === item.id);
-            if (originalImage) {
-                newExistingImages.push(originalImage);
-            }
-        });
-
-        // Update the state
-        setExistingImages(newExistingImages);
-        setExistingImageItems(reorderedImages);
-    };
-
-    // Form submission handler
+    // Form submission handler that preserves image order
     const handleSubmit = async (formData: FormData) => {
         setIsSubmitting(true);
         setErrors({});
@@ -304,13 +402,37 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
             updatedFormData.append('paymentMethods', paymentMethodId.toString());
         });
 
-        // Add cropped image files
-        selectedFiles.forEach(file => {
-            updatedFormData.append('images', file);
+        // IMPORTANTE: Aquí está la clave - enviar las imágenes en el orden correcto
+        // Obtener imágenes en el orden de unifiedImageItems
+        const orderedExistingImages: ProfileImage[] = [];
+        const orderedSelectedFilesIndexes: number[] = [];
+
+        // Recorrer unifiedImageItems para mantener el orden correcto
+        unifiedImageItems.forEach(item => {
+            if (!item.isNew && typeof item.id === 'number') {
+                // Es una imagen existente
+                const image = existingImages.find(img => img.id === item.id);
+                if (image) {
+                    orderedExistingImages.push(image);
+                }
+            } else if (item.isNew && typeof item.id === 'string') {
+                // Es una imagen nueva, obtener su índice
+                const index = parseInt(item.id.replace('new-', ''));
+                if (!isNaN(index) && index >= 0 && index < selectedFiles.length) {
+                    orderedSelectedFilesIndexes.push(index);
+                }
+            }
         });
 
-        // Add existing images storage keys
-        existingImages.forEach(image => {
+        // Agregar imágenes nuevas en el orden correcto
+        orderedSelectedFilesIndexes.forEach(index => {
+            if (index < selectedFiles.length) {
+                updatedFormData.append('images', selectedFiles[index]);
+            }
+        });
+
+        // Agregar imágenes existentes en el orden correcto
+        orderedExistingImages.forEach(image => {
             updatedFormData.append('existingImages', image.mediumStorageKey);
         });
 
@@ -532,30 +654,16 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
                         {errors.images && <p className="mt-1 text-sm text-red-600 font-medium">{errors.images[0]}</p>}
                     </div>
 
-                    {/* New images gallery */}
-                    {newImageItems.length > 0 && (
+                    {/* Unified image gallery */}
+                    {unifiedImageItems.length > 0 && (
                         <div className="md:col-span-2 space-y-2">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                New Images Preview <span className="text-xs text-gray-500 dark:text-gray-400">(drag to reorder, first image is main)</span>
+                                Images <span className="text-xs text-gray-500 dark:text-gray-400">(drag to reorder, first image is main)</span>
                             </label>
                             <SortableImageGallery
-                                images={newImageItems}
-                                onReorder={handleNewImagesReorder}
-                                onRemove={removeNewImage}
-                            />
-                        </div>
-                    )}
-
-                    {/* Existing images gallery */}
-                    {existingImageItems.length > 0 && (
-                        <div className="md:col-span-2 space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Current Images <span className="text-xs text-gray-500 dark:text-gray-400">(drag to reorder, first image is main)</span>
-                            </label>
-                            <SortableImageGallery
-                                images={existingImageItems}
-                                onReorder={handleExistingImagesReorder}
-                                onRemove={removeExistingImage}
+                                images={unifiedImageItems}
+                                onReorder={handleUnifiedImagesReorder}
+                                onRemove={removeUnifiedImage}
                             />
                         </div>
                     )}

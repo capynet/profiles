@@ -10,6 +10,7 @@ generator client {
 model ProfileImage {
   id        Int @id @default(autoincrement())
   profileId Int
+  position  Int @default(0)
 
   // Medium quality version (default)
   mediumUrl        String
