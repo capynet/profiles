@@ -3,6 +3,11 @@ import {Prisma, ProfileImage} from "@prisma/client";
 import {prisma} from "@/prisma";
 import {ImageService, ProcessedImage} from "./imageService";
 
+// Enhanced interface for processed images with order information
+interface ProcessedImageWithOrder extends ProcessedImage {
+    order?: number;
+}
+
 export const DataService = {
 
     async getAllLanguages() {
@@ -150,12 +155,12 @@ export const DataService = {
     },
 
     async updateProfile(profileId: number, data: Prisma.ProfileUpdateInput & {
-        processedImages?: ProcessedImage[],
-        imagesToKeep?: string[]
+        processedImages?: ProcessedImageWithOrder[],
+        existingImagesOrder?: { key: string, order: number }[]
     }) {
         try {
             // Extract the custom fields (not part of Prisma type)
-            const {processedImages, imagesToKeep, ...profileData} = data;
+            const {processedImages, existingImagesOrder, ...profileData} = data;
 
             // Extract language and payment method IDs
             const languageIds = profileData.languages
@@ -183,26 +188,37 @@ export const DataService = {
                     throw new Error(`Profile with ID ${profileId} not found`);
                 }
 
-                // Handle images deletion
+                // Get existing images
                 const existingImages = (existingProfile.images || []) as ProfileImage[];
+
+                // Create a map for existing images by storage key for easy lookup
+                const existingImageMap = new Map<string, ProfileImage>();
+                existingImages.forEach(img => {
+                    existingImageMap.set(img.mediumStorageKey, img);
+                });
+
+                // Determine which existing images to keep
+                const imagesToKeep = existingImagesOrder ?
+                    existingImagesOrder.map(item => item.key) :
+                    [];
+
+                // Find images to delete (not in imagesToKeep)
                 const imagesToDelete = existingImages.filter(img =>
-                    !imagesToKeep || !imagesToKeep.includes(img.mediumStorageKey)
+                    !imagesToKeep.includes(img.mediumStorageKey)
                 );
 
-                // Delete images from Google Cloud Storage
+                // Delete images from Google Cloud Storage that won't be kept
                 for (const img of imagesToDelete) {
+                    console.log('Deleting image from storage:', img.mediumStorageKey);
                     await ImageService.deleteImage(img.mediumStorageKey);
                 }
 
-                // Delete image records from database for those being deleted
-                if (imagesToDelete.length > 0) {
-                    await tx.profileImage.deleteMany({
-                        where: {
-                            profileId,
-                            mediumStorageKey: {in: imagesToDelete.map(img => img.mediumStorageKey)}
-                        }
-                    });
-                }
+                // Delete all existing image records from database
+                // We'll recreate them with the correct order
+                console.log('Deleting all existing image records to recreate with correct order');
+                await tx.profileImage.deleteMany({
+                    where: { profileId }
+                });
 
                 // First, update the basic profile data
                 const updatedProfile = await tx.profile.update({
@@ -242,68 +258,93 @@ export const DataService = {
                     });
                 }
 
-                // CAMBIOS PARA MANTENER EL ORDEN DE LAS IMÁGENES
+                // Prepare an ordered list of all images (existing and new) to create
+                const allImagesToCreate: {
+                    imageData: ProfileImage | ProcessedImageWithOrder;
+                    isNew: boolean;
+                    order: number;
+                }[] = [];
 
-                // Eliminar las imágenes existentes para recrearlas con orden
-                if (imagesToKeep && imagesToKeep.length > 0) {
-                    await tx.profileImage.deleteMany({
-                        where: {
-                            profileId,
-                            mediumStorageKey: {
-                                in: imagesToKeep
-                            }
-                        }
-                    });
-
-                    // Recrear las imágenes existentes con el orden correcto
-                    for (let position = 0; position < imagesToKeep.length; position++) {
-                        const storageKey = imagesToKeep[position];
-                        const existingImage = existingImages.find(img => img.mediumStorageKey === storageKey);
-
+                // Add existing images with their specified order
+                if (existingImagesOrder && existingImagesOrder.length > 0) {
+                    existingImagesOrder.forEach(item => {
+                        const existingImage = existingImageMap.get(item.key);
                         if (existingImage) {
-                            await tx.profileImage.create({
-                                data: {
-                                    profileId,
-                                    position, // Usar la posición basada en el orden del array
-                                    // Medium quality (default)
-                                    mediumUrl: existingImage.mediumUrl,
-                                    mediumCdnUrl: existingImage.mediumCdnUrl,
-                                    mediumStorageKey: existingImage.mediumStorageKey,
-                                    // Thumbnail version
-                                    thumbnailUrl: existingImage.thumbnailUrl,
-                                    thumbnailCdnUrl: existingImage.thumbnailCdnUrl,
-                                    thumbnailStorageKey: existingImage.thumbnailStorageKey,
-                                    // High quality version
-                                    highQualityUrl: existingImage.highQualityUrl,
-                                    highQualityCdnUrl: existingImage.highQualityCdnUrl,
-                                    highQualityStorageKey: existingImage.highQualityStorageKey
-                                }
+                            allImagesToCreate.push({
+                                imageData: existingImage,
+                                isNew: false,
+                                order: item.order
                             });
                         }
-                    }
+                    });
                 }
 
-                // Agregar nuevas imágenes continuando el orden
+                // Add new images with their specified order
                 if (processedImages && processedImages.length > 0) {
-                    let nextPosition = (imagesToKeep?.length || 0);
+                    processedImages.forEach(img => {
+                        allImagesToCreate.push({
+                            imageData: img,
+                            isNew: true,
+                            order: img.order !== undefined ? img.order : allImagesToCreate.length
+                        });
+                    });
+                }
 
-                    for (const img of processedImages) {
+                // Sort all images by their order
+                allImagesToCreate.sort((a, b) => a.order - b.order);
+
+                console.log('Creating images in this order:',
+                    allImagesToCreate.map((item, idx) => ({
+                        position: idx,
+                        isNew: item.isNew,
+                        originalOrder: item.order
+                    }))
+                );
+
+                // Create all image records with the correct position
+                for (let position = 0; position < allImagesToCreate.length; position++) {
+                    const { imageData, isNew } = allImagesToCreate[position];
+
+                    if (isNew) {
+                        // It's a new image
+                        const newImg = imageData as ProcessedImageWithOrder;
                         await tx.profileImage.create({
                             data: {
                                 profileId,
-                                position: nextPosition++, // Incrementar la posición para cada imagen
+                                position,
                                 // Medium quality (default)
-                                mediumUrl: img.mediumUrl,
-                                mediumCdnUrl: img.mediumCdnUrl,
-                                mediumStorageKey: img.mediumStorageKey,
+                                mediumUrl: newImg.mediumUrl,
+                                mediumCdnUrl: newImg.mediumCdnUrl,
+                                mediumStorageKey: newImg.mediumStorageKey,
                                 // Thumbnail version
-                                thumbnailUrl: img.thumbnailUrl,
-                                thumbnailCdnUrl: img.thumbnailCdnUrl,
-                                thumbnailStorageKey: img.thumbnailStorageKey,
+                                thumbnailUrl: newImg.thumbnailUrl,
+                                thumbnailCdnUrl: newImg.thumbnailCdnUrl,
+                                thumbnailStorageKey: newImg.thumbnailStorageKey,
                                 // High quality version
-                                highQualityUrl: img.highQualityUrl,
-                                highQualityCdnUrl: img.highQualityCdnUrl,
-                                highQualityStorageKey: img.highQualityStorageKey
+                                highQualityUrl: newImg.highQualityUrl,
+                                highQualityCdnUrl: newImg.highQualityCdnUrl,
+                                highQualityStorageKey: newImg.highQualityStorageKey
+                            }
+                        });
+                    } else {
+                        // It's an existing image
+                        const existingImg = imageData as ProfileImage;
+                        await tx.profileImage.create({
+                            data: {
+                                profileId,
+                                position,
+                                // Medium quality (default)
+                                mediumUrl: existingImg.mediumUrl,
+                                mediumCdnUrl: existingImg.mediumCdnUrl,
+                                mediumStorageKey: existingImg.mediumStorageKey,
+                                // Thumbnail version
+                                thumbnailUrl: existingImg.thumbnailUrl,
+                                thumbnailCdnUrl: existingImg.thumbnailCdnUrl,
+                                thumbnailStorageKey: existingImg.thumbnailStorageKey,
+                                // High quality version
+                                highQualityUrl: existingImg.highQualityUrl,
+                                highQualityCdnUrl: existingImg.highQualityCdnUrl,
+                                highQualityStorageKey: existingImg.highQualityStorageKey
                             }
                         });
                     }

@@ -323,18 +323,22 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
 
     // Unified image reordering handler that allows complete mixing of image types
     const handleUnifiedImagesReorder = (reorderedImages: {id: string | number, url: string, isPrimary?: boolean, isNew?: boolean}[]) => {
-        // Create mappings to the original indices
-        const newImageIndexMap = new Map<string, number>();
-
-        // Build index maps for new images (we need to know original indices)
-        newImageItems.forEach((item, index) => {
-            newImageIndexMap.set(item.id as string, index);
-        });
+        console.log("Reordering images:", reorderedImages.map(item => ({
+            id: item.id,
+            isNew: item.isNew,
+            isPrimary: item.isPrimary
+        })));
 
         // Create new empty arrays for the reordered data
         const newSelectedFilesReordered: File[] = [];
         const newPreviewUrlsReordered: string[] = [];
         const newExistingImagesReordered: ProfileImage[] = [];
+
+        // Create mappings for original indices
+        const newImageIndexMap = new Map<string, number>();
+        newImageItems.forEach((item, index) => {
+            newImageIndexMap.set(item.id as string, index);
+        });
 
         // Process each image in the reordered array to rebuild our data structures
         reorderedImages.forEach(item => {
@@ -356,6 +360,11 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
             }
         });
 
+        console.log("After reordering:");
+        console.log("- New files:", newSelectedFilesReordered.length);
+        console.log("- New previews:", newPreviewUrlsReordered.length);
+        console.log("- Existing images:", newExistingImagesReordered.length);
+
         // Now update all our state variables with the reordered data
         setSelectedFiles(newSelectedFilesReordered);
         setPreviewUrls(newPreviewUrlsReordered);
@@ -373,83 +382,113 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
         setNewImageItems(newImageItemsReordered);
         setExistingImageItems(existingImageItemsReordered);
 
-        // Update the unified list
-        setUnifiedImageItems(reorderedImages);
+        // Update the unified list with clear isNew and isPrimary flags
+        const updatedUnifiedList = reorderedImages.map((item, index) => ({
+            ...item,
+            isPrimary: index === 0,
+            isNew: typeof item.id === 'string'
+        }));
+
+        setUnifiedImageItems(updatedUnifiedList);
+
+        console.log("Updated unified list:", updatedUnifiedList.map(item => ({
+            id: item.id,
+            isNew: item.isNew,
+            isPrimary: item.isPrimary
+        })));
     };
 
-    // Form submission handler that preserves image order
     const handleSubmit = async (formData: FormData) => {
         setIsSubmitting(true);
         setErrors({});
 
-        // Create a new FormData object to add our selected values
-        const updatedFormData = new FormData();
-
-        // Copy existing form data
-        for (const [key, value] of formData.entries()) {
-            if (key !== 'languages' && key !== 'paymentMethods' && key !== 'images') {
-                updatedFormData.append(key, value);
-            }
-        }
-
-        // Add selected languages
-        selectedLanguages.forEach(languageId => {
-            updatedFormData.append('languages', languageId.toString());
-        });
-
-        // Add selected payment methods
-        selectedPaymentMethods.forEach(paymentMethodId => {
-            updatedFormData.append('paymentMethods', paymentMethodId.toString());
-        });
-
-        // IMPORTANTE: Aquí está la clave - enviar las imágenes en el orden correcto
-        // Obtener imágenes en el orden de unifiedImageItems
-        const orderedExistingImages: ProfileImage[] = [];
-        const orderedSelectedFilesIndexes: number[] = [];
-
-        // Recorrer unifiedImageItems para mantener el orden correcto
-        unifiedImageItems.forEach(item => {
-            if (!item.isNew && typeof item.id === 'number') {
-                // Es una imagen existente
-                const image = existingImages.find(img => img.id === item.id);
-                if (image) {
-                    orderedExistingImages.push(image);
-                }
-            } else if (item.isNew && typeof item.id === 'string') {
-                // Es una imagen nueva, obtener su índice
-                const index = parseInt(item.id.replace('new-', ''));
-                if (!isNaN(index) && index >= 0 && index < selectedFiles.length) {
-                    orderedSelectedFilesIndexes.push(index);
-                }
-            }
-        });
-
-        // Agregar imágenes nuevas en el orden correcto
-        orderedSelectedFilesIndexes.forEach(index => {
-            if (index < selectedFiles.length) {
-                updatedFormData.append('images', selectedFiles[index]);
-            }
-        });
-
-        // Agregar imágenes existentes en el orden correcto
-        orderedExistingImages.forEach(image => {
-            updatedFormData.append('existingImages', image.mediumStorageKey);
-        });
-
         try {
+            // Create a new FormData object
+            const updatedFormData = new FormData();
+
+            updatedFormData.append('name', formData.get('name') as string);
+            updatedFormData.append('price', formData.get('price') as string);
+            updatedFormData.append('age', formData.get('age') as string);
+            updatedFormData.append('description', formData.get('description') as string);
+            updatedFormData.append('latitude', formData.get('latitude') as string);
+            updatedFormData.append('longitude', formData.get('longitude') as string);
+            updatedFormData.append('address', formData.get('address') as string);
+
+            selectedLanguages.forEach(id => {
+                updatedFormData.append('languages', id.toString());
+            });
+
+            selectedPaymentMethods.forEach(id => {
+                updatedFormData.append('paymentMethods', id.toString());
+            });
+
+            console.log("unifiedImageItems para enviar:", unifiedImageItems);
+
+            const completeOrderData: {type: string, id: string | number, position: number}[] = [];
+
+            unifiedImageItems.forEach((item, index) => {
+                if (!item.isNew && typeof item.id === 'number') {
+                    for (const existingImg of existingImages) {
+                        if (existingImg.id === item.id) {
+                            completeOrderData.push({
+                                type: 'existing',
+                                id: existingImg.mediumStorageKey,
+                                position: index
+                            });
+                            break;
+                        }
+                    }
+                } else if (item.isNew && typeof item.id === 'string') {
+                    const newIndex = parseInt(item.id.replace('new-', ''));
+                    if (!isNaN(newIndex) && newIndex >= 0 && newIndex < selectedFiles.length) {
+                        completeOrderData.push({
+                            type: 'new',
+                            id: newIndex.toString(),
+                            position: index
+                        });
+                    }
+                }
+            });
+
+            console.log("Orden completo de imágenes:", completeOrderData);
+
+            const existingImagesData = completeOrderData
+                .filter(item => item.type === 'existing')
+                .sort((a, b) => a.position - b.position);
+
+            const newImagesData = completeOrderData
+                .filter(item => item.type === 'new')
+                .sort((a, b) => a.position - b.position);
+
+            updatedFormData.append('imageOrderData', JSON.stringify(completeOrderData));
+
+            existingImagesData.forEach(item => {
+                updatedFormData.append('existingImages', item.id as string);
+            });
+
+            newImagesData.forEach(item => {
+                const fileIndex = parseInt(item.id as string);
+                if (fileIndex < selectedFiles.length) {
+                    updatedFormData.append('images', selectedFiles[fileIndex]);
+                    updatedFormData.append('imagePositions', item.position.toString());
+                }
+            });
+
+            console.log("Datos de orden enviados:", JSON.parse(updatedFormData.get('imageOrderData') as string));
+
             if (isEditing && profile) {
                 const result = await updateProfile(profile.id, updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    router.push('/profile');
+                    window.location.href = '/profile';
                 }
             } else {
                 const result = await createProfile(updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    router.push('/profile');
+                    window.location.href = '/profile';
                 }
             }
         } catch (error) {
