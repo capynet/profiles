@@ -99,7 +99,9 @@ export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps)
             onUnmount={onUnmount}
             onClick={() => setSelectedProfile(null)}
             options={{
-                mapId
+                mapId,
+                scrollwheel: true,
+                gestureHandling: 'greedy'
             }}
         >
             {/* Use regular Markers for now, as they're more reliable */}
