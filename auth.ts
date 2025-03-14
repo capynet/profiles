@@ -3,6 +3,20 @@ import NextAuth from "next-auth"
 import {PrismaAdapter} from "@auth/prisma-adapter"
 import {prisma} from "@/prisma"
 
+
+// Extend the session type to include role (necessary when const session = await auth();)
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string;
+            name?: string | null;
+            email?: string | null;
+            image?: string | null;
+            role?: string;
+        }
+    }
+}
+
 export const {handlers, auth, signIn, signOut} = NextAuth({
     adapter: PrismaAdapter(prisma),
     providers: [Google],
