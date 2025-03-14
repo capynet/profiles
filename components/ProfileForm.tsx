@@ -2,7 +2,6 @@
 
 import {useEffect, useState, useCallback} from 'react';
 import {useRouter} from 'next/navigation';
-import Image from 'next/image';
 import {Profile, ProfileImage} from '@prisma/client';
 import {createProfile, updateProfile} from '@/app/profile/actions';
 import ImageCropModal from './ImageCropModal';

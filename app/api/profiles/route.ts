@@ -1,6 +1,5 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {DataService} from '@/services/dataService';
-import {prisma} from '@/prisma';
 import {Prisma} from '@prisma/client';
 
 export async function GET(request: NextRequest) {

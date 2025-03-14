@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { GoogleMap, useLoadScript, InfoWindow, Marker } from '@react-google-maps/api';
 import ProfileMapCard from './ProfileMapCard';
 
