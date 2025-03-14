@@ -79,12 +79,6 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
                 <div className="mt-20 px-8 py-6">
                     {/* Actions */}
                     <div className="flex justify-end mb-6 space-x-4">
-                        <Link
-                            href="/"
-                            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            Volver
-                        </Link>
 
                         {isOwner && (
                             <Link
