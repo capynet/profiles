@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:storage-connectivity": "tsx tests/test-credentials.ts"
+    "test:storage-connectivity": "tsx tests/test-credentials.ts",
+    "db:seed": "prisma db seed",
+    "db:cleanup": "tsx prisma/scripts/cleanup.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
