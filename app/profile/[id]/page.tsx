@@ -5,12 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 
 interface ProfilePageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default async function ProfileDetailPage({params}: ProfilePageProps) {
+export default async function ProfileDetailPage(props: ProfilePageProps) {
+    const params = await props.params;
     const session = await auth();
 
     // Get profile by ID

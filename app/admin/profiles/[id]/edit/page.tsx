@@ -10,12 +10,13 @@ export const metadata = {
 };
 
 interface AdminEditProfilePageProps {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
-export default async function AdminEditProfilePage({ params }: AdminEditProfilePageProps) {
+export default async function AdminEditProfilePage(props: AdminEditProfilePageProps) {
+    const params = await props.params;
     // Ensure user is an admin
     await requireAdmin();
 

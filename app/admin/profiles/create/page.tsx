@@ -9,11 +9,12 @@ export const metadata = {
     description: 'Create user profile as administrator',
 };
 
-export default async function AdminCreateProfilePage({
-                                                         searchParams,
-                                                     }: {
-    searchParams: { userId?: string }
-}) {
+export default async function AdminCreateProfilePage(
+    props: {
+        searchParams: Promise<{ userId?: string }>
+    }
+) {
+    const searchParams = await props.searchParams;
     // Ensure user is an admin
     await requireAdmin();
 

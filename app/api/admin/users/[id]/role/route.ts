@@ -3,10 +3,8 @@ import {NextRequest, NextResponse} from 'next/server';
 import {auth} from '@/auth';
 import {prisma} from '@/prisma';
 
-export async function PATCH(
-    request: NextRequest,
-    {params}: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+    const params = await props.params;
     try {
         const session = await auth();
 
