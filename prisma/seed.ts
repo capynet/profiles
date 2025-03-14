@@ -1,15 +1,16 @@
+// prisma/seed.ts
 import {PrismaClient} from '@prisma/client'
 import seedLanguages from './seeders/languages'
 import seedPaymentMethods from './seeders/paymentMethods'
-// import seedProfiles from './seeders/profiles'
+import seedProfiles from './seeders/profiles'
 
 const prisma = new PrismaClient()
 
 async function main() {
-    // Ejecutar seeders en orden
+    // Run seeders in order
     await seedLanguages(prisma)
     await seedPaymentMethods(prisma)
-    // await seedProfiles(prisma)
+    await seedProfiles(prisma)
 }
 
 main()
