@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import {useEffect, useState, useCallback} from 'react';
+import {useRouter} from 'next/navigation';
 import Image from 'next/image';
-import { Profile, ProfileImage } from '@prisma/client';
-import { createProfile, updateProfile } from '@/app/profile/actions';
+import {Profile, ProfileImage} from '@prisma/client';
+import {createProfile, updateProfile} from '@/app/profile/actions';
 import ImageCropModal from './ImageCropModal';
 import SortableImageGallery from './SortableImageGallery';
 
@@ -25,9 +25,11 @@ type ProfileWithRelations = Profile & {
 type ProfileFormProps = {
     profile?: ProfileWithRelations;
     isEditing?: boolean;
+    isAdminMode?: boolean;
+    userId?: string; // For admin creating profiles for specific users
 };
 
-export default function ProfileForm({ profile, isEditing = false }: ProfileFormProps) {
+export default function ProfileForm({profile, isEditing = false, isAdminMode = false, userId}: ProfileFormProps) {
     const router = useRouter();
 
     // Form data states
@@ -49,11 +51,11 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
     const [imagesToProcess, setImagesToProcess] = useState<ImageToProcess[]>([]);
 
     // Image ordering states
-    const [newImageItems, setNewImageItems] = useState<{id: string, url: string}[]>([]);
-    const [existingImageItems, setExistingImageItems] = useState<{id: number, url: string}[]>([]);
+    const [newImageItems, setNewImageItems] = useState<{ id: string, url: string }[]>([]);
+    const [existingImageItems, setExistingImageItems] = useState<{ id: number, url: string }[]>([]);
 
     // Combined image list state for unified gallery
-    const [unifiedImageItems, setUnifiedImageItems] = useState<{id: string | number, url: string, isPrimary?: boolean, isNew?: boolean}[]>([]);
+    const [unifiedImageItems, setUnifiedImageItems] = useState<{ id: string | number, url: string, isPrimary?: boolean, isNew?: boolean }[]>([]);
 
     // Initialize form data on load
     useEffect(() => {
@@ -131,14 +133,14 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
                     // Check if this new image still exists
                     if (newMap.has(item.id)) {
                         const updatedItem = newMap.get(item.id);
-                        return { ...item, url: updatedItem?.url || item.url };
+                        return {...item, url: updatedItem?.url || item.url};
                     }
                     return null; // This item was removed
                 } else if (!item.isNew && typeof item.id === 'number') {
                     // Check if this existing image still exists
                     if (existingMap.has(item.id)) {
                         const updatedItem = existingMap.get(item.id);
-                        return { ...item, url: updatedItem?.url || item.url };
+                        return {...item, url: updatedItem?.url || item.url};
                     }
                     return null; // This item was removed
                 }
@@ -151,13 +153,13 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
 
             existingImageItems.forEach(item => {
                 if (!existingIds.has(item.id)) {
-                    updatedList.push({ ...item, isNew: false });
+                    updatedList.push({...item, isNew: false});
                 }
             });
 
             newImageItems.forEach(item => {
                 if (!newIds.has(item.id)) {
-                    updatedList.push({ ...item, isNew: true });
+                    updatedList.push({...item, isNew: true});
                 }
             });
 
@@ -172,8 +174,8 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
         } else {
             // If we don't have a unified list yet, create one from scratch
             const combinedList = [
-                ...existingImageItems.map(item => ({ ...item, isNew: false })),
-                ...newImageItems.map(item => ({ ...item, isNew: true }))
+                ...existingImageItems.map(item => ({...item, isNew: false})),
+                ...newImageItems.map(item => ({...item, isNew: true}))
             ];
 
             // Mark the first image as primary
@@ -233,7 +235,7 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
         const croppedFile = new File(
             [croppedBlob],
             `cropped-image-${Date.now()}.jpg`,
-            { type: 'image/jpeg' }
+            {type: 'image/jpeg'}
         );
 
         // Add the cropped file to selectedFiles (maintaining previously selected files)
@@ -247,7 +249,7 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
         setImagesToProcess(prev =>
             prev.map(img =>
                 img.id === imageId
-                    ? { ...img, processed: true }
+                    ? {...img, processed: true}
                     : img
             )
         );
@@ -322,7 +324,7 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
     };
 
     // Unified image reordering handler that allows complete mixing of image types
-    const handleUnifiedImagesReorder = (reorderedImages: {id: string | number, url: string, isPrimary?: boolean, isNew?: boolean}[]) => {
+    const handleUnifiedImagesReorder = (reorderedImages: { id: string | number, url: string, isPrimary?: boolean, isNew?: boolean }[]) => {
         console.log("Reordering images:", reorderedImages.map(item => ({
             id: item.id,
             isNew: item.isNew,
@@ -373,11 +375,11 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
         // Also rebuild our items arrays to keep them in sync
         const newImageItemsReordered = reorderedImages
             .filter(item => item.isNew && typeof item.id === 'string')
-            .map(item => ({ id: item.id as string, url: item.url }));
+            .map(item => ({id: item.id as string, url: item.url}));
 
         const existingImageItemsReordered = reorderedImages
             .filter(item => !item.isNew && typeof item.id === 'number')
-            .map(item => ({ id: item.id as number, url: item.url }));
+            .map(item => ({id: item.id as number, url: item.url}));
 
         setNewImageItems(newImageItemsReordered);
         setExistingImageItems(existingImageItemsReordered);
@@ -406,6 +408,11 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
             // Create a new FormData object
             const updatedFormData = new FormData();
 
+            // If in admin mode and creating a profile for a specific user, add the userId
+            if (isAdminMode && userId && !isEditing) {
+                updatedFormData.append('userId', userId);
+            }
+
             updatedFormData.append('name', formData.get('name') as string);
             updatedFormData.append('price', formData.get('price') as string);
             updatedFormData.append('age', formData.get('age') as string);
@@ -424,7 +431,7 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
 
             console.log("unifiedImageItems para enviar:", unifiedImageItems);
 
-            const completeOrderData: {type: string, id: string | number, position: number}[] = [];
+            const completeOrderData: { type: string, id: string | number, position: number }[] = [];
 
             unifiedImageItems.forEach((item, index) => {
                 if (!item.isNew && typeof item.id === 'number') {
@@ -481,54 +488,26 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    window.location.href = '/profile';
+                    // Redirect to appropriate page based on mode
+                    window.location.href = isAdminMode
+                        ? '/admin'
+                        : '/profile';
                 }
             } else {
                 const result = await createProfile(updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    window.location.href = '/profile';
+                    // Redirect to appropriate page based on mode
+                    window.location.href = isAdminMode
+                        ? '/admin'
+                        : '/profile';
                 }
             }
         } catch (error) {
             console.error('Error processing form:', error);
         } finally {
             setIsSubmitting(false);
-        }
-    };
-
-    // Helper function to fill test data
-    const fillTestData = () => {
-        const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-        const priceInput = document.querySelector('input[name="price"]') as HTMLInputElement;
-        const ageInput = document.querySelector('input[name="age"]') as HTMLInputElement;
-        const descriptionInput = document.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
-        const latitudeInput = document.querySelector('input[name="latitude"]') as HTMLInputElement;
-        const longitudeInput = document.querySelector('input[name="longitude"]') as HTMLInputElement;
-        const addressInput = document.querySelector('input[name="address"]') as HTMLInputElement;
-
-        if (nameInput) nameInput.value = 'Test User';
-        if (priceInput) priceInput.value = '50.00';
-        if (ageInput) ageInput.value = '30';
-        if (descriptionInput) descriptionInput.value = 'This is a test profile description with some sample text for testing purposes.';
-        if (latitudeInput) latitudeInput.value = '40.4168';
-        if (longitudeInput) longitudeInput.value = '-3.7038';
-        if (addressInput) addressInput.value = '123 Test Street, 28001, Madrid';
-
-        // Select random payment methods and languages
-        if (paymentMethods.length > 0) {
-            const randomPaymentMethods = paymentMethods
-                .slice(0, Math.min(2, paymentMethods.length))
-                .map(pm => pm.id);
-            setSelectedPaymentMethods(randomPaymentMethods);
-        }
-
-        if (languages.length > 0) {
-            const randomLanguages = languages
-                .slice(0, Math.min(3, languages.length))
-                .map(lang => lang.id);
-            setSelectedLanguages(randomLanguages);
         }
     };
 
@@ -557,16 +536,17 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
     return (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
             <form action={handleSubmit} className="p-6">
-                {/* Test data button */}
-                <div className="md:col-span-2 mt-4 mb-6">
-                    <button
-                        type="button"
-                        onClick={fillTestData}
-                        className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-800"
-                    >
-                        Fill Test Data
-                    </button>
-                </div>
+                {/* Admin mode indicator */}
+                {isAdminMode && (
+                    <div className="mb-6 p-3 bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-800 rounded-md">
+                        <p className="text-purple-800 dark:text-purple-300 text-sm font-medium">
+                            {isEditing
+                                ? `Admin Mode: Editing profile #${profile?.id} for user ${profile?.user?.name || profile?.user?.email}`
+                                : `Admin Mode: Creating profile for user ID: ${userId}`
+                            }
+                        </p>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic information fields */}
@@ -677,7 +657,7 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
                             />
                             <div className="dropzone w-full px-4 py-8 flex flex-col items-center justify-center space-y-3 text-sm font-medium rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform active:scale-[0.98] active:bg-indigo-50 dark:active:bg-indigo-900/20">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                 </svg>
                                 <div className="text-center">
                                     <span className="font-medium text-indigo-600 dark:text-indigo-400">Click to upload</span> or drag and drop
@@ -863,7 +843,7 @@ export default function ProfileForm({ profile, isEditing = false }: ProfileFormP
                         imagesToProcess={imagesToProcess}
                         onCropComplete={handleCropComplete}
                         onClose={handleCloseCropModal}
-                        aspectRatio={9/16}
+                        aspectRatio={9 / 16}
                     />
                 )}
             </form>

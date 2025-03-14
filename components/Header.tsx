@@ -10,6 +10,7 @@ interface User {
     name?: string | null;
     email?: string | null;
     image?: string | null;
+    role?: string;
 }
 
 interface HeaderProps {
@@ -97,6 +98,16 @@ export default function Header({ user }: HeaderProps) {
                                         >
                                             Editar Perfil
                                         </Link>
+
+                                        {user?.role === 'admin' && (
+                                            <Link
+                                                href="/admin"
+                                                className="block px-4 py-2 text-sm text-indigo-600 hover:bg-gray-100 dark:text-indigo-400 dark:hover:bg-gray-700"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Admin Dashboard
+                                            </Link>
+                                        )}
 
                                         <div className="border-t border-gray-100 dark:border-gray-700"></div>
 

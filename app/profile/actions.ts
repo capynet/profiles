@@ -1,10 +1,11 @@
 // app/profile/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { DataService } from '@/services/dataService';
-import { ImageService } from '@/services/imageService';
-import { auth } from '@/auth';
+import {revalidatePath} from 'next/cache';
+import {DataService} from '@/services/dataService';
+import {ImageService} from '@/services/imageService';
+import {auth} from '@/auth';
+import {prisma} from '@/prisma';
 
 type ValidationError = {
     path: string[];
@@ -67,15 +68,25 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
     console.log('createProfile action started');
 
     const session = await auth();
-    if (!session  || !session.user) {
+    if (!session || !session.user) {
         console.log('No session found, user not authenticated');
         return {
             success: false,
-            errors: { auth: ['User not authenticated'] }
+            errors: {auth: ['User not authenticated']}
         };
     }
 
-    console.log('User authenticated:', session.user.id);
+    // Check if this is an admin creating a profile for another user
+    const adminProvidedUserId = formData.get('userId') as string;
+    let targetUserId = session.user.id;
+
+    // If an admin is creating a profile for another user
+    if (adminProvidedUserId && session.user.role === 'admin' && adminProvidedUserId !== session.user.id) {
+        console.log('Admin creating profile for user:', adminProvidedUserId);
+        targetUserId = adminProvidedUserId;
+    } else {
+        console.log('User creating own profile:', session.user.id);
+    }
 
     // Validate form data
     const validationResult = validateFormData(formData);
@@ -141,7 +152,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
 
         // Prepare data for profile creation
         const profileData = {
-            userId: session.user.id,
+            userId: targetUserId,
             name: formData.get('name') as string,
             price: Number(formData.get('price')),
             age: Number(formData.get('age')),
@@ -150,10 +161,10 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
             languages: {
-                connect: languageIds.map(id => ({ id }))
+                connect: languageIds.map(id => ({id}))
             },
             paymentMethods: {
-                connect: paymentMethodIds.map(id => ({ id }))
+                connect: paymentMethodIds.map(id => ({id}))
             },
             // Pass processed images to the service
             processedImages: processedImages.length > 0 ? processedImages : undefined
@@ -174,7 +185,8 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         console.log('Profile created successfully, ID:', result?.id);
 
         revalidatePath('/profile');
-        return { success: true };
+        revalidatePath('/admin');
+        return {success: true};
     } catch (error: unknown) {
         console.error('Error in createProfile action:', error);
 
@@ -191,7 +203,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
                 errors[field].push(err.message);
             });
 
-            return { success: false, errors };
+            return {success: false, errors};
         }
 
         return {
@@ -207,10 +219,34 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
     console.log('updateProfile action started for profile ID:', profileId);
 
     const session = await auth();
-    if (!session) {
+    if (!session || !session.user) {
         return {
             success: false,
-            errors: { auth: ['User not authenticated'] }
+            errors: {auth: ['User not authenticated']}
+        };
+    }
+
+    // Get the profile to check ownership
+    const profile = await prisma.profile.findUnique({
+        where: {id: profileId},
+        select: {userId: true}
+    });
+
+    if (!profile) {
+        return {
+            success: false,
+            errors: {profile: ['Profile not found']}
+        };
+    }
+
+    // Check if user has permission to edit this profile
+    const isOwner = profile.userId === session.user.id;
+    const isAdmin = session.user.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+        return {
+            success: false,
+            errors: {auth: ['You do not have permission to edit this profile']}
         };
     }
 
@@ -234,7 +270,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         console.log('Selected languages:', languageIds);
         console.log('Selected payment methods:', paymentMethodIds);
 
-        let imageOrderData: {type: string, id: string | number, position: number}[] = [];
+        let imageOrderData: { type: string, id: string | number, position: number }[] = [];
         const orderDataRaw = formData.get('imageOrderData');
 
         if (orderDataRaw) {
@@ -336,10 +372,10 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
             languages: {
-                connect: languageIds.map(id => ({ id }))
+                connect: languageIds.map(id => ({id}))
             },
             paymentMethods: {
-                connect: paymentMethodIds.map(id => ({ id }))
+                connect: paymentMethodIds.map(id => ({id}))
             },
             // Pass processed images and images to keep to the service,
             // now with order information
@@ -363,8 +399,9 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         revalidatePath('/profile');
         revalidatePath('/profile/edit');
         revalidatePath(`/profile/${profileId}`);
+        revalidatePath('/admin');
 
-        return { success: true };
+        return {success: true};
     } catch (error: unknown) {
         console.error('Error updating profile:', error);
 
@@ -381,7 +418,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
                 errors[field].push(err.message);
             });
 
-            return { success: false, errors };
+            return {success: false, errors};
         }
 
         return {
