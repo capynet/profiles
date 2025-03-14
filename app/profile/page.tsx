@@ -1,6 +1,6 @@
-import { redirect } from 'next/navigation';
-import { auth } from '@/auth';
-import { DataService } from '@/services/dataService';
+import {redirect} from 'next/navigation';
+import {auth} from '@/auth';
+import {DataService} from '@/services/dataService';
 import ProfilePageClient from './ProfilePageClient';
 
 export const metadata = {
@@ -17,14 +17,14 @@ export default async function ProfilePage() {
     }
 
     // Get user profile
-    const profiles = await DataService.getProfiles({ userId: session.user?.id });
+    const profiles = await DataService.getProfiles({userId: session.user?.id});
     const profile = profiles?.[0] || null;
 
     console.log('Server: Found profile?', !!profile);
 
     return (
         <div className="container mx-auto py-8 px-4">
-            <ProfilePageClient profile={profile} />
+            <ProfilePageClient profile={profile}/>
         </div>
     );
 }

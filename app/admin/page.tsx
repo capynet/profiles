@@ -1,6 +1,6 @@
 // app/admin/page.tsx
-import { requireAdmin } from '@/lib/auth-utils';
-import { prisma } from '@/prisma';
+import {requireAdmin} from '@/lib/auth-utils';
+import {prisma} from '@/prisma';
 import AdminUserTable from '@/components/AdminUserTable';
 
 export const metadata = {
@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
                         User Management
                     </h2>
 
-                    <AdminUserTable users={users} />
+                    <AdminUserTable users={users}/>
                 </div>
             </div>
         </div>

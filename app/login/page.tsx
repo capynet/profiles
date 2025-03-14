@@ -1,4 +1,4 @@
-import { signIn } from "@/auth";
+import {signIn} from "@/auth";
 
 export default function Login() {
     return (
@@ -12,7 +12,7 @@ export default function Login() {
                 <form
                     action={async () => {
                         "use server";
-                        await signIn("google", { redirectTo: "/" });
+                        await signIn("google", {redirectTo: "/"});
                     }}
                     className="mt-8 space-y-6"
                 >

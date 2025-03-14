@@ -1,8 +1,8 @@
 // app/admin/profiles/create/page.tsx
-import { redirect } from 'next/navigation';
-import { prisma } from '@/prisma';
+import {redirect} from 'next/navigation';
+import {prisma} from '@/prisma';
 import ProfileForm from '@/components/ProfileForm';
-import { requireAdmin } from '@/lib/auth-utils';
+import {requireAdmin} from '@/lib/auth-utils';
 
 export const metadata = {
     title: 'Admin - Create Profile',
@@ -26,8 +26,8 @@ export default async function AdminCreateProfilePage(
 
     // Check if the user exists
     const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, name: true, email: true },
+        where: {id: userId},
+        select: {id: true, name: true, email: true},
     });
 
     if (!user) {
@@ -36,7 +36,7 @@ export default async function AdminCreateProfilePage(
 
     // Check if user already has a profile
     const existingProfile = await prisma.profile.findUnique({
-        where: { userId: user.id },
+        where: {userId: user.id},
     });
 
     if (existingProfile) {

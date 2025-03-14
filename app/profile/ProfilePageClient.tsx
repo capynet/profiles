@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import {useState} from 'react';
 import ImageDetailModal from '@/components/ImageDetailModal';
 
 interface ProfileImage {
@@ -36,7 +36,7 @@ interface ProfilePageClientProps {
     profile?: Profile | null;
 }
 
-export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
+export default function ProfilePageClient({profile}: ProfilePageClientProps) {
     const [selectedImage, setSelectedImage] = useState<ProfileImage | null>(null);
 
     // If profile is undefined or null, show a message with a link to create one

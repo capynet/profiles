@@ -1,8 +1,8 @@
 // app/admin/profiles/[id]/edit/page.tsx
-import { redirect } from 'next/navigation';
-import { prisma } from '@/prisma';
+import {redirect} from 'next/navigation';
+import {prisma} from '@/prisma';
 import ProfileForm from '@/components/ProfileForm';
-import { requireAdmin } from '@/lib/auth-utils';
+import {requireAdmin} from '@/lib/auth-utils';
 
 export const metadata = {
     title: 'Admin - Edit Profile',
@@ -28,13 +28,13 @@ export default async function AdminEditProfilePage(props: AdminEditProfilePagePr
 
     // Get profile with all needed related data
     const profile = await prisma.profile.findUnique({
-        where: { id: profileId },
+        where: {id: profileId},
         include: {
             languages: true,
             paymentMethods: true,
             images: true,
             user: {
-                select: { name: true, email: true, id: true }
+                select: {name: true, email: true, id: true}
             },
         },
     });
