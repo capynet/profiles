@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import {useState} from 'react';
+import { useState, useEffect } from 'react';
 import ImageDetailModal from '@/components/ImageDetailModal';
 
 interface ProfileImage {
@@ -36,8 +36,16 @@ interface ProfilePageClientProps {
     profile?: Profile | null;
 }
 
-export default function ProfilePageClient({profile}: ProfilePageClientProps) {
-    const [selectedImage, setSelectedImage] = useState<ProfileImage | null>(null);
+export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
+    const [modalImage, setModalImage] = useState<ProfileImage | null>(null);
+    const [activeImage, setActiveImage] = useState<ProfileImage | null>(null);
+
+    // Set the first image as active when profile loads or changes
+    useEffect(() => {
+        if (profile?.images && profile.images.length > 0) {
+            setActiveImage(profile.images[0]);
+        }
+    }, [profile]);
 
     // If profile is undefined or null, show a message with a link to create one
     if (!profile) {
@@ -54,17 +62,44 @@ export default function ProfilePageClient({profile}: ProfilePageClientProps) {
         );
     }
 
-    const handleImageClick = (image: ProfileImage) => {
-        setSelectedImage(image);
+    // Open the modal for fullscreen view
+    const openModal = (image: ProfileImage) => {
+        setModalImage(image);
     };
 
+    // Close the modal
     const closeModal = () => {
-        setSelectedImage(null);
+        setModalImage(null);
     };
 
-    const getImageUrl = (image: ProfileImage) => {
-        // For gallery thumbnails, prefer thumbnail version if available
+    // Handle thumbnail click to set active image
+    const handleThumbnailClick = (image: ProfileImage) => {
+        setActiveImage(image);
+    };
+
+    // Handle main image click to open modal
+    const handleMainImageClick = () => {
+        if (activeImage) {
+            openModal(activeImage);
+        }
+    };
+
+    // Get the appropriate URL for thumbnails - always use smallest version available
+    const getThumbnailUrl = (image: ProfileImage) => {
+        // Strict priority: thumbnail first, then medium as fallback
         return image.thumbnailUrl || image.thumbnailCdnUrl || image.mediumUrl || '';
+    };
+
+    // Get the best quality URL for the main image
+    const getMainImageUrl = (image: ProfileImage) => {
+        // For main image display, medium quality is sufficient and loads faster
+        return image.mediumUrl || image.mediumCdnUrl || '';
+    };
+
+    // Get high quality image for modal view
+    const getHighQualityUrl = (image: ProfileImage) => {
+        // For fullscreen modal, use highest quality available
+        return image.highQualityUrl || image.highQualityCdnUrl || image.mediumUrl || '';
     };
 
     return (
@@ -80,28 +115,130 @@ export default function ProfilePageClient({profile}: ProfilePageClientProps) {
                     </div>
                 </div>
 
-                {/* Display image gallery with responsive image loading */}
+                {/* Display image gallery with main image and thumbnails */}
                 {profile.images && profile.images.length > 0 ? (
-                    <div className="mb-6">
-                        <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Gallery</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {profile.images.map(image => (
-                                <div
-                                    key={image.id}
-                                    className="aspect-[9/16] relative rounded-lg overflow-hidden shadow-md cursor-pointer transform transition-transform hover:scale-105"
-                                    onClick={() => handleImageClick(image)}
-                                >
+                    <div className="mb-6 space-y-4">
+                        {/* Main active image display with navigation arrows */}
+                        <div className="relative">
+                            <div
+                                className="relative aspect-[9/16] max-h-[70vh] w-full bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden cursor-pointer"
+                                onClick={handleMainImageClick}
+                            >
+                                {activeImage && (
                                     <Image
-                                        src={getImageUrl(image)}
-                                        alt={`${profile.name}`}
+                                        src={getMainImageUrl(activeImage)}
+                                        alt={`${profile.name} - main image`}
                                         fill
-                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                        className="object-cover"
-                                        unoptimized={!!image.thumbnailCdnUrl}
-                                        priority={image.id === profile.images[0]?.id} // Only prioritize first image
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-contain"
+                                        priority
                                     />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end justify-center pb-2">
+                                    <span className="text-white text-sm px-2 py-1 bg-black/50 rounded-md">Click to enlarge</span>
                                 </div>
-                            ))}
+                            </div>
+
+                            {/* Navigation arrows for main image */}
+                            <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
+                                <button
+                                    className="ml-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors pointer-events-auto focus:outline-none focus:ring-2 focus:ring-white"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent opening modal
+                                        const currentIndex = profile.images.findIndex(img => img.id === activeImage?.id);
+                                        if (currentIndex > 0) {
+                                            setActiveImage(profile.images[currentIndex - 1]);
+                                        } else {
+                                            setActiveImage(profile.images[profile.images.length - 1]);
+                                        }
+                                    }}
+                                    aria-label="Previous image"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+
+                                <button
+                                    className="mr-4 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full transition-colors pointer-events-auto focus:outline-none focus:ring-2 focus:ring-white"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent opening modal
+                                        const currentIndex = profile.images.findIndex(img => img.id === activeImage?.id);
+                                        if (currentIndex < profile.images.length - 1) {
+                                            setActiveImage(profile.images[currentIndex + 1]);
+                                        } else {
+                                            setActiveImage(profile.images[0]);
+                                        }
+                                    }}
+                                    aria-label="Next image"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Thumbnails slider with navigation arrows */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                className="flex-shrink-0 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                onClick={() => {
+                                    const currentIndex = profile.images.findIndex(img => img.id === activeImage?.id);
+                                    if (currentIndex > 0) {
+                                        setActiveImage(profile.images[currentIndex - 1]);
+                                    } else {
+                                        setActiveImage(profile.images[profile.images.length - 1]);
+                                    }
+                                }}
+                                aria-label="Previous image"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+
+                            <div className="flex-1 overflow-x-auto py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                                <div className="flex gap-3">
+                                    {profile.images.map((image) => (
+                                        <div
+                                            key={image.id}
+                                            className={`flex-shrink-0 w-[150px] aspect-[9/16] relative rounded-md overflow-hidden cursor-pointer transition-all 
+                                            ${activeImage?.id === image.id
+                                                ? 'ring-2 ring-indigo-600 dark:ring-indigo-400 scale-95'
+                                                : 'hover:scale-95'}`}
+                                            onClick={() => handleThumbnailClick(image)}
+                                        >
+                                            <Image
+                                                src={getThumbnailUrl(image)}
+                                                alt={`${profile.name} thumbnail`}
+                                                fill
+                                                sizes="150px"
+                                                className="object-cover"
+                                                quality={60}
+                                                unoptimized={!!image.thumbnailCdnUrl}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button
+                                className="flex-shrink-0 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                onClick={() => {
+                                    const currentIndex = profile.images.findIndex(img => img.id === activeImage?.id);
+                                    if (currentIndex < profile.images.length - 1) {
+                                        setActiveImage(profile.images[currentIndex + 1]);
+                                    } else {
+                                        setActiveImage(profile.images[0]);
+                                    }
+                                }}
+                                aria-label="Next image"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -171,9 +308,9 @@ export default function ProfilePageClient({profile}: ProfilePageClientProps) {
             </div>
 
             {/* Image detail modal */}
-            {selectedImage && (
+            {modalImage && (
                 <ImageDetailModal
-                    image={selectedImage}
+                    image={modalImage}
                     onClose={closeModal}
                 />
             )}

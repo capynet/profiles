@@ -20,8 +20,6 @@ export default async function ProfilePage() {
     const profiles = await DataService.getProfiles({userId: session.user?.id});
     const profile = profiles?.[0] || null;
 
-    console.log('Server: Found profile?', !!profile);
-
     return (
         <div className="container mx-auto py-8 px-4">
             <ProfilePageClient profile={profile}/>
