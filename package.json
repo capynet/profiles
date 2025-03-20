@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test:storage-connectivity": "tsx tests/test-credentials.ts",
+    "db:reset": "prisma migrate reset",
     "db:seed": "prisma db seed",
-    "db:cleanup": "tsx prisma/scripts/cleanup.ts",
+    "db:seed-samples": "tsx prisma/seed-samples.ts",
     "admin:set": "tsx scripts/set-admin.ts"
   },
   "prisma": {
