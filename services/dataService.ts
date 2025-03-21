@@ -34,10 +34,17 @@ export const DataService = {
         }
     },
 
-    async getProfiles(where?: Prisma.ProfileWhereInput) {
+    async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false) {
         try {
+            // Create a new where condition that includes the published filter
+            const finalWhere: Prisma.ProfileWhereInput = {
+                ...where,
+                // Only include non-published profiles if explicitly requested
+                ...(includeDrafts ? {} : { published: true })
+            };
+
             return await prisma.profile.findMany({
-                where,
+                where: finalWhere,
                 include: {
                     languages: {include: {language: true}},
                     paymentMethods: {include: {paymentMethod: true}},

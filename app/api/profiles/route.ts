@@ -1,3 +1,4 @@
+// app/api/profiles/route.ts
 import {NextRequest, NextResponse} from 'next/server';
 import {DataService} from '@/services/dataService';
 import {Prisma} from '@prisma/client';
@@ -15,7 +16,10 @@ export async function GET(request: NextRequest) {
         const paymentMethods = searchParams.get('paymentMethods');
 
         // Build filter conditions
-        const whereConditions: Prisma.ProfileWhereInput = {};
+        const whereConditions: Prisma.ProfileWhereInput = {
+            // Only show published profiles in public API
+            published: true,
+        };
 
         // Price range filter
         if (minPrice || maxPrice) {

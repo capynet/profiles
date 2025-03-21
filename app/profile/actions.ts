@@ -126,6 +126,10 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             processedImages.push(imageData);
         }
 
+        // Check if user is admin for controlling published state
+        const isAdmin = session.user.role === 'admin';
+        const publishedValue = isAdmin ? formData.get('published') === 'true' : false;
+
         // Prepare data for profile creation
         const profileData = {
             userId: targetUserId,
@@ -136,6 +140,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             latitude: Number(formData.get('latitude')),
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
+            published: publishedValue,
             languages: {
                 connect: languageIds.map(id => ({id}))
             },
@@ -192,7 +197,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
     // Get the profile to check ownership
     const profile = await prisma.profile.findUnique({
         where: {id: profileId},
-        select: {userId: true}
+        select: {userId: true, published: true}
     });
 
     if (!profile) {
@@ -294,6 +299,18 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             });
         }
 
+        // Handle published state
+        // Only admins can change published status, otherwise keep existing value
+        let publishedValue: boolean;
+
+        if (isAdmin) {
+            // Admins can change the published status
+            publishedValue = formData.get('published') === 'true';
+        } else {
+            // Non-admins keep the existing value
+            publishedValue = profile.published;
+        }
+
         // Prepare data for profile update
         const profileData = {
             name: formData.get('name') as string,
@@ -303,6 +320,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             latitude: Number(formData.get('latitude')),
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
+            published: publishedValue,
             languages: {
                 connect: languageIds.map(id => ({id}))
             },

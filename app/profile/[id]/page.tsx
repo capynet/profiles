@@ -1,3 +1,4 @@
+// app/profile/[id]/page.tsx
 import {notFound} from "next/navigation";
 import {auth} from "@/auth";
 import {prisma} from "@/prisma";
@@ -35,11 +36,34 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
         notFound();
     }
 
-    // Check if this profile belongs to the current user
+    // Check if this profile belongs to the current user or if user is admin
     const isOwner = session?.user?.id === profile.userId;
+    const isAdmin = session?.user?.role === 'admin';
+
+    // If profile is not published and user is not owner or admin, return 404
+    if (!profile.published && !isOwner && !isAdmin) {
+        notFound();
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">
+            {/* Show warning banner if profile is not published */}
+            {!profile.published && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md shadow-sm">
+                    <div className="flex">
+                        <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                        </div>
+                        <div className="ml-3">
+                            <p className="text-sm font-medium">This profile is not published yet</p>
+                            <p className="text-xs mt-1">This profile is only visible to you and administrators. It will be available to the public once an administrator approves and publishes it.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
                 {/* Profile Header */}
                 <div className="relative">

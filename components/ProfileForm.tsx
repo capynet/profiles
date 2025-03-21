@@ -1,3 +1,4 @@
+// components/ProfileForm.tsx
 'use client';
 
 import {useEffect, useState, useCallback} from 'react';
@@ -36,6 +37,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
     const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string }[]>([]);
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
+    const [isPublished, setIsPublished] = useState<boolean>(false);
 
     // UI control states
     const [isLoading, setIsLoading] = useState(true);
@@ -81,6 +83,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     setSelectedLanguages(profile.languages.map(l => l.languageId));
                     setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
                     setExistingImages(profile.images || []);
+                    setIsPublished(profile.published || false);
                 }
             } catch (error) {
                 console.error('Error fetching form data:', error);
@@ -419,6 +422,11 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
             updatedFormData.append('latitude', formData.get('latitude') as string);
             updatedFormData.append('longitude', formData.get('longitude') as string);
             updatedFormData.append('address', formData.get('address') as string);
+
+            // Add published state if admin
+            if (isAdminMode) {
+                updatedFormData.append('published', isPublished.toString());
+            }
 
             selectedLanguages.forEach(id => {
                 updatedFormData.append('languages', id.toString());
@@ -807,6 +815,29 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         {errors.languages && <p className="mt-1 text-sm text-red-600 font-medium">{errors.languages[0]}</p>}
                     </div>
                 </div>
+
+                {/* Admin-only publication control */}
+                {isAdminMode && (
+                    <div className="md:col-span-2 space-y-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Admin Options</h3>
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="published"
+                                name="published"
+                                checked={isPublished}
+                                onChange={(e) => setIsPublished(e.target.checked)}
+                                className={checkboxClassName}
+                            />
+                            <label htmlFor="published" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Publish profile (visible to public)
+                            </label>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Only published profiles are visible in search results and the main page
+                        </p>
+                    </div>
+                )}
 
                 {/* Form actions */}
                 <div className="flex justify-end space-x-4 mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
