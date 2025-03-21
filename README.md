@@ -11,4 +11,6 @@ mpn run db:seed
 # Generate profile samples.
 npm run db:seed-samples
 
+# Dump the DB (only for docker composer provided on the project)
+docker exec postgres pg_dump -U admin -d db -W > backup_file.sql
 ```
