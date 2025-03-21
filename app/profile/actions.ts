@@ -82,10 +82,8 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
 
     // If an admin is creating a profile for another user
     if (adminProvidedUserId && session.user.role === 'admin' && adminProvidedUserId !== session.user.id) {
-        console.log('Admin creating profile for user:', adminProvidedUserId);
         targetUserId = adminProvidedUserId;
     } else {
-        console.log('User creating own profile:', session.user.id);
     }
 
     // Validate form data
@@ -98,30 +96,12 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
     console.log('Form validation passed');
 
     try {
-        // Log all form data keys to see what's available
-        console.log('Form data keys:', Array.from(formData.keys()));
-        console.log('FORM DATA RECEIVED:', Object.fromEntries(formData.entries()));
-
         // Convert language and payment IDs to numbers
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
 
-        console.log('Selected languages:', languageIds);
-        console.log('Selected payment methods:', paymentMethodIds);
-
         // Process and upload images
         const imageFiles = formData.getAll('images') as File[];
-        console.log('Image files count:', imageFiles.length);
-
-        // Para verificar si están llegando los archivos correctos
-        if (imageFiles.length > 0) {
-            console.log('New images details:', imageFiles.map(file => ({
-                name: file.name,
-                size: file.size,
-                type: file.type
-            })));
-        }
-
         const processedImages = [];
 
         for (const imageFile of imageFiles) {
@@ -130,8 +110,6 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
                 console.log('Skipping empty file input');
                 continue;
             }
-
-            console.log('Processing image:', imageFile.name, 'size:', imageFile.size);
 
             // Convert File to Buffer for processing
             const buffer = Buffer.from(await imageFile.arrayBuffer());
@@ -147,8 +125,6 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
 
             processedImages.push(imageData);
         }
-
-        console.log('Total processed images:', processedImages.length);
 
         // Prepare data for profile creation
         const profileData = {
@@ -166,23 +142,11 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             paymentMethods: {
                 connect: paymentMethodIds.map(id => ({id}))
             },
-            // Pass processed images to the service
+
             processedImages: processedImages.length > 0 ? processedImages : undefined
         };
 
-        console.log('Profile data prepared:', {
-            userId: profileData.userId,
-            name: profileData.name,
-            price: profileData.price,
-            age: profileData.age,
-            hasLanguages: languageIds.length > 0,
-            hasPaymentMethods: paymentMethodIds.length > 0,
-            hasImages: processedImages.length > 0
-        });
-
-        console.log('Calling DataService.createProfile...');
-        const result = await DataService.createProfile(profileData);
-        console.log('Profile created successfully, ID:', result?.id);
+        await DataService.createProfile(profileData);
 
         revalidatePath('/profile');
         revalidatePath('/admin');
@@ -216,9 +180,8 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
 }
 
 export async function updateProfile(profileId: number, formData: FormData): Promise<ValidationResult> {
-    console.log('updateProfile action started for profile ID:', profileId);
-
     const session = await auth();
+
     if (!session || !session.user) {
         return {
             success: false,
@@ -267,16 +230,12 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
 
-        console.log('Selected languages:', languageIds);
-        console.log('Selected payment methods:', paymentMethodIds);
-
         let imageOrderData: { type: string, id: string | number, position: number }[] = [];
         const orderDataRaw = formData.get('imageOrderData');
 
         if (orderDataRaw) {
             try {
                 imageOrderData = JSON.parse(orderDataRaw as string);
-                console.log('Datos de orden de imágenes recibidos:', imageOrderData);
             } catch (error) {
                 console.error('Error parsing image order data:', error);
             }
@@ -287,7 +246,6 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         const existingImagesOrder: { key: string, order: number }[] = [];
 
         const orderedImageKeys = formData.getAll('existingImages');
-        console.log('Ordered image keys from form (ORDEN REAL):', orderedImageKeys);
 
         if (imageOrderData.length > 0) {
             const existingImagesInOrder = imageOrderData
@@ -297,11 +255,11 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             existingImagesInOrder.forEach(item => {
                 existingImagesOrder.push({
                     key: item.id as string,
-                    order: item.position // Usar la posición absoluta
+                    order: item.position
                 });
             });
         } else {
-            // Fallback al comportamiento anterior
+            // Fallback.
             orderedImageKeys.forEach((key, index) => {
                 existingImagesOrder.push({
                     key: key.toString(),
@@ -310,24 +268,10 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             });
         }
 
-        console.log('Existing images with order (ESTO ES LO QUE SE PROCESA):', existingImagesOrder);
 
         // Process and upload new images
         const imageFiles = formData.getAll('images') as File[];
         const imagePositions = formData.getAll('imagePositions').map(pos => Number(pos));
-
-        console.log('New image files count (NUEVAS IMÁGENES):', imageFiles.length);
-        console.log('Image positions:', imagePositions);
-
-        if (imageFiles.length > 0) {
-            console.log('New images details:', imageFiles.map((file, idx) => ({
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                position: imagePositions[idx] || idx
-            })));
-        }
-
         const processedImages = [];
 
         for (let i = 0; i < imageFiles.length; i++) {
@@ -337,18 +281,11 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             // Skip empty file inputs
             if (!(imageFile instanceof File) || imageFile.size === 0) continue;
 
-            console.log(`Processing new image ${i}: ${imageFile.name}, size: ${imageFile.size}, position: ${position}`);
-
             // Convert File to Buffer for processing
             const buffer = Buffer.from(await imageFile.arrayBuffer());
 
             // Process and upload image
             const imageData = await ImageService.processAndUploadImage(buffer);
-            console.log(`Image ${i} processed, got URLs:`, {
-                medium: imageData.mediumUrl,
-                thumbnail: imageData.thumbnailUrl,
-                highQuality: imageData.highQualityUrl
-            });
 
             // Add the position for this new image
             processedImages.push({
@@ -356,11 +293,6 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
                 order: position
             });
         }
-
-        console.log('Processed images with order:', processedImages.map(img => ({
-            url: img.mediumUrl,
-            order: img.order
-        })));
 
         // Prepare data for profile update
         const profileData = {
@@ -383,17 +315,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             existingImagesOrder: existingImagesOrder
         };
 
-        console.log('Profile data prepared for update:', {
-            name: profileData.name,
-            hasLanguages: languageIds.length > 0,
-            hasPaymentMethods: paymentMethodIds.length > 0,
-            existingImagesCount: existingImagesOrder.length,
-            newImagesCount: processedImages.length
-        });
-
-        console.log('Calling DataService.updateProfile...');
         await DataService.updateProfile(profileId, profileData);
-        console.log('Profile updated successfully');
 
         // Revalidate multiple paths to ensure fresh data
         revalidatePath('/profile');
