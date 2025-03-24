@@ -504,15 +504,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    // If we're creating a draft (editing a published profile as a regular user)
-                    if (isEditingPublished) {
-                        // Show success message about the draft creation
-                        alert('Your changes have been saved as a draft and will be reviewed by an administrator before being published.');
-                    }
                     // Redirect to appropriate page based on mode
-                    window.location.href = isAdminMode
-                        ? '/admin'
-                        : '/profile';
+                    window.location.href = isAdminMode ? '/admin' : '/profile';
                 }
             } else {
                 const result = await createProfile(updatedFormData);
