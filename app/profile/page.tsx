@@ -150,7 +150,10 @@ export default async function ProfilePage() {
                 </div>
             )}
 
-            <ProfilePageClient profile={displayProfile} />
+            <ProfilePageClient
+                profile={displayProfile}
+                draftId={draftProfile?.id || newProfileDraft?.id || null}
+            />
         </div>
     );
 }

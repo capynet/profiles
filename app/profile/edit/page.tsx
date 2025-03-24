@@ -1,7 +1,11 @@
+// app/profile/edit/page.tsx
+// Modify the existing file to check for drafts
+
 import {redirect} from 'next/navigation';
 import ProfileForm from '@/components/ProfileForm';
 import {DataService} from '@/services/dataService';
 import {auth} from '@/auth';
+import {prisma} from '@/prisma';
 
 export const metadata = {
     title: 'Edit profile',
@@ -15,6 +19,25 @@ export default async function EditProfilePage() {
         redirect('/login');
     }
 
+    // First check if there's a draft profile
+    const draftProfile = await prisma.profile.findFirst({
+        where: {
+            userId: session.user.id,
+            isDraft: true
+        },
+        include: {
+            languages: true,
+            paymentMethods: true,
+            images: true,
+        },
+    });
+
+    // If a draft exists, redirect to edit the draft instead
+    if (draftProfile) {
+        redirect(`/profile/edit/${draftProfile.id}`);
+    }
+
+    // Otherwise get the original profile
     const profiles = await DataService.getProfiles({userId: session.user.id});
     const profile = profiles[0];
 

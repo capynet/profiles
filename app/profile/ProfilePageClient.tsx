@@ -34,9 +34,10 @@ interface Profile {
 
 interface ProfilePageClientProps {
     profile?: Profile | null;
+    draftId?: number | null;
 }
 
-export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
+export default function ProfilePageClient({ profile, draftId }: ProfilePageClientProps) {
     const [modalImage, setModalImage] = useState<ProfileImage | null>(null);
     const [activeImage, setActiveImage] = useState<ProfileImage | null>(null);
 
@@ -299,7 +300,7 @@ export default function ProfilePageClient({ profile }: ProfilePageClientProps) {
 
                 <div className="mt-6 flex justify-end">
                     <Link
-                        href="/profile/edit"
+                        href={draftId ? `/profile/edit/${draftId}` : "/profile/edit"}
                         className="px-4 py-2 text-white bg-indigo-600 rounded hover:bg-indigo-700 transition-colors"
                     >
                         Editar Perfil

@@ -476,11 +476,12 @@ export const DataService = {
 
     async updateProfile(profileId: number, data: Prisma.ProfileUpdateInput & {
         processedImages?: ProcessedImageWithOrder[],
-        existingImagesOrder?: { key: string, order: number }[]
+        existingImagesOrder?: { key: string, order: number }[],
+        images?: string | any // Add this to the type definition
     }, userContext?: {userId: string, isAdmin: boolean}) {
         try {
             // Extract the custom fields
-            const {processedImages, existingImagesOrder, ...profileData} = data;
+            const {processedImages, existingImagesOrder, images, ...profileData} = data;
 
             // Get the profile to update
             const existingProfile = await prisma.profile.findUnique({
@@ -523,7 +524,7 @@ export const DataService = {
 
                 console.log('Creating new draft for published profile');
                 // Create a new draft based on the original
-                return this.createProfileDraft(existingProfile, data);
+                return this.createProfileDraft(existingProfile, {...data, images});
             }
 
             // Normal update logic for drafts or when admin is updating
