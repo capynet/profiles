@@ -32,22 +32,28 @@ model ProfileImage {
 
 // Update the Profile model
 model Profile {
-  id             Int                    @id @default(autoincrement())
-  userId         String                 @unique
-  name           String
-  price          Float
-  age            Int
-  description    String
-  latitude       Float
-  longitude      Float
-  address        String
-  published      Boolean                @default(false)
-  updatedAt      DateTime               @updatedAt
-  createdAt      DateTime               @default(now())
-  paymentMethods ProfilePaymentMethod[]
-  languages      ProfileLanguage[]
-  images         ProfileImage[]
-  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                Int                    @id @default(autoincrement())
+  userId            String // Ya no tiene @unique
+  name              String
+  price             Float
+  age               Int
+  description       String
+  latitude          Float
+  longitude         Float
+  address           String
+  published         Boolean                @default(false)
+  isDraft           Boolean                @default(false)
+  originalProfileId Int?
+  originalProfile   Profile?               @relation("DraftToOriginal", fields: [originalProfileId], references: [id], onDelete: SetNull)
+  drafts            Profile[]              @relation("DraftToOriginal")
+  updatedAt         DateTime               @updatedAt
+  createdAt         DateTime               @default(now())
+  paymentMethods    ProfilePaymentMethod[]
+  languages         ProfileLanguage[]
+  images            ProfileImage[]
+  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, published, isDraft])
 }
 
 model PaymentMethod {
@@ -90,10 +96,10 @@ model User {
   accounts      Account[]
   sessions      Session[]
   Authenticator Authenticator[]
+  profiles      Profile[] // Cambiado de profile Profile? a profiles Profile[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  profile   Profile?
 }
 
 model Account {

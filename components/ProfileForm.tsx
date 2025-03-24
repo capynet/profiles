@@ -20,6 +20,8 @@ type ProfileWithRelations = Profile & {
     paymentMethods: { paymentMethodId: number }[];
     languages: { languageId: number }[];
     images: ProfileImage[];
+    isDraft?: boolean;
+    originalProfileId?: number | null;
 };
 
 type ProfileFormProps = {
@@ -57,6 +59,9 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
 
     // Combined image list state for unified gallery
     const [unifiedImageItems, setUnifiedImageItems] = useState<{ id: string | number, url: string, isPrimary?: boolean, isNew?: boolean }[]>([]);
+
+    // Detect if we're editing a published profile (which will create a draft)
+    const isEditingPublished = isEditing && profile && profile.published && !profile.isDraft && !isAdminMode;
 
     // Initialize form data on load
     useEffect(() => {
@@ -476,6 +481,10 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
 
             updatedFormData.append('imageOrderData', JSON.stringify(completeOrderData));
 
+            // IMPORTANTE: Indicar explícitamente si estamos eliminando todas las imágenes
+            // Añadimos un campo para indicar que el usuario ha tocado la sección de imágenes
+            updatedFormData.append('images', 'explicit');  // esto indica que el usuario ha interactuado con las imágenes
+
             existingImagesData.forEach(item => {
                 updatedFormData.append('existingImages', item.id as string);
             });
@@ -495,6 +504,11 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
+                    // If we're creating a draft (editing a published profile as a regular user)
+                    if (isEditingPublished) {
+                        // Show success message about the draft creation
+                        alert('Your changes have been saved as a draft and will be reviewed by an administrator before being published.');
+                    }
                     // Redirect to appropriate page based on mode
                     window.location.href = isAdminMode
                         ? '/admin'
@@ -505,6 +519,10 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
+                    // If not admin, show info about approval process
+                    if (!isAdminMode) {
+                        alert('Your profile has been created and will be reviewed by an administrator before being published.');
+                    }
                     // Redirect to appropriate page based on mode
                     window.location.href = isAdminMode
                         ? '/admin'
@@ -551,6 +569,25 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                                 ? `Admin Mode: Editing profile #${profile?.id} for user ${profile?.user?.name || profile?.user?.email}`
                                 : `Admin Mode: Creating profile for user ID: ${userId}`
                             }
+                        </p>
+                    </div>
+                )}
+
+                {/* Draft indicator for published profiles being edited */}
+                {isEditingPublished && (
+                    <div className="mb-6 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                        <p className="text-yellow-800 dark:text-yellow-300 text-sm font-medium">
+                            Your changes will create a draft that requires administrator approval before becoming public.
+                            Your current published profile will remain visible until your changes are approved.
+                        </p>
+                    </div>
+                )}
+
+                {/* Draft indicator if editing an existing draft */}
+                {isEditing && profile && profile.isDraft && !isAdminMode && (
+                    <div className="mb-6 p-3 bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-md">
+                        <p className="text-blue-800 dark:text-blue-300 text-sm font-medium">
+                            You are editing a draft version of your profile. Your changes will need to be approved before becoming public.
                         </p>
                     </div>
                 )}
@@ -855,12 +892,12 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     >
                         {isSubmitting ? (
                             <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </span>
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Saving...
+                            </span>
                         ) : (
                             isEditing ? 'Update' : 'Create'
                         )}

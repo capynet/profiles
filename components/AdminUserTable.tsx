@@ -10,6 +10,8 @@ interface Profile {
     name: string;
     age: number;
     price: number;
+    isDraft?: boolean;
+    originalProfileId?: number | null;
 }
 
 interface User {
@@ -21,6 +23,7 @@ interface User {
     role: string;
     createdAt: Date;
     profile: Profile | null;
+    profiles?: Profile[]; // Opcional: para acceder a todos los perfiles si es necesario
 }
 
 interface AdminUserTableProps {
@@ -184,6 +187,11 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                         <div>
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                 {user.profile.name}
+                                                {user.profile.isDraft && (
+                                                    <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
+                                                        Draft
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">
                                                 {user.profile.age} years • {user.profile.price}€
@@ -191,18 +199,18 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                         </div>
                                     ) : (
                                         <span className="text-sm text-gray-500 dark:text-gray-400">
-                        No profile
-                      </span>
+                                            No profile
+                                        </span>
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.role === 'admin'
-                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                    }`}>
-                      {user.role}
-                    </span>
+                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                        user.role === 'admin'
+                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    }`}>
+                                      {user.role}
+                                    </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     {new Date(user.createdAt).toLocaleDateString()}

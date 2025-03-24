@@ -1,5 +1,5 @@
 // services/dataService.ts
-import {Prisma, ProfileImage} from "@prisma/client";
+import {Prisma, ProfileImage, Profile} from "@prisma/client";
 import {prisma} from "@/prisma";
 import {ImageService, ProcessedImage} from "./imageService";
 
@@ -9,7 +9,6 @@ interface ProcessedImageWithOrder extends ProcessedImage {
 }
 
 export const DataService = {
-
     async getAllLanguages() {
         try {
             return await prisma.language.findMany({
@@ -34,17 +33,41 @@ export const DataService = {
         }
     },
 
-    async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false) {
+    async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false, userContext?: {userId?: string, isAdmin?: boolean}) {
         try {
-            // Create a new where condition that includes the published filter
-            const finalWhere: Prisma.ProfileWhereInput = {
-                ...where,
-                // Only include non-published profiles if explicitly requested
-                ...(includeDrafts ? {} : { published: true })
-            };
+            // Base where condition
+            const baseWhere: Prisma.ProfileWhereInput = { ...where };
+
+            // Handling draft visibility logic
+            if (userContext?.userId) {
+                if (userContext.isAdmin) {
+                    // Admins can see everything by default
+                    if (!includeDrafts) {
+                        // But if not explicitly including drafts, show only published
+                        baseWhere.isDraft = false;
+                    }
+                } else {
+                    // Regular users see:
+                    if (includeDrafts) {
+                        // Their own drafts + published profiles
+                        baseWhere.OR = [
+                            { userId: userContext.userId }, // Their own profiles (published or draft)
+                            { published: true, isDraft: false } // Published profiles from others
+                        ];
+                    } else {
+                        // Only published profiles (default)
+                        baseWhere.published = true;
+                        baseWhere.isDraft = false;
+                    }
+                }
+            } else {
+                // Unauthenticated users see only published, non-draft profiles
+                baseWhere.published = true;
+                baseWhere.isDraft = false;
+            }
 
             return await prisma.profile.findMany({
-                where: finalWhere,
+                where: baseWhere,
                 include: {
                     languages: {include: {language: true}},
                     paymentMethods: {include: {paymentMethod: true}},
@@ -53,7 +76,13 @@ export const DataService = {
                         orderBy: {
                             position: 'asc'
                         }
-                    }
+                    },
+                    originalProfile: userContext?.isAdmin || (userContext?.userId && baseWhere.userId === userContext.userId)
+                        ? { select: { id: true, name: true } }
+                        : false,
+                    drafts: userContext?.isAdmin || (userContext?.userId && baseWhere.userId === userContext.userId)
+                        ? { select: { id: true, updatedAt: true } }
+                        : false
                 }
             });
         } catch (error) {
@@ -161,14 +190,311 @@ export const DataService = {
         }
     },
 
+    async createProfileDraft(originalProfile: Profile & {
+        images: ProfileImage[],
+        languages: {languageId: number}[],
+        paymentMethods: {paymentMethodId: number}[]
+    }, updateData: any) {
+        return await prisma.$transaction(async (tx) => {
+            // 1. Create a new profile as a draft, linked to the original
+            const draftProfile = await tx.profile.create({
+                data: {
+                    userId: originalProfile.userId,
+                    name: updateData.name || originalProfile.name,
+                    price: updateData.price !== undefined ? Number(updateData.price) : originalProfile.price,
+                    age: updateData.age !== undefined ? Number(updateData.age) : originalProfile.age,
+                    description: updateData.description || originalProfile.description,
+                    latitude: updateData.latitude !== undefined ? Number(updateData.latitude) : originalProfile.latitude,
+                    longitude: updateData.longitude !== undefined ? Number(updateData.longitude) : originalProfile.longitude,
+                    address: updateData.address || originalProfile.address,
+                    published: false, // Draft is not published
+                    isDraft: true,    // Mark as draft
+                    originalProfileId: originalProfile.id, // Link to original
+                }
+            });
+
+            console.log('Created draft profile:', draftProfile.id);
+
+            // 2. Clone language relationships if provided in updateData, otherwise use original
+            const languageIds = updateData.languages
+                ? updateData.languages instanceof Array
+                    ? updateData.languages.map((id: string) => Number(id))
+                    : []
+                : originalProfile.languages.map(l => l.languageId);
+
+            if (languageIds.length > 0) {
+                for (const langId of languageIds) {
+                    await tx.profileLanguage.create({
+                        data: {
+                            profileId: draftProfile.id,
+                            languageId: langId
+                        }
+                    });
+                }
+            }
+
+            // 3. Clone payment method relationships
+            const paymentMethodIds = updateData.paymentMethods
+                ? updateData.paymentMethods instanceof Array
+                    ? updateData.paymentMethods.map((id: string) => Number(id))
+                    : []
+                : originalProfile.paymentMethods.map(pm => pm.paymentMethodId);
+
+            if (paymentMethodIds.length > 0) {
+                for (const pmId of paymentMethodIds) {
+                    await tx.profilePaymentMethod.create({
+                        data: {
+                            profileId: draftProfile.id,
+                            paymentMethodId: pmId
+                        }
+                    });
+                }
+            }
+
+            // 4. Handle images - CORRECCIÓN PARA EL PROBLEMA DE ELIMINACIÓN DE IMÁGENES
+            // If new images are provided, use them
+            const processedImages = updateData.processedImages || [];
+            const existingImagesOrder = updateData.existingImagesOrder || [];
+
+            // Check if we should clone original images
+            // AQUÍ ESTÁ LA CORRECCIÓN: solo clonamos imágenes originales si no hay indicación explícita
+            // de que el usuario está enviando imágenes o eliminando imágenes
+            const shouldCloneOriginalImages = processedImages.length === 0 &&
+                existingImagesOrder.length === 0 &&
+                !updateData.hasOwnProperty('images') &&
+                originalProfile.images.length > 0;
+
+            if (shouldCloneOriginalImages) {
+                // Clone original images to the draft SOLO si no hay indicación de actualización de imágenes
+                console.log('Cloning original images to draft');
+                for (let position = 0; position < originalProfile.images.length; position++) {
+                    const img = originalProfile.images[position];
+                    await tx.profileImage.create({
+                        data: {
+                            profileId: draftProfile.id,
+                            position,
+                            mediumUrl: img.mediumUrl,
+                            mediumCdnUrl: img.mediumCdnUrl,
+                            mediumStorageKey: img.mediumStorageKey,
+                            thumbnailUrl: img.thumbnailUrl,
+                            thumbnailCdnUrl: img.thumbnailCdnUrl,
+                            thumbnailStorageKey: img.thumbnailStorageKey,
+                            highQualityUrl: img.highQualityUrl,
+                            highQualityCdnUrl: img.highQualityCdnUrl,
+                            highQualityStorageKey: img.highQualityStorageKey
+                        }
+                    });
+                }
+            } else if (processedImages.length > 0) {
+                // Create new images for the draft si hay nuevas imágenes
+                console.log('Adding new images to draft:', processedImages.length);
+                for (let position = 0; position < processedImages.length; position++) {
+                    const img = processedImages[position];
+                    await tx.profileImage.create({
+                        data: {
+                            profileId: draftProfile.id,
+                            position: img.order !== undefined ? img.order : position,
+                            mediumUrl: img.mediumUrl,
+                            mediumCdnUrl: img.mediumCdnUrl,
+                            mediumStorageKey: img.mediumStorageKey,
+                            thumbnailUrl: img.thumbnailUrl,
+                            thumbnailCdnUrl: img.thumbnailCdnUrl,
+                            thumbnailStorageKey: img.thumbnailStorageKey,
+                            highQualityUrl: img.highQualityUrl,
+                            highQualityCdnUrl: img.highQualityCdnUrl,
+                            highQualityStorageKey: img.highQualityStorageKey
+                        }
+                    });
+                }
+            } else {
+                // Si llegamos aquí, significa que el usuario intencionalmente quiere un borrador sin imágenes
+                console.log('Creating draft with no images');
+            }
+
+            // 5. Return the draft profile with all relationships
+            return tx.profile.findUnique({
+                where: { id: draftProfile.id },
+                include: {
+                    languages: { include: { language: true } },
+                    paymentMethods: { include: { paymentMethod: true } },
+                    images: {
+                        orderBy: {
+                            position: 'asc'
+                        }
+                    },
+                    originalProfile: true
+                }
+            });
+        });
+    },
+
+    async approveProfileDraft(draftId: number) {
+        return await prisma.$transaction(async (tx) => {
+            // Get the draft profile with all relationships
+            const draft = await tx.profile.findUnique({
+                where: { id: draftId },
+                include: {
+                    originalProfile: true,
+                    images: true,
+                    languages: true,
+                    paymentMethods: true
+                }
+            });
+
+            if (!draft) {
+                throw new Error('Draft profile not found');
+            }
+
+            if (!draft.isDraft || !draft.originalProfileId) {
+                throw new Error('This is not a valid draft profile');
+            }
+
+            const originalProfileId = draft.originalProfileId;
+
+            // 1. Get the language and payment method IDs from the draft
+            const languageIds = draft.languages.map(l => l.languageId);
+            const paymentMethodIds = draft.paymentMethods.map(pm => pm.paymentMethodId);
+
+            // 2. Clear existing relationships on the original profile
+            await tx.profileLanguage.deleteMany({
+                where: { profileId: originalProfileId }
+            });
+
+            await tx.profilePaymentMethod.deleteMany({
+                where: { profileId: originalProfileId }
+            });
+
+            // Delete original profile images
+            const originalImages = await tx.profileImage.findMany({
+                where: { profileId: originalProfileId }
+            });
+
+            for (const img of originalImages) {
+                await ImageService.deleteImage(img.mediumStorageKey);
+            }
+
+            await tx.profileImage.deleteMany({
+                where: { profileId: originalProfileId }
+            });
+
+            // 3. Update the original profile with the draft's data
+            const updatedProfile = await tx.profile.update({
+                where: { id: originalProfileId },
+                data: {
+                    name: draft.name,
+                    price: draft.price,
+                    age: draft.age,
+                    description: draft.description,
+                    latitude: draft.latitude,
+                    longitude: draft.longitude,
+                    address: draft.address,
+                    // Keep it published
+                    updatedAt: new Date()
+                }
+            });
+
+            // 4. Create new relationships on the original profile
+            // Languages
+            for (const langId of languageIds) {
+                await tx.profileLanguage.create({
+                    data: {
+                        profileId: originalProfileId,
+                        languageId: langId
+                    }
+                });
+            }
+
+            // Payment methods
+            for (const pmId of paymentMethodIds) {
+                await tx.profilePaymentMethod.create({
+                    data: {
+                        profileId: originalProfileId,
+                        paymentMethodId: pmId
+                    }
+                });
+            }
+
+            // Clone images from draft to original
+            for (const img of draft.images) {
+                await tx.profileImage.create({
+                    data: {
+                        profileId: originalProfileId,
+                        position: img.position,
+                        mediumUrl: img.mediumUrl,
+                        mediumCdnUrl: img.mediumCdnUrl,
+                        mediumStorageKey: img.mediumStorageKey,
+                        thumbnailUrl: img.thumbnailUrl,
+                        thumbnailCdnUrl: img.thumbnailCdnUrl,
+                        thumbnailStorageKey: img.thumbnailStorageKey,
+                        highQualityUrl: img.highQualityUrl,
+                        highQualityCdnUrl: img.highQualityCdnUrl,
+                        highQualityStorageKey: img.highQualityStorageKey
+                    }
+                });
+            }
+
+            // 5. Delete the draft
+            await tx.profile.delete({
+                where: { id: draftId }
+            });
+
+            return updatedProfile;
+        });
+    },
+
     async updateProfile(profileId: number, data: Prisma.ProfileUpdateInput & {
         processedImages?: ProcessedImageWithOrder[],
         existingImagesOrder?: { key: string, order: number }[]
-    }) {
+    }, userContext?: {userId: string, isAdmin: boolean}) {
         try {
-            // Extract the custom fields (not part of Prisma type)
+            // Extract the custom fields
             const {processedImages, existingImagesOrder, ...profileData} = data;
 
+            // Get the profile to update
+            const existingProfile = await prisma.profile.findUnique({
+                where: {id: profileId},
+                include: {
+                    images: true,
+                    languages: true,
+                    paymentMethods: true,
+                    drafts: true
+                }
+            });
+
+            if (!existingProfile) {
+                throw new Error(`Profile with ID ${profileId} not found`);
+            }
+
+            // Check if a draft should be created
+            // 1. Profile is published
+            // 2. User is not an admin
+            // 3. This profile is not already a draft
+            const shouldCreateDraft = existingProfile.published &&
+                !userContext?.isAdmin &&
+                !existingProfile.isDraft;
+
+            // If should create draft, check if one already exists
+            if (shouldCreateDraft) {
+                console.log('Checking for existing draft for profile:', profileId);
+
+                const existingDraft = await prisma.profile.findFirst({
+                    where: {
+                        originalProfileId: profileId,
+                        isDraft: true
+                    }
+                });
+
+                if (existingDraft) {
+                    console.log('Found existing draft, updating it instead:', existingDraft.id);
+                    return this.updateProfile(existingDraft.id, data, userContext);
+                }
+
+                console.log('Creating new draft for published profile');
+                // Create a new draft based on the original
+                return this.createProfileDraft(existingProfile, data);
+            }
+
+            // Normal update logic for drafts or when admin is updating
             // Extract language and payment method IDs
             const languageIds = profileData.languages
                 ? (profileData.languages as any).connect?.map((item: any) => item.id) || []
