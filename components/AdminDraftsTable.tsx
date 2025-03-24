@@ -67,10 +67,6 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
     };
 
     const handleReject = async (draftId: number) => {
-        if (!confirm('Are you sure you want to reject this draft? This action cannot be undone.')) {
-            return;
-        }
-
         try {
             setIsProcessing(draftId);
 

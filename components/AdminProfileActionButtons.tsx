@@ -40,11 +40,6 @@ export default function AdminProfileActionButtons({ profileId, isDraft, hasOrigi
     };
 
     const handleReject = async () => {
-        // Confirm before rejecting
-        if (!confirm('Are you sure you want to reject this draft? This action cannot be undone.')) {
-            return;
-        }
-
         try {
             setIsProcessing(true);
 
