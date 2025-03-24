@@ -26,7 +26,7 @@ export default async function ProfilePage() {
     );
     const profile = profiles?.[0] || null;
 
-    // Check if there's a draft version of this profile
+    // Check if there's a draft version of this profile and fetch the full draft data
     let draftProfile = null;
     if (profile) {
         draftProfile = await prisma.profile.findFirst({
@@ -34,9 +34,17 @@ export default async function ProfilePage() {
                 originalProfileId: profile.id,
                 isDraft: true
             },
-            select: {
-                id: true,
-                updatedAt: true
+            include: {
+                languages: {include: {language: true}},
+                paymentMethods: {include: {paymentMethod: true}},
+                images: {
+                    orderBy: {
+                        position: 'asc'
+                    }
+                },
+                user: {
+                    select: {name: true, email: true}
+                }
             }
         });
     }
@@ -50,17 +58,32 @@ export default async function ProfilePage() {
                 isDraft: true,
                 originalProfileId: null
             },
-            select: {
-                id: true,
-                updatedAt: true
+            include: {
+                languages: {include: {language: true}},
+                paymentMethods: {include: {paymentMethod: true}},
+                images: {
+                    orderBy: {
+                        position: 'asc'
+                    }
+                },
+                user: {
+                    select: {name: true, email: true}
+                }
             }
         });
     }
 
+    // Determine which profile to display:
+    // 1. Draft of existing profile, if it exists
+    // 2. New profile draft, if it exists
+    // 3. Published profile, if it exists
+    // 4. null, if none exist
+    const displayProfile = draftProfile || newProfileDraft || profile;
+
     return (
         <div className="container mx-auto py-8 px-4">
             {/* Show warning if profile is not published */}
-            {profile && !profile.published && (
+            {profile && !profile.published && !draftProfile && (
                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md shadow-sm">
                     <div className="flex">
                         <div className="flex-shrink-0">
@@ -76,7 +99,7 @@ export default async function ProfilePage() {
                 </div>
             )}
 
-            {/* Show info banner if there is a pending draft */}
+            {/* Show info banner if there is a pending draft and we're displaying it */}
             {draftProfile && (
                 <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-md shadow-sm">
                     <div className="flex">
@@ -86,14 +109,14 @@ export default async function ProfilePage() {
                             </svg>
                         </div>
                         <div className="ml-3">
-                            <p className="text-sm font-medium">You have pending changes</p>
-                            <p className="text-xs mt-1">Your profile updates are awaiting admin approval. The current profile will remain visible until your changes are approved.</p>
+                            <p className="text-sm font-medium">You are viewing your draft changes</p>
+                            <p className="text-xs mt-1">These changes are awaiting admin approval. Your current profile remains visible to others until these changes are approved.</p>
                             <p className="mt-2">
                                 <Link
-                                    href={`/profile/draft/${draftProfile.id}`}
+                                    href={`/profile/view/${profile.id}`}
                                     className="inline-block text-xs text-blue-600 hover:text-blue-800"
                                 >
-                                    View pending changes
+                                    View published profile
                                 </Link>
                                 <span className="text-xs text-blue-400 mx-2">•</span>
                                 <span className="text-xs text-blue-400">
@@ -105,7 +128,7 @@ export default async function ProfilePage() {
                 </div>
             )}
 
-            {/* Show info banner if user has a new profile draft */}
+            {/* Show info banner if user has a new profile draft and we're displaying it */}
             {newProfileDraft && (
                 <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded-md shadow-sm">
                     <div className="flex">
@@ -116,15 +139,8 @@ export default async function ProfilePage() {
                         </div>
                         <div className="ml-3">
                             <p className="text-sm font-medium">Your profile is awaiting approval</p>
-                            <p className="text-xs mt-1">You have a profile that is waiting for administrator approval before it becomes public.</p>
+                            <p className="text-xs mt-1">You are viewing your profile draft. It will be visible to others after administrator approval.</p>
                             <p className="mt-2">
-                                <Link
-                                    href={`/profile/draft/${newProfileDraft.id}`}
-                                    className="inline-block text-xs text-blue-600 hover:text-blue-800"
-                                >
-                                    View profile draft
-                                </Link>
-                                <span className="text-xs text-blue-400 mx-2">•</span>
                                 <span className="text-xs text-blue-400">
                                     Created: {new Date(newProfileDraft.updatedAt).toLocaleDateString()}
                                 </span>
@@ -134,7 +150,7 @@ export default async function ProfilePage() {
                 </div>
             )}
 
-            <ProfilePageClient profile={profile} />
+            <ProfilePageClient profile={displayProfile} />
         </div>
     );
 }
