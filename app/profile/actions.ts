@@ -273,7 +273,6 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             });
         }
 
-
         // Process and upload new images
         const imageFiles = formData.getAll('images') as File[];
         const imagePositions = formData.getAll('imagePositions').map(pos => Number(pos));
@@ -330,7 +329,9 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             // Pass processed images and images to keep to the service,
             // now with order information
             processedImages: processedImages.length > 0 ? processedImages : undefined,
-            existingImagesOrder: existingImagesOrder
+            existingImagesOrder: existingImagesOrder,
+            // Add the images flag to indicate explicit interaction with images
+            images: formData.get('images')
         };
 
         await DataService.updateProfile(profileId, profileData);
