@@ -251,49 +251,84 @@ export const DataService = {
                 }
             }
 
-            // 4. Handle images - CORRECCIÓN PARA EL PROBLEMA DE ELIMINACIÓN DE IMÁGENES
-            // If new images are provided, use them
+            // 4. Handle images - FIXING THE IMAGE HANDLING
+            // Process any explicit instruction to remove all images
+            const explicitlyRemovingAllImages = updateData.hasOwnProperty('images') &&
+                updateData.images === 'explicit' &&
+                (!updateData.existingImagesOrder || updateData.existingImagesOrder.length === 0) &&
+                (!updateData.processedImages || updateData.processedImages.length === 0);
+
+            // Get new images data
             const processedImages = updateData.processedImages || [];
             const existingImagesOrder = updateData.existingImagesOrder || [];
 
-            // Check if we should clone original images
-            // AQUÍ ESTÁ LA CORRECCIÓN: solo clonamos imágenes originales si no hay indicación explícita
-            // de que el usuario está enviando imágenes o eliminando imágenes
-            const shouldCloneOriginalImages = processedImages.length === 0 &&
-                existingImagesOrder.length === 0 &&
-                !updateData.hasOwnProperty('images') &&
-                originalProfile.images.length > 0;
+            // Determine if we should clone original images
+            const shouldCloneOriginalImages = !explicitlyRemovingAllImages && originalProfile.images.length > 0;
 
+            let nextPosition = 0;
+
+            // First, clone original images to the draft if needed
             if (shouldCloneOriginalImages) {
-                // Clone original images to the draft SOLO si no hay indicación de actualización de imágenes
-                console.log('Cloning original images to draft');
-                for (let position = 0; position < originalProfile.images.length; position++) {
-                    const img = originalProfile.images[position];
-                    await tx.profileImage.create({
-                        data: {
-                            profileId: draftProfile.id,
-                            position,
-                            mediumUrl: img.mediumUrl,
-                            mediumCdnUrl: img.mediumCdnUrl,
-                            mediumStorageKey: img.mediumStorageKey,
-                            thumbnailUrl: img.thumbnailUrl,
-                            thumbnailCdnUrl: img.thumbnailCdnUrl,
-                            thumbnailStorageKey: img.thumbnailStorageKey,
-                            highQualityUrl: img.highQualityUrl,
-                            highQualityCdnUrl: img.highQualityCdnUrl,
-                            highQualityStorageKey: img.highQualityStorageKey
-                        }
+                // If we have an explicit order for existing images, use that
+                if (existingImagesOrder.length > 0) {
+                    // Create a map for looking up original images by storage key
+                    const originalImageMap = new Map<string, ProfileImage>();
+                    originalProfile.images.forEach(img => {
+                        originalImageMap.set(img.mediumStorageKey, img);
                     });
+
+                    // Add only the images specified in existingImagesOrder
+                    for (const orderItem of existingImagesOrder) {
+                        const originalImage = originalImageMap.get(orderItem.key);
+                        if (originalImage) {
+                            await tx.profileImage.create({
+                                data: {
+                                    profileId: draftProfile.id,
+                                    position: orderItem.order || nextPosition++,
+                                    mediumUrl: originalImage.mediumUrl,
+                                    mediumCdnUrl: originalImage.mediumCdnUrl,
+                                    mediumStorageKey: originalImage.mediumStorageKey,
+                                    thumbnailUrl: originalImage.thumbnailUrl,
+                                    thumbnailCdnUrl: originalImage.thumbnailCdnUrl,
+                                    thumbnailStorageKey: originalImage.thumbnailStorageKey,
+                                    highQualityUrl: originalImage.highQualityUrl,
+                                    highQualityCdnUrl: originalImage.highQualityCdnUrl,
+                                    highQualityStorageKey: originalImage.highQualityStorageKey
+                                }
+                            });
+                        }
+                    }
+                } else {
+                    // No specific order provided, clone all original images in their current order
+                    console.log('Cloning original images to draft');
+                    for (const img of originalProfile.images) {
+                        await tx.profileImage.create({
+                            data: {
+                                profileId: draftProfile.id,
+                                position: nextPosition++,
+                                mediumUrl: img.mediumUrl,
+                                mediumCdnUrl: img.mediumCdnUrl,
+                                mediumStorageKey: img.mediumStorageKey,
+                                thumbnailUrl: img.thumbnailUrl,
+                                thumbnailCdnUrl: img.thumbnailCdnUrl,
+                                thumbnailStorageKey: img.thumbnailStorageKey,
+                                highQualityUrl: img.highQualityUrl,
+                                highQualityCdnUrl: img.highQualityCdnUrl,
+                                highQualityStorageKey: img.highQualityStorageKey
+                            }
+                        });
+                    }
                 }
-            } else if (processedImages.length > 0) {
-                // Create new images for the draft si hay nuevas imágenes
+            }
+
+            // Then, add any new images
+            if (processedImages.length > 0) {
                 console.log('Adding new images to draft:', processedImages.length);
-                for (let position = 0; position < processedImages.length; position++) {
-                    const img = processedImages[position];
+                for (const img of processedImages) {
                     await tx.profileImage.create({
                         data: {
                             profileId: draftProfile.id,
-                            position: img.order !== undefined ? img.order : position,
+                            position: img.order !== undefined ? img.order : nextPosition++,
                             mediumUrl: img.mediumUrl,
                             mediumCdnUrl: img.mediumCdnUrl,
                             mediumStorageKey: img.mediumStorageKey,
@@ -306,9 +341,6 @@ export const DataService = {
                         }
                     });
                 }
-            } else {
-                // Si llegamos aquí, significa que el usuario intencionalmente quiere un borrador sin imágenes
-                console.log('Creating draft with no images');
             }
 
             // 5. Return the draft profile with all relationships
