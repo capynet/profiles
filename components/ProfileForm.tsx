@@ -7,6 +7,9 @@ import { Profile, ProfileImage } from '@prisma/client';
 import { createProfile, updateProfile } from '@/app/profile/actions';
 import ImageCropModal from './ImageCropModal';
 import ProfileImageManager from './ProfileImageManager';
+import LanguageSelector from './LanguageSelector';
+import PaymentMethodSelector from './PaymentMethodSelector';
+import AdminControls from './AdminControls';
 import { useProfileImages } from '@/hooks/useProfileImages';
 
 // Define interfaces outside the component
@@ -16,6 +19,11 @@ type ProfileWithRelations = Profile & {
     images: ProfileImage[];
     isDraft?: boolean;
     originalProfileId?: number | null;
+    user?: {
+        name: string | null;
+        email: string;
+        id: string;
+    };
 };
 
 type ProfileFormProps = {
@@ -29,8 +37,6 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
     const router = useRouter();
 
     // Form data states
-    const [languages, setLanguages] = useState<{ id: number; name: string }[]>([]);
-    const [paymentMethods, setPaymentMethods] = useState<{ id: number; name: string }[]>([]);
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
     const [isPublished, setIsPublished] = useState<boolean>(false);
@@ -58,56 +64,20 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
 
     // Initialize form data on load
     useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                const [langResponse, pmResponse] = await Promise.all([
-                    fetch('/api/languages'),
-                    fetch('/api/payment-methods')
-                ]);
-
-                if (!langResponse.ok || !pmResponse.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-
-                const fetchedLanguages = await langResponse.json();
-                const fetchedPaymentMethods = await pmResponse.json();
-
-                setLanguages(fetchedLanguages);
-                setPaymentMethods(fetchedPaymentMethods);
-
-                // Set default selected values if profile exists
-                if (profile) {
-                    setSelectedLanguages(profile.languages.map(l => l.languageId));
-                    setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
-                    setIsPublished(profile.published || false);
-                }
-            } catch (error) {
-                console.error('Error fetching form data:', error);
-            } finally {
-                setIsLoading(false);
+        setIsLoading(true);
+        try {
+            // Set default selected values if profile exists
+            if (profile) {
+                setSelectedLanguages(profile.languages.map(l => l.languageId));
+                setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
+                setIsPublished(profile.published || false);
             }
-        };
-
-        fetchData();
+        } catch (error) {
+            console.error('Error initializing form data:', error);
+        } finally {
+            setIsLoading(false);
+        }
     }, [profile]);
-
-    // Form input handlers
-    const handleLanguageChange = (languageId: number) => {
-        setSelectedLanguages(prev =>
-            prev.includes(languageId)
-                ? prev.filter(id => id !== languageId)
-                : [...prev, languageId]
-        );
-    };
-
-    const handlePaymentMethodChange = (paymentMethodId: number) => {
-        setSelectedPaymentMethods(prev =>
-            prev.includes(paymentMethodId)
-                ? prev.filter(id => id !== paymentMethodId)
-                : [...prev, paymentMethodId]
-        );
-    };
 
     const handleSubmit = async (formData: FormData) => {
         setIsSubmitting(true);
@@ -196,7 +166,6 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
 
     // Define CSS classes
     const inputClassName = "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white";
-    const checkboxClassName = "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded";
 
     // Render loading state
     if (isLoading) {
@@ -375,80 +344,35 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         </div>
                     </div>
 
-                    {/* Payment Methods */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment Methods</label>
-                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
-                            {paymentMethods.length > 0 ? (
-                                paymentMethods.map(method => (
-                                    <div key={method.id} className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id={`payment-method-${method.id}`}
-                                            checked={selectedPaymentMethods.includes(method.id)}
-                                            onChange={() => handlePaymentMethodChange(method.id)}
-                                            className={checkboxClassName}
-                                        />
-                                        <label htmlFor={`payment-method-${method.id}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                            {method.name}
-                                        </label>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">No payment methods available</div>
-                            )}
-                        </div>
-                        {errors.paymentMethods && <p className="mt-1 text-sm text-red-600 font-medium">{errors.paymentMethods[0]}</p>}
+                    {/* Payment Methods Selector */}
+                    <div>
+                        <PaymentMethodSelector
+                            selectedPaymentMethods={selectedPaymentMethods}
+                            onChange={setSelectedPaymentMethods}
+                            error={errors.paymentMethods?.[0]}
+                        />
                     </div>
 
-                    {/* Languages */}
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Languages</label>
-                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
-                            {languages.length > 0 ? (
-                                languages.map(language => (
-                                    <div key={language.id} className="flex items-center">
-                                        <input
-                                            type="checkbox"
-                                            id={`language-${language.id}`}
-                                            checked={selectedLanguages.includes(language.id)}
-                                            onChange={() => handleLanguageChange(language.id)}
-                                            className={checkboxClassName}
-                                        />
-                                        <label htmlFor={`language-${language.id}`} className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                                            {language.name}
-                                        </label>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">No languages available</div>
-                            )}
-                        </div>
-                        {errors.languages && <p className="mt-1 text-sm text-red-600 font-medium">{errors.languages[0]}</p>}
+                    {/* Languages Selector */}
+                    <div>
+                        <LanguageSelector
+                            selectedLanguages={selectedLanguages}
+                            onChange={setSelectedLanguages}
+                            error={errors.languages?.[0]}
+                        />
                     </div>
                 </div>
 
-                {/* Admin-only publication control */}
+                {/* Admin Controls Component */}
                 {isAdminMode && (
-                    <div className="md:col-span-2 space-y-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Admin Options</h3>
-                        <div className="flex items-center">
-                            <input
-                                type="checkbox"
-                                id="published"
-                                name="published"
-                                checked={isPublished}
-                                onChange={(e) => setIsPublished(e.target.checked)}
-                                className={checkboxClassName}
-                            />
-                            <label htmlFor="published" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Publish profile (visible to public)
-                            </label>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Only published profiles are visible in search results and the main page
-                        </p>
-                    </div>
+                    <AdminControls
+                        isPublished={isPublished}
+                        onPublishedChange={setIsPublished}
+                        profileId={profile?.id}
+                        profileName={profile?.name}
+                        userName={profile?.user?.name}
+                        userEmail={profile?.user?.email}
+                    />
                 )}
 
                 {/* Form actions */}
