@@ -51,9 +51,26 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
             }
         }
 
-        // Delete the draft profile and all its relationships
-        await prisma.profile.delete({
-            where: { id: draftId }
+        // Use a transaction to ensure all related records are deleted
+        await prisma.$transaction(async (tx) => {
+            // First delete all profile relationships
+            await tx.profilePaymentMethod.deleteMany({
+                where: { profileId: draftId }
+            });
+
+            await tx.profileLanguage.deleteMany({
+                where: { profileId: draftId }
+            });
+
+            // Then delete profile images
+            await tx.profileImage.deleteMany({
+                where: { profileId: draftId }
+            });
+
+            // Finally delete the profile itself
+            await tx.profile.delete({
+                where: { id: draftId }
+            });
         });
 
         // Revalidate relevant paths
