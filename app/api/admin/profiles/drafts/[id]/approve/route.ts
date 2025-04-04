@@ -25,7 +25,6 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
             );
         }
 
-        // Approve the draft
         await DataService.approveProfileDraft(draftId);
 
         // Revalidate relevant paths

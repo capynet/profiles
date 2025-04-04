@@ -91,6 +91,45 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
         }
     };
 
+    // Handle profile deletion
+    const handleDeleteProfile = async (profileId: number) => {
+        if (!window.confirm('Are you sure you want to delete this profile? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            setIsUpdating(true);
+            const response = await fetch(`/api/admin/profiles/${profileId}/delete`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete profile');
+            }
+
+            setStatusMessage({
+                type: 'success',
+                text: 'Profile deleted successfully!'
+            });
+
+            // Refresh the page data
+            router.refresh();
+
+            // Clear the message after 3 seconds
+            setTimeout(() => {
+                setStatusMessage(null);
+            }, 3000);
+        } catch (error) {
+            console.error('Error deleting profile:', error);
+            setStatusMessage({
+                type: 'error',
+                text: 'Failed to delete profile. Please try again.'
+            });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     return (
         <div>
             {/* Status message */}
@@ -217,12 +256,21 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 space-x-3">
                                     {user.profile ? (
-                                        <Link
-                                            href={`/admin/profiles/${user.profile.id}/edit`}
-                                            className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                        >
-                                            Edit Profile
-                                        </Link>
+                                        <>
+                                            <Link
+                                                href={`/admin/profiles/${user.profile.id}/edit`}
+                                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                            >
+                                                Edit Profile
+                                            </Link>
+                                            <button
+                                                onClick={() => handleDeleteProfile(user.profile.id)}
+                                                disabled={isUpdating}
+                                                className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                            >
+                                                Delete
+                                            </button>
+                                        </>
                                     ) : (
                                         <Link
                                             href={`/admin/profiles/create?userId=${user.id}`}

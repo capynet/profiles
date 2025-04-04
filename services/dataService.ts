@@ -33,10 +33,10 @@ export const DataService = {
         }
     },
 
-    async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false, userContext?: {userId?: string, isAdmin?: boolean}) {
+    async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false, userContext?: { userId?: string, isAdmin?: boolean }) {
         try {
             // Base where condition
-            const baseWhere: Prisma.ProfileWhereInput = { ...where };
+            const baseWhere: Prisma.ProfileWhereInput = {...where};
 
             // Handling draft visibility logic
             if (userContext?.userId) {
@@ -51,8 +51,8 @@ export const DataService = {
                     if (includeDrafts) {
                         // Their own drafts + published profiles
                         baseWhere.OR = [
-                            { userId: userContext.userId }, // Their own profiles (published or draft)
-                            { published: true, isDraft: false } // Published profiles from others
+                            {userId: userContext.userId}, // Their own profiles (published or draft)
+                            {published: true, isDraft: false} // Published profiles from others
                         ];
                     } else {
                         // Only published profiles (default)
@@ -78,10 +78,10 @@ export const DataService = {
                         }
                     },
                     originalProfile: userContext?.isAdmin || (userContext?.userId && baseWhere.userId === userContext.userId)
-                        ? { select: { id: true, name: true } }
+                        ? {select: {id: true, name: true}}
                         : false,
                     drafts: userContext?.isAdmin || (userContext?.userId && baseWhere.userId === userContext.userId)
-                        ? { select: { id: true, updatedAt: true } }
+                        ? {select: {id: true, updatedAt: true}}
                         : false
                 }
             });
@@ -100,89 +100,87 @@ export const DataService = {
             // Extract the processedImages field (not part of Prisma type)
             const {processedImages, ...profileData} = data;
 
-            // Extract connect objects to handle them separately
-            const {languages, paymentMethods, ...basicProfileData} = profileData;
+            // Use transaction to ensure all operations succeed or fail together
+            return await prisma.$transaction(async (tx) => {
+                // Extract connect objects to handle them separately
+                const {languages, paymentMethods, ...basicProfileData} = profileData;
 
-            // Create profile first without relations
-            console.log('Creating profile with basic data (no relations)');
-            const profile = await prisma.profile.create({
-                data: {
-                    ...basicProfileData,
-                    images: {create: []},
-                    languages: {create: []},
-                    paymentMethods: {create: []}
-                },
-            });
+                // Create profile first without relations
+                console.log('Creating profile with basic data (no relations)');
+                const profile = await tx.profile.create({
+                    data: basicProfileData,
+                });
 
-            console.log('Profile created with ID:', profile.id);
+                console.log('Profile created with ID:', profile.id);
 
-            // Now handle language relationships if they exist
-            if (languages && 'connect' in languages && Array.isArray(languages.connect) && languages.connect.length > 0) {
-                console.log('Adding languages:', languages.connect.length);
+                // Now handle language relationships if they exist
+                if (languages && 'connect' in languages && Array.isArray(languages.connect) && languages.connect.length > 0) {
+                    console.log('Adding languages:', languages.connect.length);
 
-                for (const lang of languages.connect) {
-                    await prisma.profileLanguage.create({
-                        data: {
-                            profileId: profile.id,
-                            languageId: lang.id
-                        }
-                    });
-                }
-            }
-
-            // Handle payment method relationships if they exist
-            if (paymentMethods && 'connect' in paymentMethods && Array.isArray(paymentMethods.connect) && paymentMethods.connect.length > 0) {
-                console.log('Adding payment methods:', paymentMethods.connect.length);
-
-                for (const method of paymentMethods.connect) {
-                    await prisma.profilePaymentMethod.create({
-                        data: {
-                            profileId: profile.id,
-                            paymentMethodId: method.id
-                        }
-                    });
-                }
-            }
-
-            // Handle images if they exist - with position for order
-            if (processedImages && processedImages.length > 0) {
-                console.log('Adding images:', processedImages.length);
-
-                for (let position = 0; position < processedImages.length; position++) {
-                    const img = processedImages[position];
-                    await prisma.profileImage.create({
-                        data: {
-                            profileId: profile.id,
-                            position,
-                            // Medium quality (default)
-                            mediumUrl: img.mediumUrl,
-                            mediumCdnUrl: img.mediumCdnUrl,
-                            mediumStorageKey: img.mediumStorageKey,
-                            // Thumbnail version
-                            thumbnailUrl: img.thumbnailUrl,
-                            thumbnailCdnUrl: img.thumbnailCdnUrl,
-                            thumbnailStorageKey: img.thumbnailStorageKey,
-                            // High quality version
-                            highQualityUrl: img.highQualityUrl,
-                            highQualityCdnUrl: img.highQualityCdnUrl,
-                            highQualityStorageKey: img.highQualityStorageKey
-                        }
-                    });
-                }
-            }
-
-            // Return the complete profile with related data
-            return await prisma.profile.findUnique({
-                where: {id: profile.id},
-                include: {
-                    languages: {include: {language: true}},
-                    paymentMethods: {include: {paymentMethod: true}},
-                    images: {
-                        orderBy: {
-                            position: 'asc'
-                        }
+                    for (const lang of languages.connect) {
+                        await tx.profileLanguage.create({
+                            data: {
+                                profileId: profile.id,
+                                languageId: lang.id
+                            }
+                        });
                     }
                 }
+
+                // Handle payment method relationships if they exist
+                if (paymentMethods && 'connect' in paymentMethods && Array.isArray(paymentMethods.connect) && paymentMethods.connect.length > 0) {
+                    console.log('Adding payment methods:', paymentMethods.connect.length);
+
+                    for (const method of paymentMethods.connect) {
+                        await tx.profilePaymentMethod.create({
+                            data: {
+                                profileId: profile.id,
+                                paymentMethodId: method.id
+                            }
+                        });
+                    }
+                }
+
+                // Handle images if they exist - with position for order
+                if (processedImages && processedImages.length > 0) {
+                    console.log('Adding images:', processedImages.length);
+
+                    for (let position = 0; position < processedImages.length; position++) {
+                        const img = processedImages[position];
+                        await tx.profileImage.create({
+                            data: {
+                                profileId: profile.id,
+                                position,
+                                // Medium quality (default)
+                                mediumUrl: img.mediumUrl,
+                                mediumCdnUrl: img.mediumCdnUrl,
+                                mediumStorageKey: img.mediumStorageKey,
+                                // Thumbnail version
+                                thumbnailUrl: img.thumbnailUrl,
+                                thumbnailCdnUrl: img.thumbnailCdnUrl,
+                                thumbnailStorageKey: img.thumbnailStorageKey,
+                                // High quality version
+                                highQualityUrl: img.highQualityUrl,
+                                highQualityCdnUrl: img.highQualityCdnUrl,
+                                highQualityStorageKey: img.highQualityStorageKey
+                            }
+                        });
+                    }
+                }
+
+                // Return the complete profile with related data
+                return await tx.profile.findUnique({
+                    where: {id: profile.id},
+                    include: {
+                        languages: {include: {language: true}},
+                        paymentMethods: {include: {paymentMethod: true}},
+                        images: {
+                            orderBy: {
+                                position: 'asc'
+                            }
+                        }
+                    }
+                });
             });
         } catch (error) {
             console.error('Error creating profile:', error);
@@ -192,8 +190,8 @@ export const DataService = {
 
     async createProfileDraft(originalProfile: Profile & {
         images: ProfileImage[],
-        languages: {languageId: number}[],
-        paymentMethods: {paymentMethodId: number}[]
+        languages: { languageId: number }[],
+        paymentMethods: { paymentMethodId: number }[]
     }, updateData: any) {
         return await prisma.$transaction(async (tx) => {
             // 1. Create a new profile as a draft, linked to the original
@@ -345,10 +343,10 @@ export const DataService = {
 
             // 5. Return the draft profile with all relationships
             return tx.profile.findUnique({
-                where: { id: draftProfile.id },
+                where: {id: draftProfile.id},
                 include: {
-                    languages: { include: { language: true } },
-                    paymentMethods: { include: { paymentMethod: true } },
+                    languages: {include: {language: true}},
+                    paymentMethods: {include: {paymentMethod: true}},
                     images: {
                         orderBy: {
                             position: 'asc'
@@ -364,7 +362,7 @@ export const DataService = {
         return await prisma.$transaction(async (tx) => {
             // Get the draft profile with all relationships
             const draft = await tx.profile.findUnique({
-                where: { id: draftId },
+                where: {id: draftId},
                 include: {
                     originalProfile: true,
                     images: true,
@@ -389,16 +387,16 @@ export const DataService = {
 
             // 2. Clear existing relationships on the original profile
             await tx.profileLanguage.deleteMany({
-                where: { profileId: originalProfileId }
+                where: {profileId: originalProfileId}
             });
 
             await tx.profilePaymentMethod.deleteMany({
-                where: { profileId: originalProfileId }
+                where: {profileId: originalProfileId}
             });
 
             // Delete original profile images
             const originalImages = await tx.profileImage.findMany({
-                where: { profileId: originalProfileId }
+                where: {profileId: originalProfileId}
             });
 
             for (const img of originalImages) {
@@ -406,12 +404,12 @@ export const DataService = {
             }
 
             await tx.profileImage.deleteMany({
-                where: { profileId: originalProfileId }
+                where: {profileId: originalProfileId}
             });
 
             // 3. Update the original profile with the draft's data
             const updatedProfile = await tx.profile.update({
-                where: { id: originalProfileId },
+                where: {id: originalProfileId},
                 data: {
                     name: draft.name,
                     price: draft.price,
@@ -467,7 +465,7 @@ export const DataService = {
 
             // 5. Delete the draft
             await tx.profile.delete({
-                where: { id: draftId }
+                where: {id: draftId}
             });
 
             return updatedProfile;
@@ -478,7 +476,7 @@ export const DataService = {
         processedImages?: ProcessedImageWithOrder[],
         existingImagesOrder?: { key: string, order: number }[],
         images?: string | any // Add this to the type definition
-    }, userContext?: {userId: string, isAdmin: boolean}) {
+    }, userContext?: { userId: string, isAdmin: boolean }) {
         try {
             // Extract the custom fields
             const {processedImages, existingImagesOrder, images, ...profileData} = data;
@@ -583,7 +581,7 @@ export const DataService = {
                 // We'll recreate them with the correct order
                 console.log('Deleting all existing image records to recreate with correct order');
                 await tx.profileImage.deleteMany({
-                    where: { profileId }
+                    where: {profileId}
                 });
 
                 // First, update the basic profile data
@@ -669,7 +667,7 @@ export const DataService = {
 
                 // Create all image records with the correct position
                 for (let position = 0; position < allImagesToCreate.length; position++) {
-                    const { imageData, isNew } = allImagesToCreate[position];
+                    const {imageData, isNew} = allImagesToCreate[position];
 
                     if (isNew) {
                         // It's a new image
