@@ -36,7 +36,15 @@ type ProfileFormProps = {
 export default function ProfileForm({profile, isEditing = false, isAdminMode = false, userId}: ProfileFormProps) {
     const router = useRouter();
 
-    // Form data states
+    // Form data states - controlled inputs
+    const [name, setName] = useState(profile?.name || '');
+    const [price, setPrice] = useState(profile?.price?.toString() || '0');
+    const [age, setAge] = useState(profile?.age?.toString() || '18');
+    const [description, setDescription] = useState(profile?.description || '');
+    const [latitude, setLatitude] = useState(profile?.latitude?.toString() || '0');
+    const [longitude, setLongitude] = useState(profile?.longitude?.toString() || '0');
+    const [address, setAddress] = useState(profile?.address || '');
+
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
     const [isPublished, setIsPublished] = useState<boolean>(false);
@@ -68,6 +76,13 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
         try {
             // Set default selected values if profile exists
             if (profile) {
+                setName(profile.name || '');
+                setPrice(profile.price?.toString() || '0');
+                setAge(profile.age?.toString() || '18');
+                setDescription(profile.description || '');
+                setLatitude(profile.latitude?.toString() || '0');
+                setLongitude(profile.longitude?.toString() || '0');
+                setAddress(profile.address || '');
                 setSelectedLanguages(profile.languages.map(l => l.languageId));
                 setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
                 setIsPublished(profile.published || false);
@@ -92,14 +107,14 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 updatedFormData.append('userId', userId);
             }
 
-            // Add basic form fields
-            updatedFormData.append('name', formData.get('name') as string);
-            updatedFormData.append('price', formData.get('price') as string);
-            updatedFormData.append('age', formData.get('age') as string);
-            updatedFormData.append('description', formData.get('description') as string);
-            updatedFormData.append('latitude', formData.get('latitude') as string);
-            updatedFormData.append('longitude', formData.get('longitude') as string);
-            updatedFormData.append('address', formData.get('address') as string);
+            // Add basic form fields using state values
+            updatedFormData.append('name', name);
+            updatedFormData.append('price', price);
+            updatedFormData.append('age', age);
+            updatedFormData.append('description', description);
+            updatedFormData.append('latitude', latitude);
+            updatedFormData.append('longitude', longitude);
+            updatedFormData.append('address', address);
 
             // Add published state if admin
             if (isAdminMode) {
@@ -220,13 +235,14 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Basic information fields */}
+                    {/* Basic information fields - now controlled */}
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
                         <input
                             type="text"
                             name="name"
-                            defaultValue={profile?.name || ''}
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                             className={inputClassName}
                             placeholder="Ex: John Doe"
                         />
@@ -243,7 +259,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                                 type="number"
                                 step="0.01"
                                 name="price"
-                                defaultValue={profile?.price || 0}
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
                                 className={`${inputClassName} pl-7`}
                                 placeholder="0.00"
                             />
@@ -256,7 +273,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         <input
                             type="number"
                             name="age"
-                            defaultValue={profile?.age || 18}
+                            value={age}
+                            onChange={(e) => setAge(e.target.value)}
                             className={inputClassName}
                             min="18"
                             max="100"
@@ -275,20 +293,21 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         {errors.images && <p className="mt-1 text-sm text-red-600 font-medium">{errors.images[0]}</p>}
                     </div>
 
-                    {/* Description field */}
+                    {/* Description field - now controlled */}
                     <div className="md:col-span-2 space-y-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                         <textarea
                             rows={4}
                             name="description"
-                            defaultValue={profile?.description || ''}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                             className={`${inputClassName} resize-none`}
                             placeholder="Describe your experience, specialties and services you offer..."
                         />
                         {errors.description && <p className="mt-1 text-sm text-red-600 font-medium">{errors.description[0]}</p>}
                     </div>
 
-                    {/* Location section */}
+                    {/* Location section - now controlled */}
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
@@ -303,7 +322,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             type="number"
                             step="any"
                             name="latitude"
-                            defaultValue={profile?.latitude || 0}
+                            value={latitude}
+                            onChange={(e) => setLatitude(e.target.value)}
                             className={inputClassName}
                             placeholder="40.4168"
                         />
@@ -316,7 +336,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             type="number"
                             step="any"
                             name="longitude"
-                            defaultValue={profile?.longitude || 0}
+                            value={longitude}
+                            onChange={(e) => setLongitude(e.target.value)}
                             className={inputClassName}
                             placeholder="-3.7038"
                         />
@@ -328,7 +349,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         <input
                             type="text"
                             name="address"
-                            defaultValue={profile?.address || ''}
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
                             className={inputClassName}
                             placeholder="Street, number, postal code, city"
                         />

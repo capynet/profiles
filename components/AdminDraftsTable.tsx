@@ -159,7 +159,10 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                                     {draft.name}
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                                    Draft for original profile: {draft.originalProfile.name} (#{draft.originalProfile.id})
+                                    {draft.originalProfile
+                                        ? `Draft for original profile: ${draft.originalProfile.name} (#${draft.originalProfile.id})`
+                                        : "New profile draft awaiting approval"
+                                    }
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

@@ -16,8 +16,7 @@ export default async function AdminDashboardPage() {
     // Fetch all pending profile drafts
     const drafts = await prisma.profile.findMany({
         where: {
-            isDraft: true,
-            originalProfileId: { not: null }
+            isDraft: true
         },
         include: {
             user: {

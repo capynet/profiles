@@ -130,6 +130,9 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         const isAdmin = session.user.role === 'admin';
         const publishedValue = isAdmin ? formData.get('published') === 'true' : false;
 
+        // Set isDraft based on user role - non-admins create drafts by default
+        const isDraftValue = !isAdmin;
+
         // Prepare data for profile creation
         const profileData = {
             userId: targetUserId,
@@ -141,6 +144,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
             published: publishedValue,
+            isDraft: isDraftValue, // Add isDraft field
             languages: {
                 connect: languageIds.map(id => ({id}))
             },
