@@ -34,8 +34,7 @@ export default async function AdminCreateProfilePage(
         redirect('/admin');
     }
 
-    // Check if user already has a profile
-    const existingProfile = await prisma.profile.findUnique({
+    const existingProfile = await prisma.profile.findFirst({
         where: {userId: user.id},
     });
 
