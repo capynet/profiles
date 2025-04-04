@@ -375,17 +375,47 @@ export const DataService = {
                 throw new Error('Draft profile not found');
             }
 
-            if (!draft.isDraft || !draft.originalProfileId) {
-                throw new Error('This is not a valid draft profile');
+            // Log the draft details for debugging
+            console.log('Approving draft:', {
+                id: draft.id,
+                isDraft: draft.isDraft,
+                originalProfileId: draft.originalProfileId
+            });
+
+            // Handle case where profile is not marked as draft
+            if (!draft.isDraft) {
+                console.warn(`Profile ${draftId} is not marked as a draft. Updating isDraft flag.`);
+                await tx.profile.update({
+                    where: { id: draftId },
+                    data: { isDraft: true }
+                });
             }
 
+            // Handle case where profile doesn't have an original profile ID
+            if (!draft.originalProfileId) {
+                console.warn(`Draft ${draftId} has no original profile. Publishing directly.`);
+
+                // Just publish this profile directly
+                const publishedProfile = await tx.profile.update({
+                    where: { id: draftId },
+                    data: {
+                        published: true,
+                        isDraft: false
+                    }
+                });
+
+                return publishedProfile;
+            }
+
+            // Regular approval process for standard drafts
             const originalProfileId = draft.originalProfileId;
 
-            // 1. Get the language and payment method IDs from the draft
+            // Continue with the rest of the function...
+            // Get the language and payment method IDs from the draft
             const languageIds = draft.languages.map(l => l.languageId);
             const paymentMethodIds = draft.paymentMethods.map(pm => pm.paymentMethodId);
 
-            // 2. Clear existing relationships on the original profile
+            // Clear existing relationships on the original profile
             await tx.profileLanguage.deleteMany({
                 where: {profileId: originalProfileId}
             });
@@ -407,7 +437,7 @@ export const DataService = {
                 where: {profileId: originalProfileId}
             });
 
-            // 3. Update the original profile with the draft's data
+            // Update the original profile with the draft's data
             const updatedProfile = await tx.profile.update({
                 where: {id: originalProfileId},
                 data: {
@@ -423,8 +453,7 @@ export const DataService = {
                 }
             });
 
-            // 4. Create new relationships on the original profile
-            // Languages
+            // Create new language relationships
             for (const langId of languageIds) {
                 await tx.profileLanguage.create({
                     data: {
@@ -434,7 +463,7 @@ export const DataService = {
                 });
             }
 
-            // Payment methods
+            // Create new payment method relationships
             for (const pmId of paymentMethodIds) {
                 await tx.profilePaymentMethod.create({
                     data: {
@@ -463,7 +492,7 @@ export const DataService = {
                 });
             }
 
-            // 5. Delete the draft
+            // Delete the draft
             await tx.profile.delete({
                 where: {id: draftId}
             });
