@@ -10,7 +10,7 @@ interface Profile {
     name: string;
     age: number;
     price: number;
-    published: boolean; // Make sure this property exists
+    published: boolean;
     isDraft?: boolean;
     originalProfileId?: number | null;
 }
@@ -24,7 +24,7 @@ interface User {
     role: string;
     createdAt: Date;
     profile: Profile | null;
-    profiles?: Profile[]; // Optional: for accessing all profiles if needed
+    profiles?: Profile[];
 }
 
 interface AdminUserTableProps {
@@ -36,6 +36,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<string | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [updatingProfileIds, setUpdatingProfileIds] = useState<Record<number, boolean>>({});
     const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
     // Filter users based on search term and role
@@ -89,6 +90,53 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
             });
         } finally {
             setIsUpdating(false);
+        }
+    };
+
+    // Toggle profile publication status
+    const handleTogglePublished = async (profileId: number, currentlyPublished: boolean) => {
+        try {
+            // Mark this profile as updating
+            setUpdatingProfileIds(prev => ({ ...prev, [profileId]: true }));
+
+            const response = await fetch(`/api/admin/profiles/${profileId}/publish`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ published: !currentlyPublished }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update publication status');
+            }
+
+            // Show success message
+            setStatusMessage({
+                type: 'success',
+                text: `Profile ${!currentlyPublished ? 'published' : 'unpublished'} successfully!`
+            });
+
+            // Refresh the page data
+            router.refresh();
+
+            // Clear the message after 3 seconds
+            setTimeout(() => {
+                setStatusMessage(null);
+            }, 3000);
+        } catch (error) {
+            console.error('Error updating publication status:', error);
+            setStatusMessage({
+                type: 'error',
+                text: 'Failed to update publication status. Please try again.'
+            });
+        } finally {
+            // Unmark this profile as updating
+            setUpdatingProfileIds(prev => {
+                const newState = { ...prev };
+                delete newState[profileId];
+                return newState;
+            });
         }
     };
 
@@ -248,8 +296,23 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                     {user.profile ? (
-                                        <span className="text-lg" title={user.profile.published ? "Published" : "Not Published"}>
-                                            {user.profile.published ? "✅" : "❌"}
+                                        <span
+                                            className={`text-lg ${!updatingProfileIds[user.profile.id] ? 'cursor-pointer hover:opacity-70' : 'opacity-50'}`}
+                                            title={user.profile.published ? "Click to unpublish" : "Click to publish"}
+                                            onClick={() => {
+                                                if (!updatingProfileIds[user.profile.id]) {
+                                                    handleTogglePublished(user.profile.id, user.profile.published);
+                                                }
+                                            }}
+                                        >
+                                            {updatingProfileIds[user.profile.id] ? (
+                                                <svg className="animate-spin inline-block h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                            ) : (
+                                                user.profile.published ? "✅" : "❌"
+                                            )}
                                         </span>
                                     ) : (
                                         <span className="text-sm text-gray-400">—</span>
