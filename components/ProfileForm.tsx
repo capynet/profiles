@@ -162,10 +162,6 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    // If not admin, show info about approval process
-                    if (!isAdminMode) {
-                        alert('Your profile has been created and will be reviewed by an administrator before being published.');
-                    }
                     // Redirect to appropriate page based on mode
                     window.location.href = isAdminMode
                         ? '/admin'
