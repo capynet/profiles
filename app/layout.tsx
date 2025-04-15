@@ -1,8 +1,10 @@
+// app/layout.tsx
 import type {Metadata} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
 import {auth} from "@/auth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import {prisma} from "@/prisma";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,12 +29,28 @@ export default async function RootLayout({
 }>) {
     const session = await auth();
 
+    // Check if user has any type of profile (including drafts)
+    let userWithProfileInfo = null;
+    if (session?.user) {
+        // Check for any profile (published or draft)
+        const profileCount = await prisma.profile.count({
+            where: {
+                userId: session.user.id
+            }
+        });
+
+        userWithProfileInfo = {
+            ...session.user,
+            hasProfile: profileCount > 0
+        };
+    }
+
     return (
         <html lang='en' suppressHydrationWarning>
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900`}
         >
-        <Header user={session?.user}/>
+        <Header user={userWithProfileInfo}/>
         <main className="flex-grow">
             {children}
         </main>

@@ -5,6 +5,7 @@ import {useSearchParams} from 'next/navigation';
 import ProfileCard from '@/components/ProfileCard';
 import SidebarFilters from '@/components/SidebarFilters';
 import ProfileMap from '@/components/ProfileMap';
+import CreateProfileBanner from '@/components/CreateProfileBanner';
 
 interface ProfileImage {
     id: number;
@@ -42,6 +43,10 @@ interface HomeClientProps {
     paymentMethods: PaymentMethod[];
     googleMapsApiKey: string;
     googleMapsId?: string;
+    user?: {
+        id: string;
+        hasProfile: boolean;
+    } | null;
 }
 
 export default function HomeClient({
@@ -49,7 +54,8 @@ export default function HomeClient({
                                        languages,
                                        paymentMethods,
                                        googleMapsApiKey,
-                                       googleMapsId
+                                       googleMapsId,
+                                       user
                                    }: HomeClientProps) {
     const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
     const [loading, setLoading] = useState(false);
@@ -91,6 +97,11 @@ export default function HomeClient({
 
     return (
         <div className="container mx-auto py-8 px-4">
+            {/* Show create profile banner for logged-in users without a profile */}
+            {user && !user.hasProfile && (
+                <CreateProfileBanner className="mb-8" />
+            )}
+
             {/* Header with toggle for map */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Encuentra Perfiles</h1>

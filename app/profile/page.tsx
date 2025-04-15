@@ -5,6 +5,7 @@ import {auth} from '@/auth';
 import {prisma} from '@/prisma';
 import {DataService} from '@/services/dataService';
 import ProfilePageClient from './ProfilePageClient';
+import CreateProfileBanner from '@/components/CreateProfileBanner';
 
 export const metadata = {
     title: 'Mi Perfil',
@@ -73,15 +74,15 @@ export default async function ProfilePage() {
         });
     }
 
-    // Determine which profile to display:
-    // 1. Draft of existing profile, if it exists
-    // 2. New profile draft, if it exists
-    // 3. Published profile, if it exists
-    // 4. null, if none exist
+    // Determine which profile to display
     const displayProfile = draftProfile || newProfileDraft || profile;
+    const hasNoProfile = !profile && !newProfileDraft;
 
     return (
         <div className="container mx-auto py-8 px-4">
+            {/* Show prominent banner if user has no profile at all */}
+            {hasNoProfile && <CreateProfileBanner className="mb-6" />}
+
             {/* Show warning if profile is not published */}
             {profile && !profile.published && !draftProfile && (
                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md shadow-sm">

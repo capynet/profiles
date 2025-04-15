@@ -1,7 +1,21 @@
 import {DataService} from '@/services/dataService';
+import {auth} from '@/auth';
 import HomeClient from "./HomeClient";
 
 export default async function Home() {
+    // Get authenticated user
+    const session = await auth();
+
+    // Determine if user has a profile
+    let userWithProfileInfo = null;
+    if (session?.user) {
+        const userProfiles = await DataService.getProfiles({userId: session.user.id});
+        userWithProfileInfo = {
+            id: session.user.id,
+            hasProfile: userProfiles.length > 0
+        };
+    }
+
     // Get all languages and payment methods for filters
     const [languages, paymentMethods, initialProfiles] = await Promise.all([
         DataService.getAllLanguages(),
@@ -21,6 +35,7 @@ export default async function Home() {
                 paymentMethods={paymentMethods}
                 googleMapsApiKey={googleMapsApiKey}
                 googleMapsId={googleMapsId}
+                user={userWithProfileInfo}
             />
         </div>
     );

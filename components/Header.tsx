@@ -1,3 +1,4 @@
+// components/Header.tsx
 'use client';
 
 import { useState } from 'react';
@@ -11,6 +12,7 @@ interface User {
     email?: string | null;
     image?: string | null;
     role?: string;
+    hasProfile?: boolean;
 }
 
 interface HeaderProps {
@@ -19,7 +21,6 @@ interface HeaderProps {
 
 export default function Header({ user }: HeaderProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
     return (
@@ -67,8 +68,8 @@ export default function Header({ user }: HeaderProps) {
                                         </div>
                                     )}
                                     <span className="hidden sm:inline-block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {user.name || user.email?.split('@')[0]}
-                  </span>
+                                        {user.name || user.email?.split('@')[0]}
+                                    </span>
                                     <svg
                                         className={`h-4 w-4 text-gray-500 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
                                         fill="none"
@@ -88,16 +89,18 @@ export default function Header({ user }: HeaderProps) {
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
-                                            Mi Perfil
+                                            My profile {!user.hasProfile && <span className="text-indigo-600 dark:text-indigo-400">(create)</span>}
                                         </Link>
 
-                                        <Link
-                                            href="/profile/edit"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                                            onClick={() => setIsMenuOpen(false)}
-                                        >
-                                            Editar Perfil
-                                        </Link>
+                                        {user.hasProfile && (
+                                            <Link
+                                                href="/profile/edit"
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                                onClick={() => setIsMenuOpen(false)}
+                                            >
+                                                Edit profile
+                                            </Link>
+                                        )}
 
                                         {user?.role === 'admin' && (
                                             <Link
@@ -116,7 +119,7 @@ export default function Header({ user }: HeaderProps) {
                                                 type="submit"
                                                 className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                                             >
-                                                Cerrar sesión
+                                                Logout
                                             </button>
                                         </form>
                                     </div>
