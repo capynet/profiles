@@ -4,6 +4,9 @@ import {prisma} from '@/prisma';
 import AdminUserTable from '@/components/AdminUserTable';
 import AdminDraftsTable from '@/components/AdminDraftsTable';
 
+// Force dynamic rendering to ensure fresh data on each request
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
     title: 'Admin Dashboard',
     description: 'Manage users and profiles',
@@ -41,6 +44,7 @@ export default async function AdminDashboardPage() {
                     age: true,
                     price: true,
                     isDraft: true,
+                    published: true, // Explicitly include published field
                     originalProfileId: true
                 },
                 where: {
@@ -56,17 +60,26 @@ export default async function AdminDashboardPage() {
         },
     });
 
-    // Transformar los datos para mantener compatibilidad con componente AdminUserTable
+    // Transform data to maintain compatibility with AdminUserTable component
     const transformedUsers = users.map(user => {
-        // Encontrar el perfil principal (no draft) o el primer perfil si no hay ninguno principal
+        // Find the main profile (non-draft) or the first profile if no main profile exists
         const mainProfile = user.profiles.find(p => !p.isDraft) || user.profiles[0] || null;
 
         return {
             ...user,
-            // Asignar el perfil principal como "profile" (singular) para compatibilidad
+            // Assign the main profile as "profile" (singular) for compatibility
             profile: mainProfile
         };
     });
+
+    console.log("Users with profiles:", transformedUsers.map(u => ({
+        email: u.email,
+        profile: u.profile ? {
+            id: u.profile.id,
+            name: u.profile.name,
+            published: u.profile.published
+        } : null
+    })));
 
     return (
         <div className="container mx-auto py-8 px-4">

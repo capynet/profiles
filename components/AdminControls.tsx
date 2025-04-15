@@ -1,4 +1,3 @@
-// components/AdminControls.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -31,6 +30,7 @@ export default function AdminControls({
     // Handle checkbox change
     const handlePublishedChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.checked;
+        console.log("Publishing checkbox changed to:", newValue); // Debug log
         setLocalPublished(newValue);
         onPublishedChange(newValue);
     };
@@ -96,6 +96,11 @@ export default function AdminControls({
                         <strong>Note:</strong> Publishing will make this profile immediately visible to all users.
                     </div>
                 )}
+
+                {/* Debug info */}
+                <div className="mt-2 text-xs text-gray-500">
+                    Current status: {localPublished ? "Published ✅" : "Not Published ❌"}
+                </div>
             </div>
 
             {/* Additional admin actions */}

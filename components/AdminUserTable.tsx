@@ -10,6 +10,7 @@ interface Profile {
     name: string;
     age: number;
     price: number;
+    published: boolean; // Make sure this property exists
     isDraft?: boolean;
     originalProfileId?: number | null;
 }
@@ -23,7 +24,7 @@ interface User {
     role: string;
     createdAt: Date;
     profile: Profile | null;
-    profiles?: Profile[]; // Opcional: para acceder a todos los perfiles si es necesario
+    profiles?: Profile[]; // Optional: for accessing all profiles if needed
 }
 
 interface AdminUserTableProps {
@@ -179,6 +180,9 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Profile
                         </th>
+                        <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Published
+                        </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Role
                         </th>
@@ -242,6 +246,15 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                         </span>
                                     )}
                                 </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-center">
+                                    {user.profile ? (
+                                        <span className="text-lg" title={user.profile.published ? "Published" : "Not Published"}>
+                                            {user.profile.published ? "✅" : "❌"}
+                                        </span>
+                                    ) : (
+                                        <span className="text-sm text-gray-400">—</span>
+                                    )}
+                                </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                         user.role === 'admin'
@@ -292,7 +305,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                            <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                 No users found
                             </td>
                         </tr>

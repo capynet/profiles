@@ -309,6 +309,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         if (isAdmin) {
             // Admins can change the published status
             publishedValue = formData.get('published') === 'true';
+            console.log('Admin setting published value:', publishedValue);
         } else {
             // Non-admins keep the existing value
             publishedValue = profile.published;
