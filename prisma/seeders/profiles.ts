@@ -26,6 +26,8 @@ interface SeedProfile {
     images: SeedImage[];
     languages: number[];
     paymentMethods: number[];
+    nationalityId: number | null; // Added nationality
+    ethnicityId: number | null;   // Added ethnicity
 }
 
 interface SeedUser {
@@ -112,6 +114,10 @@ function generateSeedData(): SeedData[] {
         "Chef privada con experiencia en cocina mediterránea e internacional. Preparo menús a medida en tu domicilio para ocasiones especiales o como servicio regular."
     ];
 
+    // Nationality and ethnicity pools - IDs from seeders
+    const nationalityPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
+    const ethnicityPool = [1, 2, 3, 4, 5, 6];
+
     // Generate profiles (mix of male and female)
     for (let i = 0; i < PROFILES_QTY; i++) {
         const isFemale = Math.random() > 0.5;
@@ -177,6 +183,16 @@ function generateSeedData(): SeedData[] {
             }
         }
 
+        // Random nationality (single value or null)
+        const nationalityId = Math.random() > 0.1
+            ? nationalityPool[Math.floor(Math.random() * nationalityPool.length)]
+            : null;
+
+        // Random ethnicity (single value or null)
+        const ethnicityId = Math.random() > 0.1
+            ? ethnicityPool[Math.floor(Math.random() * ethnicityPool.length)]
+            : null;
+
         seedData.push({
             user: {
                 name: fullName,
@@ -194,6 +210,8 @@ function generateSeedData(): SeedData[] {
                 images,
                 languages,
                 paymentMethods,
+                nationalityId,
+                ethnicityId
             }
         });
     }
@@ -293,6 +311,28 @@ export default async function seedProfiles(prisma: PrismaClient) {
             }
 
             console.log(`Added ${data.profile.paymentMethods.length} payment methods to profile ${profile.id}`);
+
+            // 6. Create nationality association if present
+            if (data.profile.nationalityId) {
+                await prisma.profileNationality.create({
+                    data: {
+                        profileId: profile.id,
+                        nationalityId: data.profile.nationalityId,
+                    },
+                });
+                console.log(`Added nationality ${data.profile.nationalityId} to profile ${profile.id}`);
+            }
+
+            // 7. Create ethnicity association if present
+            if (data.profile.ethnicityId) {
+                await prisma.profileEthnicity.create({
+                    data: {
+                        profileId: profile.id,
+                        ethnicityId: data.profile.ethnicityId,
+                    },
+                });
+                console.log(`Added ethnicity ${data.profile.ethnicityId} to profile ${profile.id}`);
+            }
         } catch (error) {
             console.error(`Error creating profile for ${data.user.email}:`, error);
         }
