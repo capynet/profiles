@@ -30,6 +30,36 @@ model ProfileImage {
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 }
 
+model Nationality {
+  id       Int                  @id @default(autoincrement())
+  name     String               @unique
+  profiles ProfileNationality[]
+}
+
+model Ethnicity {
+  id       Int                @id @default(autoincrement())
+  name     String             @unique
+  profiles ProfileEthnicity[]
+}
+
+model ProfileNationality {
+  profile       Profile     @relation(fields: [profileId], references: [id])
+  profileId     Int
+  nationality   Nationality @relation(fields: [nationalityId], references: [id])
+  nationalityId Int
+
+  @@id([profileId, nationalityId])
+}
+
+model ProfileEthnicity {
+  profile     Profile   @relation(fields: [profileId], references: [id])
+  profileId   Int
+  ethnicity   Ethnicity @relation(fields: [ethnicityId], references: [id])
+  ethnicityId Int
+
+  @@id([profileId, ethnicityId])
+}
+
 // Update the Profile model
 model Profile {
   id                Int                    @id @default(autoincrement())
@@ -52,6 +82,8 @@ model Profile {
   languages         ProfileLanguage[]
   images            ProfileImage[]
   user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nationalities     ProfileNationality[]
+  ethnicities       ProfileEthnicity[]
 
   @@index([userId, published, isDraft])
 }

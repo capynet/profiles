@@ -100,6 +100,10 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
 
+        // Get nationality and ethnicity IDs if present (single values)
+        const nationalityId = formData.get('nationality') ? Number(formData.get('nationality')) : null;
+        const ethnicityId = formData.get('ethnicity') ? Number(formData.get('ethnicity')) : null;
+
         // Process and upload images
         const imageFiles = formData.getAll('images') as File[];
         const processedImages = [];
@@ -151,7 +155,18 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             paymentMethods: {
                 connect: paymentMethodIds.map(id => ({id}))
             },
-
+            // Add nationality if provided (single value)
+            ...(nationalityId && {
+                nationalities: {
+                    connect: [{ id: nationalityId }]
+                }
+            }),
+            // Add ethnicity if provided (single value)
+            ...(ethnicityId && {
+                ethnicities: {
+                    connect: [{ id: ethnicityId }]
+                }
+            }),
             processedImages: processedImages.length > 0 ? processedImages : undefined
         };
 
@@ -238,6 +253,10 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         // Convert IDs to numbers
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
+
+        // Get nationality and ethnicity IDs if present (single values)
+        const nationalityId = formData.get('nationality') ? Number(formData.get('nationality')) : null;
+        const ethnicityId = formData.get('ethnicity') ? Number(formData.get('ethnicity')) : null;
 
         let imageOrderData: { type: string, id: string | number, position: number }[] = [];
         const orderDataRaw = formData.get('imageOrderData');
@@ -331,6 +350,18 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             paymentMethods: {
                 connect: paymentMethodIds.map(id => ({id}))
             },
+            // Add nationality if provided (single value)
+            ...(nationalityId && {
+                nationalities: {
+                    connect: [{ id: nationalityId }]
+                }
+            }),
+            // Add ethnicity if provided (single value)
+            ...(ethnicityId && {
+                ethnicities: {
+                    connect: [{ id: ethnicityId }]
+                }
+            }),
             // Pass processed images and images to keep to the service,
             // now with order information
             processedImages: processedImages.length > 0 ? processedImages : undefined,

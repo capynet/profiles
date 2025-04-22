@@ -386,8 +386,8 @@ export const DataService = {
             if (!draft.isDraft) {
                 console.warn(`Profile ${draftId} is not marked as a draft. Updating isDraft flag.`);
                 await tx.profile.update({
-                    where: { id: draftId },
-                    data: { isDraft: true }
+                    where: {id: draftId},
+                    data: {isDraft: true}
                 });
             }
 
@@ -397,7 +397,7 @@ export const DataService = {
 
                 // Just publish this profile directly
                 const publishedProfile = await tx.profile.update({
-                    where: { id: draftId },
+                    where: {id: draftId},
                     data: {
                         published: true,
                         isDraft: false
@@ -772,6 +772,30 @@ export const DataService = {
             return await prisma.user.findMany();
         } catch (error) {
             console.error('Error fetching users:', error);
+            return [];
+        }
+    },
+
+    async getAllNationalities() {
+        try {
+            return await prisma.nationality.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching nationalities:', error);
+            return [];
+        }
+    },
+
+    async getAllEthnicities() {
+        try {
+            return await prisma.ethnicity.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching ethnicities:', error);
             return [];
         }
     }

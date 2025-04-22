@@ -9,6 +9,8 @@ import ImageCropModal from './ImageCropModal';
 import ProfileImageManager from './ProfileImageManager';
 import LanguageSelector from './LanguageSelector';
 import PaymentMethodSelector from './PaymentMethodSelector';
+import NationalitySelector from './NationalitySelector';
+import EthnicitySelector from './EthnicitySelector';
 import AdminControls from './AdminControls';
 import { useProfileImages } from '@/hooks/useProfileImages';
 
@@ -16,6 +18,8 @@ import { useProfileImages } from '@/hooks/useProfileImages';
 type ProfileWithRelations = Profile & {
     paymentMethods: { paymentMethodId: number }[];
     languages: { languageId: number }[];
+    nationalities?: { nationalityId: number }[];
+    ethnicities?: { ethnicityId: number }[];
     images: ProfileImage[];
     isDraft?: boolean;
     originalProfileId?: number | null;
@@ -47,6 +51,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
 
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
+    const [selectedNationality, setSelectedNationality] = useState<number | null>(null);
+    const [selectedEthnicity, setSelectedEthnicity] = useState<number | null>(null);
     const [isPublished, setIsPublished] = useState<boolean>(false);
 
     // UI control states
@@ -86,6 +92,16 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 setSelectedLanguages(profile.languages.map(l => l.languageId));
                 setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
                 setIsPublished(profile.published || false);
+
+                // Set nationality if available (first one in the array)
+                if (profile.nationalities && profile.nationalities.length > 0) {
+                    setSelectedNationality(profile.nationalities[0].nationalityId);
+                }
+
+                // Set ethnicity if available (first one in the array)
+                if (profile.ethnicities && profile.ethnicities.length > 0) {
+                    setSelectedEthnicity(profile.ethnicities[0].ethnicityId);
+                }
             }
         } catch (error) {
             console.error('Error initializing form data:', error);
@@ -115,6 +131,14 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
             updatedFormData.append('latitude', latitude);
             updatedFormData.append('longitude', longitude);
             updatedFormData.append('address', address);
+
+            if (selectedNationality) {
+                updatedFormData.append('nationality', selectedNationality.toString());
+            }
+
+            if (selectedEthnicity) {
+                updatedFormData.append('ethnicity', selectedEthnicity.toString());
+            }
 
             // Add published state if admin
             if (isAdminMode) {
@@ -377,6 +401,24 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             selectedLanguages={selectedLanguages}
                             onChange={setSelectedLanguages}
                             error={errors.languages?.[0]}
+                        />
+                    </div>
+
+                    {/* Nationality Selector */}
+                    <div>
+                        <NationalitySelector
+                            selectedNationality={selectedNationality}
+                            onChange={setSelectedNationality}
+                            error={errors.nationality?.[0]}
+                        />
+                    </div>
+
+                    {/* Ethnicity Selector */}
+                    <div>
+                        <EthnicitySelector
+                            selectedEthnicity={selectedEthnicity}
+                            onChange={setSelectedEthnicity}
+                            error={errors.ethnicity?.[0]}
                         />
                     </div>
                 </div>
