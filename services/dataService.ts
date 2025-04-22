@@ -77,6 +77,8 @@ export const DataService = {
                             position: 'asc'
                         }
                     },
+                    nationalities: {include: {nationality: true}},
+                    ethnicities: {include: {ethnicity: true}},
                     originalProfile: userContext?.isAdmin || (userContext?.userId && baseWhere.userId === userContext.userId)
                         ? {select: {id: true, name: true}}
                         : false,
@@ -91,14 +93,18 @@ export const DataService = {
         }
     },
 
-    async createProfile(data: Prisma.ProfileCreateInput & { processedImages?: ProcessedImage[] }) {
+    async createProfile(data: Prisma.ProfileCreateInput & {
+        processedImages?: ProcessedImage[],
+        nationality?: number,
+        ethnicity?: number
+    }) {
         try {
             if (!data) {
                 throw new Error('Profile data cannot be null or undefined');
             }
 
             // Extract the processedImages field (not part of Prisma type)
-            const {processedImages, ...profileData} = data;
+            const {processedImages, nationality, ethnicity, ...profileData} = data;
 
             // Use transaction to ensure all operations succeed or fail together
             return await prisma.$transaction(async (tx) => {
@@ -141,6 +147,28 @@ export const DataService = {
                     }
                 }
 
+                // Handle nationality if provided
+                if (nationality) {
+                    console.log('Adding nationality:', nationality);
+                    await tx.profileNationality.create({
+                        data: {
+                            profileId: profile.id,
+                            nationalityId: nationality
+                        }
+                    });
+                }
+
+                // Handle ethnicity if provided
+                if (ethnicity) {
+                    console.log('Adding ethnicity:', ethnicity);
+                    await tx.profileEthnicity.create({
+                        data: {
+                            profileId: profile.id,
+                            ethnicityId: ethnicity
+                        }
+                    });
+                }
+
                 // Handle images if they exist - with position for order
                 if (processedImages && processedImages.length > 0) {
                     console.log('Adding images:', processedImages.length);
@@ -174,6 +202,8 @@ export const DataService = {
                     include: {
                         languages: {include: {language: true}},
                         paymentMethods: {include: {paymentMethod: true}},
+                        nationalities: {include: {nationality: true}},
+                        ethnicities: {include: {ethnicity: true}},
                         images: {
                             orderBy: {
                                 position: 'asc'
@@ -191,7 +221,9 @@ export const DataService = {
     async createProfileDraft(originalProfile: Profile & {
         images: ProfileImage[],
         languages: { languageId: number }[],
-        paymentMethods: { paymentMethodId: number }[]
+        paymentMethods: { paymentMethodId: number }[],
+        nationalities?: { nationalityId: number }[],
+        ethnicities?: { ethnicityId: number }[]
     }, updateData: any) {
         return await prisma.$transaction(async (tx) => {
             // 1. Create a new profile as a draft, linked to the original
@@ -249,7 +281,41 @@ export const DataService = {
                 }
             }
 
-            // 4. Handle images - FIXING THE IMAGE HANDLING
+            // 4. Clone or update nationality
+            const nationalityId = updateData.nationality
+                ? Number(updateData.nationality)
+                : (originalProfile.nationalities && originalProfile.nationalities.length > 0)
+                    ? originalProfile.nationalities[0].nationalityId
+                    : null;
+
+            if (nationalityId) {
+                await tx.profileNationality.create({
+                    data: {
+                        profileId: draftProfile.id,
+                        nationalityId: nationalityId
+                    }
+                });
+                console.log(`Added nationality ${nationalityId} to draft profile ${draftProfile.id}`);
+            }
+
+            // 5. Clone or update ethnicity
+            const ethnicityId = updateData.ethnicity
+                ? Number(updateData.ethnicity)
+                : (originalProfile.ethnicities && originalProfile.ethnicities.length > 0)
+                    ? originalProfile.ethnicities[0].ethnicityId
+                    : null;
+
+            if (ethnicityId) {
+                await tx.profileEthnicity.create({
+                    data: {
+                        profileId: draftProfile.id,
+                        ethnicityId: ethnicityId
+                    }
+                });
+                console.log(`Added ethnicity ${ethnicityId} to draft profile ${draftProfile.id}`);
+            }
+
+            // 6. Handle images - FIXING THE IMAGE HANDLING
             // Process any explicit instruction to remove all images
             const explicitlyRemovingAllImages = updateData.hasOwnProperty('images') &&
                 updateData.images === 'explicit' &&
@@ -341,12 +407,14 @@ export const DataService = {
                 }
             }
 
-            // 5. Return the draft profile with all relationships
+            // 7. Return the draft profile with all relationships
             return tx.profile.findUnique({
                 where: {id: draftProfile.id},
                 include: {
                     languages: {include: {language: true}},
                     paymentMethods: {include: {paymentMethod: true}},
+                    nationalities: {include: {nationality: true}},
+                    ethnicities: {include: {ethnicity: true}},
                     images: {
                         orderBy: {
                             position: 'asc'
@@ -367,7 +435,9 @@ export const DataService = {
                     originalProfile: true,
                     images: true,
                     languages: true,
-                    paymentMethods: true
+                    paymentMethods: true,
+                    nationalities: true,
+                    ethnicities: true
                 }
             });
 
@@ -414,6 +484,8 @@ export const DataService = {
             // Get the language and payment method IDs from the draft
             const languageIds = draft.languages.map(l => l.languageId);
             const paymentMethodIds = draft.paymentMethods.map(pm => pm.paymentMethodId);
+            const nationalityIds = draft.nationalities.map(n => n.nationalityId);
+            const ethnicityIds = draft.ethnicities.map(e => e.ethnicityId);
 
             // Clear existing relationships on the original profile
             await tx.profileLanguage.deleteMany({
@@ -421,6 +493,14 @@ export const DataService = {
             });
 
             await tx.profilePaymentMethod.deleteMany({
+                where: {profileId: originalProfileId}
+            });
+
+            await tx.profileNationality.deleteMany({
+                where: {profileId: originalProfileId}
+            });
+
+            await tx.profileEthnicity.deleteMany({
                 where: {profileId: originalProfileId}
             });
 
@@ -473,6 +553,26 @@ export const DataService = {
                 });
             }
 
+            // Create new nationality relationships
+            for (const natId of nationalityIds) {
+                await tx.profileNationality.create({
+                    data: {
+                        profileId: originalProfileId,
+                        nationalityId: natId
+                    }
+                });
+            }
+
+            // Create new ethnicity relationships
+            for (const ethId of ethnicityIds) {
+                await tx.profileEthnicity.create({
+                    data: {
+                        profileId: originalProfileId,
+                        ethnicityId: ethId
+                    }
+                });
+            }
+
             // Clone images from draft to original
             for (const img of draft.images) {
                 await tx.profileImage.create({
@@ -504,11 +604,13 @@ export const DataService = {
     async updateProfile(profileId: number, data: Prisma.ProfileUpdateInput & {
         processedImages?: ProcessedImageWithOrder[],
         existingImagesOrder?: { key: string, order: number }[],
-        images?: string | any // Add this to the type definition
+        images?: string | any,
+        nationality?: number | null,
+        ethnicity?: number | null
     }, userContext?: { userId: string, isAdmin: boolean }) {
         try {
             // Extract the custom fields
-            const {processedImages, existingImagesOrder, images, ...profileData} = data;
+            const {processedImages, existingImagesOrder, images, nationality, ethnicity, ...profileData} = data;
 
             // Get the profile to update
             const existingProfile = await prisma.profile.findUnique({
@@ -517,6 +619,8 @@ export const DataService = {
                     images: true,
                     languages: true,
                     paymentMethods: true,
+                    nationalities: true,
+                    ethnicities: true,
                     drafts: true
                 }
             });
@@ -573,7 +677,9 @@ export const DataService = {
                     include: {
                         images: true,
                         languages: true,
-                        paymentMethods: true
+                        paymentMethods: true,
+                        nationalities: true,
+                        ethnicities: true
                     }
                 });
 
@@ -649,6 +755,36 @@ export const DataService = {
                             paymentMethodId
                         }))
                     });
+                }
+
+                // Handle nationality relationship
+                await tx.profileNationality.deleteMany({
+                    where: {profileId}
+                });
+
+                if (nationality) {
+                    await tx.profileNationality.create({
+                        data: {
+                            profileId,
+                            nationalityId: Number(nationality)
+                        }
+                    });
+                    console.log(`Updated nationality for profile ${profileId} to ${nationality}`);
+                }
+
+                // Handle ethnicity relationship
+                await tx.profileEthnicity.deleteMany({
+                    where: {profileId}
+                });
+
+                if (ethnicity) {
+                    await tx.profileEthnicity.create({
+                        data: {
+                            profileId,
+                            ethnicityId: Number(ethnicity)
+                        }
+                    });
+                    console.log(`Updated ethnicity for profile ${profileId} to ${ethnicity}`);
                 }
 
                 // Prepare an ordered list of all images (existing and new) to create
@@ -749,6 +885,8 @@ export const DataService = {
                     include: {
                         languages: {include: {language: true}},
                         paymentMethods: {include: {paymentMethod: true}},
+                        nationalities: {include: {nationality: true}},
+                        ethnicities: {include: {ethnicity: true}},
                         images: {
                             orderBy: {
                                 position: 'asc'

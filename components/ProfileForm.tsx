@@ -82,6 +82,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
         try {
             // Set default selected values if profile exists
             if (profile) {
+                console.log("Loading profile data:", profile);
                 setName(profile.name || '');
                 setPrice(profile.price?.toString() || '0');
                 setAge(profile.age?.toString() || '18');
@@ -96,11 +97,13 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 // Set nationality if available (first one in the array)
                 if (profile.nationalities && profile.nationalities.length > 0) {
                     setSelectedNationality(profile.nationalities[0].nationalityId);
+                    console.log("Setting nationality:", profile.nationalities[0].nationalityId);
                 }
 
                 // Set ethnicity if available (first one in the array)
                 if (profile.ethnicities && profile.ethnicities.length > 0) {
                     setSelectedEthnicity(profile.ethnicities[0].ethnicityId);
+                    console.log("Setting ethnicity:", profile.ethnicities[0].ethnicityId);
                 }
             }
         } catch (error) {

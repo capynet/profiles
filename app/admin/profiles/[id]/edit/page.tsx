@@ -32,6 +32,8 @@ export default async function AdminEditProfilePage(props: AdminEditProfilePagePr
         include: {
             languages: true,
             paymentMethods: true,
+            nationalities: true,
+            ethnicities: true,
             images: true,
             user: {
                 select: {name: true, email: true, id: true}
