@@ -1,10 +1,10 @@
 // components/Header.tsx
 'use client';
 
-import { useState } from 'react';
+import {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { handleSignOut } from '@/app/auth-actions';
+import {handleSignOut} from '@/app/auth-actions';
 
 interface User {
     id: string;
@@ -19,7 +19,7 @@ interface HeaderProps {
     user?: User | null;
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({user}: HeaderProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -44,6 +44,17 @@ export default function Header({ user }: HeaderProps) {
 
                     {/* User Section */}
                     <div className="flex items-center">
+
+                        {user && user.role === 'admin' && (
+                            <Link
+                                href="/admin"
+                                className="block mr-4 px-4 py-2 text-sm text-indigo-600 hover:bg-gray-100 dark:text-indigo-400 dark:hover:bg-gray-700"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Admin Dashboard
+                            </Link>
+                        )}
+
                         {user ? (
                             <div className="relative">
                                 <button
@@ -76,7 +87,7 @@ export default function Header({ user }: HeaderProps) {
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
                                     </svg>
                                 </button>
 
@@ -99,16 +110,6 @@ export default function Header({ user }: HeaderProps) {
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
                                                 Edit profile
-                                            </Link>
-                                        )}
-
-                                        {user?.role === 'admin' && (
-                                            <Link
-                                                href="/admin"
-                                                className="block px-4 py-2 text-sm text-indigo-600 hover:bg-gray-100 dark:text-indigo-400 dark:hover:bg-gray-700"
-                                                onClick={() => setIsMenuOpen(false)}
-                                            >
-                                                Admin Dashboard
                                             </Link>
                                         )}
 
@@ -137,5 +138,6 @@ export default function Header({ user }: HeaderProps) {
                 </div>
             </div>
         </header>
-    );
+    )
+        ;
 }
