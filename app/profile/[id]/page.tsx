@@ -27,6 +27,8 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
         include: {
             languages: {include: {language: true}},
             paymentMethods: {include: {paymentMethod: true}},
+            nationalities: {include: {nationality: true}},
+            ethnicities: {include: {ethnicity: true}},
             images: true,
             user: {select: {name: true, email: true}},
         },
@@ -186,6 +188,40 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
                                 )}
                             </div>
                         </div>
+                        
+                        {/* Nationality */}
+                        {profile.nationalities && profile.nationalities.length > 0 && (
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Nationality</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.nationalities.map(({nationality}) => (
+                                        <span
+                                            key={nationality.id}
+                                            className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full"
+                                        >
+                                            {nationality.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Ethnicity */}
+                        {profile.ethnicities && profile.ethnicities.length > 0 && (
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Ethnicity</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.ethnicities.map(({ethnicity}) => (
+                                        <span
+                                            key={ethnicity.id}
+                                            className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full"
+                                        >
+                                            {ethnicity.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Contact Info */}

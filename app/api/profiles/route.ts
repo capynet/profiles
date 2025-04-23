@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
         const maxAge = searchParams.get('maxAge');
         const languages = searchParams.get('languages');
         const paymentMethods = searchParams.get('paymentMethods');
+        const nationality = searchParams.get('nationality');
+        const ethnicity = searchParams.get('ethnicity');
 
         // Build filter conditions
         const whereConditions: Prisma.ProfileWhereInput = {
@@ -66,6 +68,30 @@ export async function GET(request: NextRequest) {
                         paymentMethodId: {
                             in: paymentMethodIds
                         }
+                    }
+                };
+            }
+        }
+        
+        // Nationality filter
+        if (nationality) {
+            const nationalityId = parseInt(nationality);
+            if (!isNaN(nationalityId)) {
+                whereConditions.nationalities = {
+                    some: {
+                        nationalityId: nationalityId
+                    }
+                };
+            }
+        }
+        
+        // Ethnicity filter
+        if (ethnicity) {
+            const ethnicityId = parseInt(ethnicity);
+            if (!isNaN(ethnicityId)) {
+                whereConditions.ethnicities = {
+                    some: {
+                        ethnicityId: ethnicityId
                     }
                 };
             }
