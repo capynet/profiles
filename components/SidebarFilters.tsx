@@ -14,9 +14,21 @@ interface PaymentMethod {
     name: string;
 }
 
+interface Nationality {
+    id: number;
+    name: string;
+}
+
+interface Ethnicity {
+    id: number;
+    name: string;
+}
+
 interface SidebarFiltersProps {
     languages: Language[];
     paymentMethods: PaymentMethod[];
+    nationalities: Nationality[];
+    ethnicities: Ethnicity[];
     isOpen: boolean;
     onClose: () => void;
 }
@@ -24,6 +36,8 @@ interface SidebarFiltersProps {
 export default function SidebarFilters({
                                            languages,
                                            paymentMethods,
+                                           nationalities,
+                                           ethnicities,
                                            isOpen,
                                            onClose
                                        }: SidebarFiltersProps) {
@@ -37,6 +51,8 @@ export default function SidebarFilters({
     const [maxAge, setMaxAge] = useState<string>('');
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
+    const [selectedNationality, setSelectedNationality] = useState<number | null>(null);
+    const [selectedEthnicity, setSelectedEthnicity] = useState<number | null>(null);
 
     // Price and age limits for sliders
     const priceMin = 0;
@@ -52,6 +68,8 @@ export default function SidebarFilters({
         const maxAgeParam = searchParams.get('maxAge');
         const languagesParam = searchParams.get('languages');
         const paymentMethodsParam = searchParams.get('paymentMethods');
+        const nationalityParam = searchParams.get('nationality');
+        const ethnicityParam = searchParams.get('ethnicity');
 
         if (minPriceParam) setMinPrice(minPriceParam);
         if (maxPriceParam) setMaxPrice(maxPriceParam);
@@ -64,6 +82,14 @@ export default function SidebarFilters({
 
         if (paymentMethodsParam) {
             setSelectedPaymentMethods(paymentMethodsParam.split(',').map(Number));
+        }
+        
+        if (nationalityParam) {
+            setSelectedNationality(Number(nationalityParam));
+        }
+        
+        if (ethnicityParam) {
+            setSelectedEthnicity(Number(ethnicityParam));
         }
     }, [searchParams]);
 
@@ -83,6 +109,14 @@ export default function SidebarFilters({
             params.append('paymentMethods', selectedPaymentMethods.join(','));
         }
 
+        if (selectedNationality) {
+            params.append('nationality', selectedNationality.toString());
+        }
+
+        if (selectedEthnicity) {
+            params.append('ethnicity', selectedEthnicity.toString());
+        }
+
         router.push(`/?${params.toString()}`);
 
         // Close sidebar on mobile after applying filters
@@ -98,6 +132,8 @@ export default function SidebarFilters({
         setMaxAge('');
         setSelectedLanguages([]);
         setSelectedPaymentMethods([]);
+        setSelectedNationality(null);
+        setSelectedEthnicity(null);
         router.push('/');
 
         // Close sidebar on mobile after resetting filters
@@ -125,7 +161,8 @@ export default function SidebarFilters({
     // Active filters count
     const activeFiltersCount = [
         minPrice, maxPrice, minAge, maxAge,
-        ...selectedLanguages, ...selectedPaymentMethods
+        ...selectedLanguages, ...selectedPaymentMethods,
+        selectedNationality, selectedEthnicity
     ].filter(Boolean).length;
 
     return (
@@ -241,6 +278,88 @@ export default function SidebarFilters({
                             ))}
                         </div>
                     </div>
+                    
+                    {/* Nationalities */}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nationality</h3>
+                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
+                            <div className="flex items-center mb-2">
+                                <input
+                                    type="radio"
+                                    id="nationality-none"
+                                    name="nationality"
+                                    checked={selectedNationality === null}
+                                    onChange={() => setSelectedNationality(null)}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                />
+                                <label
+                                    htmlFor="nationality-none"
+                                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                >
+                                    Any
+                                </label>
+                            </div>
+                            {nationalities.map(nationality => (
+                                <div key={nationality.id} className="flex items-center">
+                                    <input
+                                        type="radio"
+                                        id={`nationality-${nationality.id}`}
+                                        name="nationality"
+                                        checked={selectedNationality === nationality.id}
+                                        onChange={() => setSelectedNationality(nationality.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                    />
+                                    <label
+                                        htmlFor={`nationality-${nationality.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {nationality.name}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Ethnicities */}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ethnicity</h3>
+                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
+                            <div className="flex items-center mb-2">
+                                <input
+                                    type="radio"
+                                    id="ethnicity-none"
+                                    name="ethnicity"
+                                    checked={selectedEthnicity === null}
+                                    onChange={() => setSelectedEthnicity(null)}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                />
+                                <label
+                                    htmlFor="ethnicity-none"
+                                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                >
+                                    Any
+                                </label>
+                            </div>
+                            {ethnicities.map(ethnicity => (
+                                <div key={ethnicity.id} className="flex items-center">
+                                    <input
+                                        type="radio"
+                                        id={`ethnicity-${ethnicity.id}`}
+                                        name="ethnicity"
+                                        checked={selectedEthnicity === ethnicity.id}
+                                        onChange={() => setSelectedEthnicity(ethnicity.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                                    />
+                                    <label
+                                        htmlFor={`ethnicity-${ethnicity.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {ethnicity.name}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
                     {/* Filter Actions */}
                     <div className="flex space-x-2 pt-2">
@@ -292,6 +411,16 @@ export default function SidebarFilters({
                             {selectedPaymentMethods.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">
                                     {selectedPaymentMethods.length} método(s) de pago
+                                </span>
+                            )}
+                            {selectedNationality && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
+                                    Nacionalidad: {nationalities.find(n => n.id === selectedNationality)?.name}
+                                </span>
+                            )}
+                            {selectedEthnicity && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs">
+                                    Etnicidad: {ethnicities.find(e => e.id === selectedEthnicity)?.name}
                                 </span>
                             )}
                         </div>

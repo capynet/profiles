@@ -25,6 +25,8 @@ interface Profile {
     images: ProfileImage[];
     languages: Array<{ language: { id: number; name: string } }>;
     paymentMethods: Array<{ paymentMethod: { id: number; name: string } }>;
+    nationalities?: Array<{ nationality: { id: number; name: string } }>;
+    ethnicities?: Array<{ ethnicity: { id: number; name: string } }>;
 }
 
 interface Language {
@@ -37,10 +39,22 @@ interface PaymentMethod {
     name: string;
 }
 
+interface Nationality {
+    id: number;
+    name: string;
+}
+
+interface Ethnicity {
+    id: number;
+    name: string;
+}
+
 interface HomeClientProps {
     initialProfiles: Profile[];
     languages: Language[];
     paymentMethods: PaymentMethod[];
+    nationalities: Nationality[];
+    ethnicities: Ethnicity[];
     googleMapsApiKey: string;
     googleMapsId?: string;
     user?: {
@@ -53,6 +67,8 @@ export default function HomeClient({
                                        initialProfiles,
                                        languages,
                                        paymentMethods,
+                                       nationalities,
+                                       ethnicities,
                                        googleMapsApiKey,
                                        googleMapsId,
                                        user
@@ -144,6 +160,8 @@ export default function HomeClient({
                 <SidebarFilters
                     languages={languages}
                     paymentMethods={paymentMethods}
+                    nationalities={nationalities}
+                    ethnicities={ethnicities}
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                 />
@@ -186,6 +204,8 @@ export default function HomeClient({
                                             images={profile.images}
                                             languages={profile.languages}
                                             paymentMethods={profile.paymentMethods}
+                                            nationalities={profile.nationalities}
+                                            ethnicities={profile.ethnicities}
                                         />
                                     ))}
                                 </div>

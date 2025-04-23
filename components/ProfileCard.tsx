@@ -19,6 +19,8 @@ interface ProfileCardProps {
     images: ProfileImage[];
     languages: Array<{ language: { id: number; name: string } }>;
     paymentMethods: Array<{ paymentMethod: { id: number; name: string } }>;
+    nationalities?: Array<{ nationality: { id: number; name: string } }>;
+    ethnicities?: Array<{ ethnicity: { id: number; name: string } }>;
 }
 
 export default function ProfileCard({
@@ -31,6 +33,8 @@ export default function ProfileCard({
                                         images,
                                         languages,
                                         paymentMethods,
+                                        nationalities,
+                                        ethnicities,
                                     }: ProfileCardProps) {
     const imageUrl = images.length > 0 ? images[0].mediumUrl : '/api/placeholder/352/576';
     const profileUrl = `/profile/${id}`;
@@ -96,7 +100,7 @@ export default function ProfileCard({
 
                 {paymentMethods.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1"></h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">PAYMENT METHODS</h4>
                         <div className="flex flex-wrap gap-1">
                             {paymentMethods.map(({paymentMethod}) => (
                                 <span
@@ -104,6 +108,38 @@ export default function ProfileCard({
                                     className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs"
                                 >
                                     {paymentMethod.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {nationalities && nationalities.length > 0 && (
+                    <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">NATIONALITY</h4>
+                        <div className="flex flex-wrap gap-1">
+                            {nationalities.map(({nationality}) => (
+                                <span
+                                    key={nationality.id}
+                                    className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs"
+                                >
+                                    {nationality.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {ethnicities && ethnicities.length > 0 && (
+                    <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">ETHNICITY</h4>
+                        <div className="flex flex-wrap gap-1">
+                            {ethnicities.map(({ethnicity}) => (
+                                <span
+                                    key={ethnicity.id}
+                                    className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded text-xs"
+                                >
+                                    {ethnicity.name}
                                 </span>
                             ))}
                         </div>

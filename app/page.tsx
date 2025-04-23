@@ -16,10 +16,12 @@ export default async function Home() {
         };
     }
 
-    // Get all languages and payment methods for filters
-    const [languages, paymentMethods, initialProfiles] = await Promise.all([
+    // Get all languages, payment methods, nationalities, and ethnicities for filters
+    const [languages, paymentMethods, nationalities, ethnicities, initialProfiles] = await Promise.all([
         DataService.getAllLanguages(),
         DataService.getAllPaymentMethods(),
+        DataService.getAllNationalities(),
+        DataService.getAllEthnicities(),
         DataService.getProfiles() // No filters for initial load
     ]);
 
@@ -33,6 +35,8 @@ export default async function Home() {
                 initialProfiles={initialProfiles}
                 languages={languages}
                 paymentMethods={paymentMethods}
+                nationalities={nationalities}
+                ethnicities={ethnicities}
                 googleMapsApiKey={googleMapsApiKey}
                 googleMapsId={googleMapsId}
                 user={userWithProfileInfo}
