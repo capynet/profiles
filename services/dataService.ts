@@ -669,7 +669,7 @@ export const DataService = {
                 : [];
 
             // Remove these fields as we'll handle them separately
-            const {languages, paymentMethods, ...restProfileData} = profileData as any;
+            const {languages, paymentMethods, nationalities, ethnicities, ...restProfileData} = profileData as any;
 
             return await prisma.$transaction(async (tx) => {
                 const existingProfile = await tx.profile.findUnique({
@@ -762,7 +762,7 @@ export const DataService = {
                     where: {profileId}
                 });
 
-                if (nationality) {
+                if (nationality !== null && nationality !== undefined) {
                     await tx.profileNationality.create({
                         data: {
                             profileId,
@@ -777,7 +777,7 @@ export const DataService = {
                     where: {profileId}
                 });
 
-                if (ethnicity) {
+                if (ethnicity !== null && ethnicity !== undefined) {
                     await tx.profileEthnicity.create({
                         data: {
                             profileId,

@@ -155,18 +155,10 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             paymentMethods: {
                 connect: paymentMethodIds.map(id => ({id}))
             },
-            // Add nationality if provided (single value)
-            ...(nationalityId && {
-                nationalities: {
-                    connect: [{ id: nationalityId }]
-                }
-            }),
-            // Add ethnicity if provided (single value)
-            ...(ethnicityId && {
-                ethnicities: {
-                    connect: [{ id: ethnicityId }]
-                }
-            }),
+            // Pass nationality directly as a parameter
+            nationality: nationalityId,
+            // Pass ethnicity directly as a parameter
+            ethnicity: ethnicityId,
             processedImages: processedImages.length > 0 ? processedImages : undefined
         };
 
@@ -350,18 +342,10 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             paymentMethods: {
                 connect: paymentMethodIds.map(id => ({id}))
             },
-            // Add nationality if provided (single value)
-            ...(nationalityId && {
-                nationalities: {
-                    connect: [{ id: nationalityId }]
-                }
-            }),
-            // Add ethnicity if provided (single value)
-            ...(ethnicityId && {
-                ethnicities: {
-                    connect: [{ id: ethnicityId }]
-                }
-            }),
+            // Pass nationality directly as a parameter
+            nationality: nationalityId,
+            // Pass ethnicity directly as a parameter
+            ethnicity: ethnicityId,
             // Pass processed images and images to keep to the service,
             // now with order information
             processedImages: processedImages.length > 0 ? processedImages : undefined,
