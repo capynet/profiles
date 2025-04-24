@@ -354,7 +354,11 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             images: formData.get('images')
         };
 
-        await DataService.updateProfile(profileId, profileData);
+        // Pasar el contexto del usuario para que DataService sepa que es un admin
+        await DataService.updateProfile(profileId, profileData, {
+            userId: session.user.id,
+            isAdmin: session.user.role === 'admin'
+        });
 
         // Revalidate multiple paths to ensure fresh data
         revalidatePath('/profile');
