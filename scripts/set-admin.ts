@@ -32,8 +32,14 @@ async function makeUserAdmin() {
     try {
         console.log('=== Make User Admin ===');
 
-        // Ask for email
-        const email = await askForEmail();
+        // Get email from command line argument or ask for it
+        let email: string;
+        if (process.argv.length > 2) {
+            email = process.argv[2].trim();
+            console.log(`Using provided email: ${email}`);
+        } else {
+            email = await askForEmail();
+        }
 
         // Check if user exists
         const user = await prisma.user.findUnique({
