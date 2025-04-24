@@ -159,6 +159,8 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             nationality: nationalityId,
             // Pass ethnicity directly as a parameter
             ethnicity: ethnicityId,
+            // Pass services as a parameter 
+            services: serviceIds,
             processedImages: processedImages.length > 0 ? processedImages : undefined
         };
 
@@ -245,6 +247,7 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         // Convert IDs to numbers
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
+        const serviceIds = formData.getAll('services').map(id => Number(id));
 
         // Get nationality and ethnicity IDs if present (single values)
         const nationalityId = formData.get('nationality') ? Number(formData.get('nationality')) : null;
@@ -346,6 +349,8 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             nationality: nationalityId,
             // Pass ethnicity directly as a parameter
             ethnicity: ethnicityId,
+            // Pass services as a parameter
+            services: serviceIds,
             // Pass processed images and images to keep to the service,
             // now with order information
             processedImages: processedImages.length > 0 ? processedImages : undefined,

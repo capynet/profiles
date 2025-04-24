@@ -79,6 +79,7 @@ export const DataService = {
                     },
                     nationalities: {include: {nationality: true}},
                     ethnicities: {include: {ethnicity: true}},
+                    services: {include: {service: true}},
                     originalProfile: userContext?.isAdmin || (userContext?.userId && baseWhere.userId === userContext.userId)
                         ? {select: {id: true, name: true}}
                         : false,
@@ -96,15 +97,16 @@ export const DataService = {
     async createProfile(data: Prisma.ProfileCreateInput & {
         processedImages?: ProcessedImage[],
         nationality?: number,
-        ethnicity?: number
+        ethnicity?: number,
+        services?: number[]
     }) {
         try {
             if (!data) {
                 throw new Error('Profile data cannot be null or undefined');
             }
 
-            // Extract the processedImages field (not part of Prisma type)
-            const {processedImages, nationality, ethnicity, ...profileData} = data;
+            // Extract the custom fields (not part of Prisma type)
+            const {processedImages, nationality, ethnicity, services, ...profileData} = data;
 
             // Use transaction to ensure all operations succeed or fail together
             return await prisma.$transaction(async (tx) => {
@@ -168,6 +170,19 @@ export const DataService = {
                         }
                     });
                 }
+                
+                // Handle services if provided
+                if (services && services.length > 0) {
+                    console.log('Adding services:', services.length);
+                    for (const serviceId of services) {
+                        await tx.profileService.create({
+                            data: {
+                                profileId: profile.id,
+                                serviceId: serviceId
+                            }
+                        });
+                    }
+                }
 
                 // Handle images if they exist - with position for order
                 if (processedImages && processedImages.length > 0) {
@@ -204,6 +219,7 @@ export const DataService = {
                         paymentMethods: {include: {paymentMethod: true}},
                         nationalities: {include: {nationality: true}},
                         ethnicities: {include: {ethnicity: true}},
+                        services: {include: {service: true}},
                         images: {
                             orderBy: {
                                 position: 'asc'
@@ -223,7 +239,8 @@ export const DataService = {
         languages: { languageId: number }[],
         paymentMethods: { paymentMethodId: number }[],
         nationalities?: { nationalityId: number }[],
-        ethnicities?: { ethnicityId: number }[]
+        ethnicities?: { ethnicityId: number }[],
+        services?: { serviceId: number }[]
     }, updateData: any) {
         return await prisma.$transaction(async (tx) => {
             // 1. Create a new profile as a draft, linked to the original
@@ -313,6 +330,27 @@ export const DataService = {
                     }
                 });
                 console.log(`Added ethnicity ${ethnicityId} to draft profile ${draftProfile.id}`);
+            }
+            
+            // 6. Clone or update services
+            const serviceIds = updateData.services 
+                ? (updateData.services instanceof Array 
+                    ? updateData.services.map((id: string) => Number(id))
+                    : [])
+                : (originalProfile.services && originalProfile.services.length > 0)
+                    ? originalProfile.services.map(s => s.serviceId)
+                    : [];
+                    
+            if (serviceIds.length > 0) {
+                for (const serviceId of serviceIds) {
+                    await tx.profileService.create({
+                        data: {
+                            profileId: draftProfile.id,
+                            serviceId: serviceId
+                        }
+                    });
+                }
+                console.log(`Added ${serviceIds.length} services to draft profile ${draftProfile.id}`);
             }
 
             // 6. Handle images - FIXING THE IMAGE HANDLING
@@ -415,6 +453,7 @@ export const DataService = {
                     paymentMethods: {include: {paymentMethod: true}},
                     nationalities: {include: {nationality: true}},
                     ethnicities: {include: {ethnicity: true}},
+                    services: {include: {service: true}},
                     images: {
                         orderBy: {
                             position: 'asc'
@@ -481,11 +520,12 @@ export const DataService = {
             const originalProfileId = draft.originalProfileId;
 
             // Continue with the rest of the function...
-            // Get the language and payment method IDs from the draft
+            // Get the language, payment method, nationality, ethnicity, and service IDs from the draft
             const languageIds = draft.languages.map(l => l.languageId);
             const paymentMethodIds = draft.paymentMethods.map(pm => pm.paymentMethodId);
             const nationalityIds = draft.nationalities.map(n => n.nationalityId);
             const ethnicityIds = draft.ethnicities.map(e => e.ethnicityId);
+            const serviceIds = draft.services?.map(s => s.serviceId) || [];
 
             // Clear existing relationships on the original profile
             await tx.profileLanguage.deleteMany({
@@ -501,6 +541,10 @@ export const DataService = {
             });
 
             await tx.profileEthnicity.deleteMany({
+                where: {profileId: originalProfileId}
+            });
+            
+            await tx.profileService.deleteMany({
                 where: {profileId: originalProfileId}
             });
 
@@ -572,6 +616,16 @@ export const DataService = {
                     }
                 });
             }
+            
+            // Create new service relationships
+            for (const svcId of serviceIds) {
+                await tx.profileService.create({
+                    data: {
+                        profileId: originalProfileId,
+                        serviceId: svcId
+                    }
+                });
+            }
 
             // Clone images from draft to original
             for (const img of draft.images) {
@@ -606,11 +660,12 @@ export const DataService = {
         existingImagesOrder?: { key: string, order: number }[],
         images?: string | any,
         nationality?: number | null,
-        ethnicity?: number | null
+        ethnicity?: number | null,
+        services?: number[]
     }, userContext?: { userId: string, isAdmin: boolean }) {
         try {
             // Extract the custom fields
-            const {processedImages, existingImagesOrder, images, nationality, ethnicity, ...profileData} = data;
+            const {processedImages, existingImagesOrder, images, nationality, ethnicity, services, ...profileData} = data;
 
             // Get the profile to update
             const existingProfile = await prisma.profile.findUnique({
@@ -786,6 +841,24 @@ export const DataService = {
                     });
                     console.log(`Updated ethnicity for profile ${profileId} to ${ethnicity}`);
                 }
+                
+                // Handle services relationship
+                await tx.profileService.deleteMany({
+                    where: {profileId}
+                });
+                
+                if (services && services.length > 0) {
+                    console.log(`Updating services for profile ${profileId}: ${services.join(', ')}`);
+                    for (const serviceId of services) {
+                        await tx.profileService.create({
+                            data: {
+                                profileId,
+                                serviceId: Number(serviceId)
+                            }
+                        });
+                    }
+                    console.log(`Successfully updated services for profile ${profileId}`);
+                }
 
                 // Prepare an ordered list of all images (existing and new) to create
                 const allImagesToCreate: {
@@ -887,6 +960,7 @@ export const DataService = {
                         paymentMethods: {include: {paymentMethod: true}},
                         nationalities: {include: {nationality: true}},
                         ethnicities: {include: {ethnicity: true}},
+                        services: {include: {service: true}},
                         images: {
                             orderBy: {
                                 position: 'asc'
@@ -934,6 +1008,18 @@ export const DataService = {
             });
         } catch (error) {
             console.error('Error fetching ethnicities:', error);
+            return [];
+        }
+    },
+    
+    async getAllServices() {
+        try {
+            return await prisma.service.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching services:', error);
             return [];
         }
     }

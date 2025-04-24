@@ -11,6 +11,7 @@ import LanguageSelector from './LanguageSelector';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import NationalitySelector from './NationalitySelector';
 import EthnicitySelector from './EthnicitySelector';
+import ServiceSelector from './ServiceSelector';
 import AdminControls from './AdminControls';
 import { useProfileImages } from '@/hooks/useProfileImages';
 
@@ -20,6 +21,7 @@ type ProfileWithRelations = Profile & {
     languages: { languageId: number }[];
     nationalities?: { nationalityId: number }[];
     ethnicities?: { ethnicityId: number }[];
+    services?: { serviceId: number }[];
     images: ProfileImage[];
     isDraft?: boolean;
     originalProfileId?: number | null;
@@ -53,6 +55,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
     const [selectedNationality, setSelectedNationality] = useState<number | null>(null);
     const [selectedEthnicity, setSelectedEthnicity] = useState<number | null>(null);
+    const [selectedServices, setSelectedServices] = useState<number[]>([]);
     const [isPublished, setIsPublished] = useState<boolean>(false);
 
     // UI control states
@@ -105,6 +108,12 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     setSelectedEthnicity(profile.ethnicities[0].ethnicityId);
                     console.log("Setting ethnicity:", profile.ethnicities[0].ethnicityId);
                 }
+                
+                // Set services if available
+                if (profile.services && profile.services.length > 0) {
+                    setSelectedServices(profile.services.map(s => s.serviceId));
+                    console.log("Setting services:", profile.services.map(s => s.serviceId));
+                }
             }
         } catch (error) {
             console.error('Error initializing form data:', error);
@@ -142,6 +151,11 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
             if (selectedEthnicity) {
                 updatedFormData.append('ethnicity', selectedEthnicity.toString());
             }
+            
+            // Add services
+            selectedServices.forEach(id => {
+                updatedFormData.append('services', id.toString());
+            });
 
             // Add published state if admin
             if (isAdminMode) {
@@ -422,6 +436,15 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             selectedEthnicity={selectedEthnicity}
                             onChange={setSelectedEthnicity}
                             error={errors.ethnicity?.[0]}
+                        />
+                    </div>
+                    
+                    {/* Services Selector */}
+                    <div className="md:col-span-2">
+                        <ServiceSelector
+                            selectedServices={selectedServices}
+                            onChange={setSelectedServices}
+                            error={errors.services?.[0]}
                         />
                     </div>
                 </div>

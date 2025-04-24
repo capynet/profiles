@@ -21,6 +21,7 @@ interface ProfileCardProps {
     paymentMethods: Array<{ paymentMethod: { id: number; name: string } }>;
     nationalities?: Array<{ nationality: { id: number; name: string } }>;
     ethnicities?: Array<{ ethnicity: { id: number; name: string } }>;
+    services?: Array<{ service: { id: number; name: string } }>;
 }
 
 export default function ProfileCard({
@@ -35,6 +36,7 @@ export default function ProfileCard({
                                         paymentMethods,
                                         nationalities,
                                         ethnicities,
+                                        services,
                                     }: ProfileCardProps) {
     const imageUrl = images.length > 0 ? images[0].mediumUrl : '/api/placeholder/352/576';
     const profileUrl = `/profile/${id}`;
@@ -140,6 +142,22 @@ export default function ProfileCard({
                                     className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded text-xs"
                                 >
                                     {ethnicity.name}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                
+                {services && services.length > 0 && (
+                    <div className="mb-3">
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">SERVICES</h4>
+                        <div className="flex flex-wrap gap-1">
+                            {services.map(({service}) => (
+                                <span
+                                    key={service.id}
+                                    className="px-2 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded text-xs"
+                                >
+                                    {service.name}
                                 </span>
                             ))}
                         </div>

@@ -27,6 +27,7 @@ interface Profile {
     paymentMethods: Array<{ paymentMethod: { id: number; name: string } }>;
     nationalities?: Array<{ nationality: { id: number; name: string } }>;
     ethnicities?: Array<{ ethnicity: { id: number; name: string } }>;
+    services?: Array<{ service: { id: number; name: string } }>;
 }
 
 interface Language {
@@ -49,12 +50,18 @@ interface Ethnicity {
     name: string;
 }
 
+interface Service {
+    id: number;
+    name: string;
+}
+
 interface HomeClientProps {
     initialProfiles: Profile[];
     languages: Language[];
     paymentMethods: PaymentMethod[];
     nationalities: Nationality[];
     ethnicities: Ethnicity[];
+    services: Service[];
     googleMapsApiKey: string;
     googleMapsId?: string;
     user?: {
@@ -69,6 +76,7 @@ export default function HomeClient({
                                        paymentMethods,
                                        nationalities,
                                        ethnicities,
+                                       services,
                                        googleMapsApiKey,
                                        googleMapsId,
                                        user
@@ -162,6 +170,7 @@ export default function HomeClient({
                     paymentMethods={paymentMethods}
                     nationalities={nationalities}
                     ethnicities={ethnicities}
+                    services={services}
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
                 />
@@ -206,6 +215,7 @@ export default function HomeClient({
                                             paymentMethods={profile.paymentMethods}
                                             nationalities={profile.nationalities}
                                             ethnicities={profile.ethnicities}
+                                            services={profile.services}
                                         />
                                     ))}
                                 </div>

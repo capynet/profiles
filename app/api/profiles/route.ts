@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         const paymentMethods = searchParams.get('paymentMethods');
         const nationality = searchParams.get('nationality');
         const ethnicity = searchParams.get('ethnicity');
+        const services = searchParams.get('services');
 
         // Build filter conditions
         const whereConditions: Prisma.ProfileWhereInput = {
@@ -92,6 +93,20 @@ export async function GET(request: NextRequest) {
                 whereConditions.ethnicities = {
                     some: {
                         ethnicityId: ethnicityId
+                    }
+                };
+            }
+        }
+        
+        // Services filter
+        if (services) {
+            const serviceIds = services.split(',').map(Number);
+            if (serviceIds.length > 0) {
+                whereConditions.services = {
+                    some: {
+                        serviceId: {
+                            in: serviceIds
+                        }
                     }
                 };
             }

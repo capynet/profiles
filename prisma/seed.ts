@@ -4,6 +4,7 @@ import seedLanguages from './seeders/languages'
 import seedPaymentMethods from './seeders/paymentMethods'
 import seedNationalities from './seeders/nationalities'
 import seedEthnicities from './seeders/ethnicities'
+import seedServices from './seeders/services'
 
 const prisma = new PrismaClient()
 
@@ -13,6 +14,7 @@ async function main() {
     await seedPaymentMethods(prisma)
     await seedNationalities(prisma)
     await seedEthnicities(prisma)
+    await seedServices(prisma)
 }
 
 main()

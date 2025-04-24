@@ -28,6 +28,7 @@ interface SeedProfile {
     paymentMethods: number[];
     nationalityId: number | null; // Added nationality
     ethnicityId: number | null;   // Added ethnicity
+    services: number[];           // Added services
 }
 
 interface SeedUser {
@@ -114,9 +115,10 @@ function generateSeedData(): SeedData[] {
         "Chef privada con experiencia en cocina mediterránea e internacional. Preparo menús a medida en tu domicilio para ocasiones especiales o como servicio regular."
     ];
 
-    // Nationality and ethnicity pools - IDs from seeders
+    // Nationality, ethnicity and service pools - IDs from seeders
     const nationalityPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
     const ethnicityPool = [1, 2, 3, 4, 5, 6];
+    const servicePool = [1, 2, 3]; // IDs for the services we created
 
     // Generate profiles (mix of male and female)
     for (let i = 0; i < PROFILES_QTY; i++) {
@@ -192,6 +194,17 @@ function generateSeedData(): SeedData[] {
         const ethnicityId = Math.random() > 0.1
             ? ethnicityPool[Math.floor(Math.random() * ethnicityPool.length)]
             : null;
+            
+        // Random services (1-3)
+        const numServices = Math.floor(Math.random() * 3) + 1;
+        const services: number[] = [];
+        
+        for (let j = 0; j < numServices; j++) {
+            const serviceId = servicePool[Math.floor(Math.random() * servicePool.length)];
+            if (!services.includes(serviceId)) {
+                services.push(serviceId);
+            }
+        }
 
         seedData.push({
             user: {
@@ -211,7 +224,8 @@ function generateSeedData(): SeedData[] {
                 languages,
                 paymentMethods,
                 nationalityId,
-                ethnicityId
+                ethnicityId,
+                services
             }
         });
     }
@@ -334,6 +348,18 @@ export default async function seedProfiles(prisma: PrismaClient) {
                 });
                 console.log(`Added ethnicity ${data.profile.ethnicityId} to profile ${profile.id}`);
             }
+
+            // 8. Create service associations
+            for (const serviceId of data.profile.services) {
+                await prisma.profileService.create({
+                    data: {
+                        profileId: profile.id,
+                        serviceId: serviceId,
+                    },
+                });
+            }
+            
+            console.log(`Added ${data.profile.services.length} services to profile ${profile.id}`);
         } catch (error) {
             console.error(`Error creating profile for ${data.user.email}:`, error);
         }

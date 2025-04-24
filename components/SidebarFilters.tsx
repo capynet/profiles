@@ -24,11 +24,17 @@ interface Ethnicity {
     name: string;
 }
 
+interface Service {
+    id: number;
+    name: string;
+}
+
 interface SidebarFiltersProps {
     languages: Language[];
     paymentMethods: PaymentMethod[];
     nationalities: Nationality[];
     ethnicities: Ethnicity[];
+    services: Service[];
     isOpen: boolean;
     onClose: () => void;
 }
@@ -38,6 +44,7 @@ export default function SidebarFilters({
                                            paymentMethods,
                                            nationalities,
                                            ethnicities,
+                                           services,
                                            isOpen,
                                            onClose
                                        }: SidebarFiltersProps) {
@@ -53,6 +60,7 @@ export default function SidebarFilters({
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
     const [selectedNationality, setSelectedNationality] = useState<number | null>(null);
     const [selectedEthnicity, setSelectedEthnicity] = useState<number | null>(null);
+    const [selectedServices, setSelectedServices] = useState<number[]>([]);
 
     // Price and age limits for sliders
     const priceMin = 0;
@@ -70,6 +78,7 @@ export default function SidebarFilters({
         const paymentMethodsParam = searchParams.get('paymentMethods');
         const nationalityParam = searchParams.get('nationality');
         const ethnicityParam = searchParams.get('ethnicity');
+        const servicesParam = searchParams.get('services');
 
         if (minPriceParam) setMinPrice(minPriceParam);
         if (maxPriceParam) setMaxPrice(maxPriceParam);
@@ -90,6 +99,10 @@ export default function SidebarFilters({
         
         if (ethnicityParam) {
             setSelectedEthnicity(Number(ethnicityParam));
+        }
+        
+        if (servicesParam) {
+            setSelectedServices(servicesParam.split(',').map(Number));
         }
     }, [searchParams]);
 
@@ -115,6 +128,10 @@ export default function SidebarFilters({
 
         if (selectedEthnicity) {
             params.append('ethnicity', selectedEthnicity.toString());
+        }
+        
+        if (selectedServices.length > 0) {
+            params.append('services', selectedServices.join(','));
         }
 
         router.push(`/?${params.toString()}`);
@@ -162,6 +179,7 @@ export default function SidebarFilters({
     const activeFiltersCount = [
         minPrice, maxPrice, minAge, maxAge,
         ...selectedLanguages, ...selectedPaymentMethods,
+        ...selectedServices,
         selectedNationality, selectedEthnicity
     ].filter(Boolean).length;
 
@@ -360,6 +378,36 @@ export default function SidebarFilters({
                             ))}
                         </div>
                     </div>
+                    
+                    {/* Services */}
+                    <div>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Services</h3>
+                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
+                            {services.map(service => (
+                                <div key={service.id} className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id={`service-${service.id}`}
+                                        checked={selectedServices.includes(service.id)}
+                                        onChange={() => {
+                                            if (selectedServices.includes(service.id)) {
+                                                setSelectedServices(selectedServices.filter(id => id !== service.id));
+                                            } else {
+                                                setSelectedServices([...selectedServices, service.id]);
+                                            }
+                                        }}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <label
+                                        htmlFor={`service-${service.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {service.name}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
 
                     {/* Filter Actions */}
                     <div className="flex space-x-2 pt-2">
@@ -421,6 +469,11 @@ export default function SidebarFilters({
                             {selectedEthnicity && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs">
                                     Etnicidad: {ethnicities.find(e => e.id === selectedEthnicity)?.name}
+                                </span>
+                            )}
+                            {selectedServices.length > 0 && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-xs">
+                                    {selectedServices.length} servicio(s)
                                 </span>
                             )}
                         </div>
