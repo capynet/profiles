@@ -29,6 +29,7 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
             paymentMethods: {include: {paymentMethod: true}},
             nationalities: {include: {nationality: true}},
             ethnicities: {include: {ethnicity: true}},
+            services: {include: {service: true}},
             images: true,
             user: {select: {name: true, email: true}},
         },
@@ -217,6 +218,23 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
                                             className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded-full"
                                         >
                                             {ethnicity.name}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* Services */}
+                        {profile.services && profile.services.length > 0 && (
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Services</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.services.map(({service}) => (
+                                        <span
+                                            key={service.id}
+                                            className="px-3 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded-full"
+                                        >
+                                            {service.name}
                                         </span>
                                     ))}
                                 </div>

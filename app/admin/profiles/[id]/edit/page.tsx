@@ -34,6 +34,7 @@ export default async function AdminEditProfilePage(props: AdminEditProfilePagePr
             paymentMethods: true,
             nationalities: true,
             ethnicities: true,
+            services: true,
             images: true,
             user: {
                 select: {name: true, email: true, id: true}

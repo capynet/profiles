@@ -41,6 +41,9 @@ export default async function EditDraftProfilePage(props: EditDraftProfilePagePr
             languages: true,
             paymentMethods: true,
             images: true,
+            nationalities: true,
+            ethnicities: true,
+            services: true,
         },
     });
 

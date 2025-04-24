@@ -29,6 +29,9 @@ export default async function EditProfilePage() {
             languages: true,
             paymentMethods: true,
             images: true,
+            nationalities: true,
+            ethnicities: true,
+            services: true,
         },
     });
 
