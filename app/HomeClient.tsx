@@ -102,16 +102,22 @@ export default function HomeClient({
     useEffect(() => {
         const radius = searchParams.get('radius');
         if (radius) {
-            setRadiusValue(parseInt(radius));
+            // Use parseFloat to handle decimal values like 0.2 and 0.5
+            const radiusValue = parseFloat(radius);
+            console.log('Setting radius from URL to:', radiusValue);
+            setRadiusValue(radiusValue);
         }
     }, [searchParams]);
 
     const [radiusValue, setRadiusValue] = useState(10); // Default 10km radius
     
-    // Handle radius change
-    const handleRadiusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newRadius = parseInt(e.target.value);
+    // Handle radius change (works with both the select dropdown and button group)
+    const handleRadiusChange = (e: React.ChangeEvent<HTMLSelectElement> | { target: { value: string } }) => {
+        // Parse as float to handle decimal values like 0.2 and 0.5
+        const newRadius = parseFloat(e.target.value);
         setRadiusValue(newRadius);
+        
+        console.log('Changed radius to:', newRadius, 'type:', typeof newRadius);
         
         // If near me is active, update the URL params
         if (isNearMeActive && userLocation) {
@@ -222,7 +228,7 @@ export default function HomeClient({
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Encuentra Perfiles</h1>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center flex-wrap gap-2 sm:flex-nowrap sm:space-x-2">
                     {/* Map toggle button */}
                     <button
                         onClick={() => setShowMap(!showMap)}
@@ -272,20 +278,47 @@ export default function HomeClient({
                         </div>
                     </button>
                     
-                    {/* Radius selector - visible when Near Me is active */}
+                    {/* Radius button group - visible when Near Me is active */}
                     {isNearMeActive && (
-                        <div className="flex items-center">
-                            <select
-                                value={radiusValue}
-                                onChange={handleRadiusChange}
-                                className="h-full ml-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm py-1 px-2"
-                            >
-                                <option value="1">1 km</option>
-                                <option value="2">2 km</option>
-                                <option value="3">3 km</option>
-                                <option value="5">5 km</option>
-                                <option value="100">No limit</option>
-                            </select>
+                        <div className="flex ml-2 rounded-md shadow-sm h-full">
+                            {[
+                                { value: 0.2, label: "200 m" },
+                                { value: 0.5, label: "500 m" },
+                                { value: 1, label: "1 km" },
+                                { value: 2, label: "2 km" },
+                                { value: 5, label: "5 km" },
+                                { value: 100, label: "Sin límite", className: "hidden sm:block" },
+                                { value: 100, label: "∞", className: "sm:hidden" }
+                            ].map((option, index, arr) => {
+                                // Filter out duplicates (the "Sin límite" and "∞" options both have value 100)
+                                const isLastOptionForDesktop = option.value === 100 && option.label === "Sin límite";
+                                const isLastOptionForMobile = option.value === 100 && option.label === "∞";
+                                
+                                // Calculate if this is the first or last visible button in the group
+                                const isFirst = index === 0;
+                                const isLast = index === arr.length - 2 && isLastOptionForDesktop || index === arr.length - 1 && isLastOptionForMobile;
+                                
+                                return (
+                                    <button
+                                        key={`${option.value}-${option.label}`}
+                                        onClick={() => handleRadiusChange({ target: { value: option.value.toString() }} as React.ChangeEvent<HTMLSelectElement>)}
+                                        className={`
+                                            px-2 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600
+                                            ${isFirst ? 'rounded-l-md' : ''} ${isLast ? 'rounded-r-md' : ''}
+                                            ${index > 0 ? '-ml-px' : ''}
+                                            ${radiusValue === option.value 
+                                                ? 'bg-green-600 text-white border-green-600 dark:bg-green-600 dark:text-white dark:border-green-700 z-10' 
+                                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                            }
+                                            focus:z-10 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500
+                                            ${option.className || ''}
+                                        `}
+                                        title={option.value === 100 ? "Sin límite de distancia" : `Radio de búsqueda: ${option.label}`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
 
@@ -331,6 +364,7 @@ export default function HomeClient({
                                 mapId={googleMapsId}
                                 userLocation={userLocation}
                                 radius={radiusValue}
+                                key={`map-${radiusValue}-${userLocation?.lat}-${userLocation?.lng}`} // Force re-render on radius or location change
                             />
                         )}
                     </div>
@@ -343,7 +377,13 @@ export default function HomeClient({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <p className="text-sm text-green-700 dark:text-green-300">
-                                Mostrando perfiles dentro de <span className="font-medium">{radiusValue} km</span> de tu ubicación, ordenados por proximidad.
+                                {radiusValue === 100 ? (
+                                    <>Mostrando perfiles <span className="font-medium">sin límite de distancia</span>, ordenados por proximidad a tu ubicación.</>
+                                ) : (
+                                    <>Mostrando perfiles dentro de <span className="font-medium">
+                                        {radiusValue < 1 ? `${radiusValue * 1000} m` : `${radiusValue} km`}
+                                    </span> de tu ubicación, ordenados por proximidad.</>
+                                )}
                                 {!showMap && (
                                     <button 
                                         onClick={() => setShowMap(true)}
