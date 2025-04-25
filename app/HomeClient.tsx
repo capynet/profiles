@@ -156,8 +156,7 @@ export default function HomeClient({
                     currentParams.set('lng', longitude.toString());
                     currentParams.set('radius', radiusValue.toString());
                     
-                    // Enable map to show the results
-                    setShowMap(true);
+                    // No longer automatically showing the map
                     
                     router.push(`/?${currentParams.toString()}`);
                     setIsLocating(false);
@@ -223,7 +222,7 @@ export default function HomeClient({
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Encuentra Perfiles</h1>
 
-                <div className="flex space-x-2">
+                <div className="flex items-center space-x-2">
                     {/* Map toggle button */}
                     <button
                         onClick={() => setShowMap(!showMap)}
@@ -272,6 +271,23 @@ export default function HomeClient({
                             )}
                         </div>
                     </button>
+                    
+                    {/* Radius selector - visible when Near Me is active */}
+                    {isNearMeActive && (
+                        <div className="flex items-center">
+                            <select
+                                value={radiusValue}
+                                onChange={handleRadiusChange}
+                                className="h-full ml-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm py-1 px-2"
+                            >
+                                <option value="1">1 km</option>
+                                <option value="2">2 km</option>
+                                <option value="3">3 km</option>
+                                <option value="5">5 km</option>
+                                <option value="100">No limit</option>
+                            </select>
+                        </div>
+                    )}
 
                     {/* Mobile filter toggle */}
                     <button
@@ -306,22 +322,7 @@ export default function HomeClient({
                             showMap ? 'opacity-100 max-h-[650px]' : 'opacity-0 max-h-0 overflow-hidden'
                         }`}
                     >
-                        {/* Radius control for Near Me */}
-                        {isNearMeActive && showMap && (
-                            <div className="bg-white dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700 flex items-center">
-                                <span className="mr-3 text-sm text-gray-700 dark:text-gray-300">Search radius:</span>
-                                <select
-                                    value={radiusValue}
-                                    onChange={handleRadiusChange}
-                                    className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm py-1 px-2"
-                                >
-                                    <option value="1">1 km</option>
-                                    <option value="2">2 km</option>
-                                    <option value="3">3 km</option>
-                                    <option value="5">5 km</option>
-                                </select>
-                            </div>
-                        )}
+                        {/* No longer needed as radius control has been moved */}
                         
                         {mapInitialized && (profiles.length > 0 || userLocation) && (
                             <ProfileMap
@@ -333,6 +334,27 @@ export default function HomeClient({
                             />
                         )}
                     </div>
+
+                    {/* Proximity message when Near Me is active */}
+                    {isNearMeActive && (
+                        <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                                Mostrando perfiles dentro de <span className="font-medium">{radiusValue} km</span> de tu ubicación, ordenados por proximidad.
+                                {!showMap && (
+                                    <button 
+                                        onClick={() => setShowMap(true)}
+                                        className="ml-2 text-green-600 dark:text-green-400 underline hover:no-underline"
+                                    >
+                                        Mostrar mapa
+                                    </button>
+                                )}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Profiles Grid (always visible) */}
                     {loading ? (
