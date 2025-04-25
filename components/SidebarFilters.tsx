@@ -107,34 +107,45 @@ export default function SidebarFilters({
     }, [searchParams]);
 
     const handleFilter = () => {
-        const params = new URLSearchParams();
-
-        if (minPrice) params.append('minPrice', minPrice);
-        if (maxPrice) params.append('maxPrice', maxPrice);
-        if (minAge) params.append('minAge', minAge);
-        if (maxAge) params.append('maxAge', maxAge);
+        // Start with current URL params to preserve location params (lat, lng, radius)
+        const params = new URLSearchParams(searchParams.toString());
+        
+        // Preserve only location params (lat, lng, radius) and remove any existing filter params
+        const locationParams = new URLSearchParams();
+        if (params.has('lat')) locationParams.append('lat', params.get('lat')!);
+        if (params.has('lng')) locationParams.append('lng', params.get('lng')!);
+        if (params.has('radius')) locationParams.append('radius', params.get('radius')!);
+        
+        // Create new params object starting with preserved location params
+        const newParams = new URLSearchParams(locationParams.toString());
+        
+        // Add filter params
+        if (minPrice) newParams.append('minPrice', minPrice);
+        if (maxPrice) newParams.append('maxPrice', maxPrice);
+        if (minAge) newParams.append('minAge', minAge);
+        if (maxAge) newParams.append('maxAge', maxAge);
 
         if (selectedLanguages.length > 0) {
-            params.append('languages', selectedLanguages.join(','));
+            newParams.append('languages', selectedLanguages.join(','));
         }
 
         if (selectedPaymentMethods.length > 0) {
-            params.append('paymentMethods', selectedPaymentMethods.join(','));
+            newParams.append('paymentMethods', selectedPaymentMethods.join(','));
         }
 
         if (selectedNationality) {
-            params.append('nationality', selectedNationality.toString());
+            newParams.append('nationality', selectedNationality.toString());
         }
 
         if (selectedEthnicity) {
-            params.append('ethnicity', selectedEthnicity.toString());
+            newParams.append('ethnicity', selectedEthnicity.toString());
         }
         
         if (selectedServices.length > 0) {
-            params.append('services', selectedServices.join(','));
+            newParams.append('services', selectedServices.join(','));
         }
 
-        router.push(`/?${params.toString()}`);
+        router.push(`/?${newParams.toString()}`);
 
         // Close sidebar on mobile after applying filters
         if (window.innerWidth < 768) {
@@ -143,6 +154,7 @@ export default function SidebarFilters({
     };
 
     const handleReset = () => {
+        // Reset state
         setMinPrice('');
         setMaxPrice('');
         setMinAge('');
@@ -151,7 +163,22 @@ export default function SidebarFilters({
         setSelectedPaymentMethods([]);
         setSelectedNationality(null);
         setSelectedEthnicity(null);
-        router.push('/');
+        setSelectedServices([]);
+        
+        // Preserve location parameters if they exist
+        const currentParams = new URLSearchParams(searchParams.toString());
+        const locationParams = new URLSearchParams();
+        
+        if (currentParams.has('lat')) locationParams.append('lat', currentParams.get('lat')!);
+        if (currentParams.has('lng')) locationParams.append('lng', currentParams.get('lng')!);
+        if (currentParams.has('radius')) locationParams.append('radius', currentParams.get('radius')!);
+        
+        // If we have location params, keep them in the URL
+        if (locationParams.toString()) {
+            router.push(`/?${locationParams.toString()}`);
+        } else {
+            router.push('/');
+        }
 
         // Close sidebar on mobile after resetting filters
         if (window.innerWidth < 768) {

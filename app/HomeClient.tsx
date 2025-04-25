@@ -124,8 +124,13 @@ export default function HomeClient({
             // Show loading indicator briefly for UI feedback
             setLoading(true);
             
+            // Preserve all existing parameters (including filters)
             const currentParams = new URLSearchParams(searchParams.toString());
+            
+            // Update only the radius parameter
             currentParams.set('radius', newRadius.toString());
+            
+            // Navigate with all parameters preserved
             router.push(`/?${currentParams.toString()}`);
             
             // The useEffect for searchParams will handle the data fetch
@@ -153,6 +158,9 @@ export default function HomeClient({
         let foundProfiles = [];
         let foundRadius = 0;
         
+        // Preserve existing filters
+        const currentParams = new URLSearchParams(searchParams.toString());
+        
         // Try each radius option from smallest to largest until we find results
         for (const option of radiusOptions) {
             // Skip duplicate "No limit" option
@@ -162,7 +170,8 @@ export default function HomeClient({
                 const radius = option.value;
                 console.log(`Searching with radius: ${radius}`);
                 
-                const params = new URLSearchParams(searchParams.toString());
+                // Use existing filters but add location params
+                const params = new URLSearchParams(currentParams.toString());
                 params.set('lat', lat.toString());
                 params.set('lng', lng.toString());
                 params.set('radius', radius.toString());
@@ -199,12 +208,12 @@ export default function HomeClient({
             setRadiusValue(foundRadius);
             setProfiles(foundProfiles);
             
-            // Update URL with this radius
-            const currentParams = new URLSearchParams(searchParams.toString());
-            currentParams.set('lat', lat.toString());
-            currentParams.set('lng', lng.toString());
-            currentParams.set('radius', foundRadius.toString());
-            router.push(`/?${currentParams.toString()}`);
+            // Update URL with this radius but preserve other filters
+            const updatedParams = new URLSearchParams(currentParams.toString());
+            updatedParams.set('lat', lat.toString());
+            updatedParams.set('lng', lng.toString());
+            updatedParams.set('radius', foundRadius.toString());
+            router.push(`/?${updatedParams.toString()}`);
             
             return true;
         } else {
@@ -212,12 +221,12 @@ export default function HomeClient({
             const largestNormalRadius = radiusOptions.filter(o => o.value !== 100)[radiusOptions.filter(o => o.value !== 100).length - 1].value;
             setRadiusValue(largestNormalRadius);
             
-            // Update URL with this radius
-            const currentParams = new URLSearchParams(searchParams.toString());
-            currentParams.set('lat', lat.toString());
-            currentParams.set('lng', lng.toString());
-            currentParams.set('radius', largestNormalRadius.toString());
-            router.push(`/?${currentParams.toString()}`);
+            // Update URL with this radius but preserve other filters
+            const updatedParams = new URLSearchParams(currentParams.toString());
+            updatedParams.set('lat', lat.toString());
+            updatedParams.set('lng', lng.toString());
+            updatedParams.set('radius', largestNormalRadius.toString());
+            router.push(`/?${updatedParams.toString()}`);
             
             return false;
         }
@@ -230,7 +239,7 @@ export default function HomeClient({
             setIsNearMeActive(false);
             setUserLocation(null);
             
-            // Reset the URL params to remove location-based filtering
+            // Remove only location params but preserve other filters
             const currentParams = new URLSearchParams(searchParams.toString());
             currentParams.delete('lat');
             currentParams.delete('lng');
@@ -250,7 +259,7 @@ export default function HomeClient({
                     setUserLocation({ lat: latitude, lng: longitude });
                     setIsNearMeActive(true);
                     
-                    // Find profiles with the minimum radius needed
+                    // Find profiles with the minimum radius needed while preserving filters
                     await findProfilesWithMinimumRadius(latitude, longitude);
                     
                     setIsLocating(false);
@@ -452,27 +461,39 @@ export default function HomeClient({
                     {/* Proximity message when Near Me is active */}
                     {isNearMeActive && (
                         <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 dark:text-green-400 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <p className="text-sm text-green-700 dark:text-green-300">
-                                {radiusValue === 100 ? (
-                                    <>Mostrando perfiles <span className="font-medium">sin límite de distancia</span>, ordenados por proximidad a tu ubicación.</>
-                                ) : (
-                                    <>Mostrando perfiles dentro de <span className="font-medium">
-                                        {radiusValue < 1 ? `${radiusValue * 1000} m` : `${radiusValue} km`}
-                                    </span> de tu ubicación, ordenados por proximidad.</>
+                            <div className="text-sm text-green-700 dark:text-green-300">
+                                <p>
+                                    {radiusValue === 100 ? (
+                                        <>Mostrando <span className="font-medium">{profiles.length} perfiles</span> <span className="font-medium">sin límite de distancia</span>, ordenados por proximidad a tu ubicación.</>
+                                    ) : (
+                                        <>Mostrando <span className="font-medium">{profiles.length} perfiles</span> dentro de <span className="font-medium">
+                                            {radiusValue < 1 ? `${radiusValue * 1000} m` : `${radiusValue} km`}
+                                        </span> de tu ubicación, ordenados por proximidad.</>
+                                    )}
+                                </p>
+                                {/* Active filters message */}
+                                {(searchParams.has('minPrice') || searchParams.has('maxPrice') || 
+                                  searchParams.has('minAge') || searchParams.has('maxAge') || 
+                                  searchParams.has('languages') || searchParams.has('paymentMethods') ||
+                                  searchParams.has('nationality') || searchParams.has('ethnicity') ||
+                                  searchParams.has('services')) && (
+                                    <p className="mt-1 text-xs italic">
+                                        Los resultados están filtrados según los criterios de búsqueda seleccionados.
+                                    </p>
                                 )}
                                 {!showMap && (
                                     <button 
                                         onClick={() => setShowMap(true)}
-                                        className="ml-2 text-green-600 dark:text-green-400 underline hover:no-underline"
+                                        className="mt-1 text-green-600 dark:text-green-400 underline hover:no-underline text-sm"
                                     >
                                         Mostrar mapa
                                     </button>
                                 )}
-                            </p>
+                            </div>
                         </div>
                     )}
 
