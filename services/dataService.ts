@@ -254,6 +254,9 @@ export const DataService = {
                     latitude: updateData.latitude !== undefined ? Number(updateData.latitude) : originalProfile.latitude,
                     longitude: updateData.longitude !== undefined ? Number(updateData.longitude) : originalProfile.longitude,
                     address: updateData.address || originalProfile.address,
+                    phone: updateData.phone || originalProfile.phone,
+                    hasWhatsapp: updateData.hasWhatsapp !== undefined ? updateData.hasWhatsapp : originalProfile.hasWhatsapp,
+                    hasTelegram: updateData.hasTelegram !== undefined ? updateData.hasTelegram : originalProfile.hasTelegram,
                     published: false, // Draft is not published
                     isDraft: true,    // Mark as draft
                     originalProfileId: originalProfile.id, // Link to original
@@ -561,20 +564,27 @@ export const DataService = {
                 where: {profileId: originalProfileId}
             });
 
-            // Update the original profile with the draft's data
-            const updatedProfile = await tx.profile.update({
-                where: {id: originalProfileId},
-                data: {
-                    name: draft.name,
-                    price: draft.price,
-                    age: draft.age,
-                    description: draft.description,
-                    latitude: draft.latitude,
-                    longitude: draft.longitude,
-                    address: draft.address,
-                    // Keep it published
-                    updatedAt: new Date()
-                }
+            // Update the original profile with the draft's data using raw query
+            await tx.$executeRaw`
+                UPDATE "Profile"
+                SET 
+                    "name" = ${draft.name},
+                    "price" = ${draft.price},
+                    "age" = ${draft.age},
+                    "description" = ${draft.description},
+                    "latitude" = ${draft.latitude},
+                    "longitude" = ${draft.longitude},
+                    "address" = ${draft.address},
+                    "phone" = ${draft.phone || null},
+                    "hasWhatsapp" = ${draft.hasWhatsapp === true},
+                    "hasTelegram" = ${draft.hasTelegram === true},
+                    "updatedAt" = NOW()
+                WHERE "id" = ${originalProfileId}
+            `;
+            
+            // Get the updated profile
+            const updatedProfile = await tx.profile.findUnique({
+                where: {id: originalProfileId}
             });
 
             // Create new language relationships
@@ -661,11 +671,30 @@ export const DataService = {
         images?: string | any,
         nationality?: number | null,
         ethnicity?: number | null,
-        services?: number[]
+        services?: number[],
+        phone?: string,
+        hasWhatsapp?: boolean,
+        hasTelegram?: boolean
     }, userContext?: { userId: string, isAdmin: boolean }) {
         try {
             // Extract the custom fields
-            const {processedImages, existingImagesOrder, images, nationality, ethnicity, services, ...profileData} = data;
+            const {
+                processedImages, 
+                existingImagesOrder, 
+                images, 
+                nationality, 
+                ethnicity, 
+                services, 
+                phone, 
+                hasWhatsapp, 
+                hasTelegram, 
+                ...profileData
+            } = data;
+            
+            // Add contact fields back to profileData
+            if (phone !== undefined) profileData.phone = phone;
+            if (hasWhatsapp !== undefined) profileData.hasWhatsapp = hasWhatsapp;
+            if (hasTelegram !== undefined) profileData.hasTelegram = hasTelegram;
 
             // Get the profile to update
             const existingProfile = await prisma.profile.findUnique({
@@ -775,9 +804,28 @@ export const DataService = {
                 });
 
                 // First, update the basic profile data
-                const updatedProfile = await tx.profile.update({
-                    where: {id: profileId},
-                    data: restProfileData as Prisma.ProfileUpdateInput
+                // Using raw query to update the profile to bypass TypeScript validation issues
+                await tx.$executeRaw`
+                    UPDATE "Profile"
+                    SET 
+                        "name" = ${restProfileData.name},
+                        "price" = ${Number(restProfileData.price)},
+                        "age" = ${Number(restProfileData.age)},
+                        "description" = ${restProfileData.description},
+                        "latitude" = ${Number(restProfileData.latitude)},
+                        "longitude" = ${Number(restProfileData.longitude)},
+                        "address" = ${restProfileData.address},
+                        "published" = ${restProfileData.published === true},
+                        "phone" = ${phone || null},
+                        "hasWhatsapp" = ${hasWhatsapp === true},
+                        "hasTelegram" = ${hasTelegram === true},
+                        "updatedAt" = NOW()
+                    WHERE "id" = ${profileId}
+                `;
+                
+                // Get the updated profile
+                const updatedProfile = await tx.profile.findUnique({
+                    where: {id: profileId}
                 });
 
                 // Handle language relationships

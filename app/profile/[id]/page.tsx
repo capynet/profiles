@@ -268,8 +268,57 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
                             Para contactar con este profesional, debes iniciar sesión.
                         </p>
                         {session && (
-                            <div className="mt-2 text-gray-700 dark:text-gray-300">
-                                Contactar por email: {profile.user.email}
+                            <div className="mt-4 space-y-3 text-gray-700 dark:text-gray-300">
+                                <div>
+                                    Contactar por email: {profile.user.email}
+                                </div>
+                                
+                                {profile.phone && (
+                                    <div className="flex flex-col space-y-2">
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                            </svg>
+                                            <a 
+                                                href={`tel:${profile.phone}`} 
+                                                className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                                            >
+                                                {profile.phone}
+                                            </a>
+                                        </div>
+                                        
+                                        <div className="flex space-x-4 ml-7">
+                                            {profile.hasWhatsapp && (
+                                                <a 
+                                                    href={`https://wa.me/${profile.phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                                                >
+                                                    <svg className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.297-.497.1-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                                                        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.088.535 4.05 1.475 5.762L.106 23.486c-.038.178.032.363.169.451.53.035.117.053.202.053.108 0 .215-.037.301-.106l5.913-3.255c1.615.834 3.437 1.307 5.374 1.37h.006c6.627 0 12-5.373 12-12S18.627 0 12 0zM12 22.02h-.006c-1.834-.04-3.59-.531-5.137-1.423l-.368-.221-3.826 2.104 2.141-3.826-.235-.38C3.505 16.698 2.98 14.881 2.98 12c0-4.962 4.038-9 9-9 4.963 0 9 4.038 9 9 0 4.963-4.037 9-9 9z" fillRule="evenodd" clipRule="evenodd"/>
+                                                    </svg>
+                                                    WhatsApp
+                                                </a>
+                                            )}
+                                            
+                                            {profile.hasTelegram && (
+                                                <a 
+                                                    href={`tg://${profile.phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                                >
+                                                    <svg className="h-5 w-5 mr-1" viewBox="0 0 24 24" fill="currentColor">
+                                                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248c-.235 2.46-1.258 8.42-1.776 11.173-.217 1.168-.5 1.557-.818 1.593-.698.082-1.23-.455-1.9-.892-1.056-.68-1.655-1.105-2.68-1.772-1.188-.775-.419-1.202.258-1.898.177-.182 3.247-2.977 3.307-3.23.007-.03.014-.105-.04-.15-.058-.044-.117-.027-.167-.015-.071.017-1.204.784-3.396 2.3-1.02.705-1.763 1.05-2.23 1.037-.487-.015-1.423-.283-2.12-.514-.85-.284-1.527-.497-1.47-.984.03-.255.256-.502.677-.745 2.82-1.632 4.996-2.7 6.526-3.204 3.118-1.02 3.763-.84 4.188-.606.19.107.406.36.422.704.016.345.015.638-.004.895z"/>
+                                                    </svg>
+                                                    Telegram
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

@@ -71,6 +71,9 @@ model Profile {
   latitude          Float
   longitude         Float
   address           String
+  phone             String?
+  hasWhatsapp       Boolean                @default(false)
+  hasTelegram       Boolean                @default(false)
   published         Boolean                @default(false)
   isDraft           Boolean                @default(false)
   originalProfileId Int?

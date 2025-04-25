@@ -50,6 +50,9 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
     const [latitude, setLatitude] = useState(profile?.latitude?.toString() || '0');
     const [longitude, setLongitude] = useState(profile?.longitude?.toString() || '0');
     const [address, setAddress] = useState(profile?.address || '');
+    const [phone, setPhone] = useState(profile?.phone || '');
+    const [hasWhatsapp, setHasWhatsapp] = useState(profile?.hasWhatsapp || false);
+    const [hasTelegram, setHasTelegram] = useState(profile?.hasTelegram || false);
 
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
@@ -93,6 +96,9 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 setLatitude(profile.latitude?.toString() || '0');
                 setLongitude(profile.longitude?.toString() || '0');
                 setAddress(profile.address || '');
+                setPhone(profile.phone || '');
+                setHasWhatsapp(profile.hasWhatsapp || false);
+                setHasTelegram(profile.hasTelegram || false);
                 setSelectedLanguages(profile.languages.map(l => l.languageId));
                 setSelectedPaymentMethods(profile.paymentMethods.map(pm => pm.paymentMethodId));
                 setIsPublished(profile.published || false);
@@ -143,6 +149,9 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
             updatedFormData.append('latitude', latitude);
             updatedFormData.append('longitude', longitude);
             updatedFormData.append('address', address);
+            updatedFormData.append('phone', phone);
+            updatedFormData.append('hasWhatsapp', hasWhatsapp.toString());
+            updatedFormData.append('hasTelegram', hasTelegram.toString());
 
             if (selectedNationality) {
                 updatedFormData.append('nationality', selectedNationality.toString());
@@ -392,6 +401,59 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             placeholder="Street, number, postal code, city"
                         />
                         {errors.address && <p className="mt-1 text-sm text-red-600 font-medium">{errors.address[0]}</p>}
+                    </div>
+                    
+                    {/* Contact Information Section */}
+                    <div className="pt-4 md:col-span-2">
+                        <div className="flex items-center">
+                            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
+                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Contact Information</span>
+                            <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
+                        </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className={inputClassName}
+                            placeholder="+34 123 456 789"
+                        />
+                        {errors.phone && <p className="mt-1 text-sm text-red-600 font-medium">{errors.phone[0]}</p>}
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-6">
+                            <div className="flex items-center">
+                                <input
+                                    id="hasWhatsapp"
+                                    name="hasWhatsapp"
+                                    type="checkbox"
+                                    checked={hasWhatsapp}
+                                    onChange={(e) => setHasWhatsapp(e.target.checked)}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor="hasWhatsapp" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                    Tengo WhatsApp
+                                </label>
+                            </div>
+                            <div className="flex items-center">
+                                <input
+                                    id="hasTelegram"
+                                    name="hasTelegram"
+                                    type="checkbox"
+                                    checked={hasTelegram}
+                                    onChange={(e) => setHasTelegram(e.target.checked)}
+                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <label htmlFor="hasTelegram" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                                    Tengo Telegram
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Additional Info section */}

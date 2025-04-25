@@ -99,6 +99,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         // Convert language and payment IDs to numbers
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
+        const serviceIds = formData.getAll('services').map(id => Number(id));
 
         // Get nationality and ethnicity IDs if present (single values)
         const nationalityId = formData.get('nationality') ? Number(formData.get('nationality')) : null;
@@ -137,6 +138,11 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         // Set isDraft based on user role - non-admins create drafts by default
         const isDraftValue = !isAdmin;
 
+        // Get phone data and messaging preferences
+        const phone = formData.get('phone') as string;
+        const hasWhatsapp = formData.get('hasWhatsapp') === 'true';
+        const hasTelegram = formData.get('hasTelegram') === 'true';
+
         // Prepare data for profile creation
         const profileData = {
             userId: targetUserId,
@@ -147,6 +153,9 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             latitude: Number(formData.get('latitude')),
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
+            phone: phone,
+            hasWhatsapp: hasWhatsapp,
+            hasTelegram: hasTelegram,
             published: publishedValue,
             isDraft: isDraftValue, // Add isDraft field
             languages: {
@@ -329,6 +338,11 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             publishedValue = profile.published;
         }
 
+        // Get phone data and messaging preferences
+        const phone = formData.get('phone') as string;
+        const hasWhatsapp = formData.get('hasWhatsapp') === 'true';
+        const hasTelegram = formData.get('hasTelegram') === 'true';
+
         // Prepare data for profile update
         const profileData = {
             name: formData.get('name') as string,
@@ -338,6 +352,9 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             latitude: Number(formData.get('latitude')),
             longitude: Number(formData.get('longitude')),
             address: formData.get('address') as string,
+            phone: phone,
+            hasWhatsapp: hasWhatsapp,
+            hasTelegram: hasTelegram,
             published: publishedValue,
             languages: {
                 connect: languageIds.map(id => ({id}))
