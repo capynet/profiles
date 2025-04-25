@@ -44,7 +44,7 @@ export default function RangeSlider({
     }, [minVal, maxVal, min, max]);
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-2 mb-8">
             <div className="flex justify-between">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
                 {showInputs && (
@@ -57,7 +57,7 @@ export default function RangeSlider({
             </div>
 
             {/* Single slider approach - more reliable */}
-            <div className="py-4">
+            <div className="pt-2 pb-4">                
                 <div className="relative">
                     {/* Track background */}
                     <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
@@ -71,10 +71,50 @@ export default function RangeSlider({
                         }}
                     ></div>
 
+                    {/* Min/Max marker ticks */}
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 h-3 w-1 bg-gray-400 rounded-sm"></div>
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 h-3 w-1 bg-gray-400 rounded-sm"></div>
+                    
+                    {/* Min value label */}
+                    <div 
+                        className="absolute top-full mt-3 -translate-x-1/2 whitespace-nowrap"
+                        style={{ 
+                            left: `${minPercent}%`,
+                            // Prevent label from going outside container
+                            transform: minPercent < 10 ? 'translateX(0)' : 'translateX(-50%)'
+                        }}
+                    >
+                        <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1 rounded-sm">
+                            {label === "Price (€)" ? `${minVal}€` : minVal}
+                        </div>
+                    </div>
+                    
+                    {/* Max value label */}
+                    <div 
+                        className="absolute top-full mt-3 -translate-x-1/2 whitespace-nowrap"
+                        style={{ 
+                            left: `${maxPercent}%`,
+                            // Prevent label from going outside container
+                            transform: maxPercent > 90 ? 'translateX(-90%)' : 'translateX(-50%)'
+                        }}
+                    >
+                        <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1 rounded-sm">
+                            {label === "Price (€)" ? `${maxVal}€` : maxVal}
+                        </div>
+                    </div>
+                    
+                    {/* Range values at track ends */}
+                    <div className="absolute left-0 top-4 text-xs text-gray-500 dark:text-gray-400">
+                        {label === "Price (€)" ? `${min}€` : min}
+                    </div>
+                    <div className="absolute right-0 top-4 text-xs text-gray-500 dark:text-gray-400">
+                        {label === "Price (€)" ? `${max}€` : max}
+                    </div>
+
                     {/* Slider thumbs */}
                     <div
-                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full cursor-pointer"
-                        style={{ left: `calc(${minPercent}% - 8px)` }}
+                        className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-indigo-600 rounded-full cursor-pointer shadow-md hover:shadow-lg transition-shadow border-2 border-white dark:border-gray-800"
+                        style={{ left: `calc(${minPercent}% - 10px)` }}
                         onMouseDown={(e) => {
                             e.preventDefault();
                             const startX = e.clientX;
@@ -124,8 +164,8 @@ export default function RangeSlider({
                     />
 
                     <div
-                        className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full cursor-pointer"
-                        style={{ left: `calc(${maxPercent}% - 8px)` }}
+                        className="absolute top-1/2 -translate-y-1/2 w-5 h-5 bg-indigo-600 rounded-full cursor-pointer shadow-md hover:shadow-lg transition-shadow border-2 border-white dark:border-gray-800"
+                        style={{ left: `calc(${maxPercent}% - 10px)` }}
                         onMouseDown={(e) => {
                             e.preventDefault();
                             const startX = e.clientX;
