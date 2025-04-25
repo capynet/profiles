@@ -4,6 +4,7 @@ import {auth} from "@/auth";
 import {prisma} from "@/prisma";
 import Link from "next/link";
 import Image from "next/image";
+import ProfileDetailMapWrapper from "@/components/ProfileDetailMapWrapper";
 
 interface ProfilePageProps {
     params: Promise<{
@@ -14,6 +15,10 @@ interface ProfilePageProps {
 export default async function ProfileDetailPage(props: ProfilePageProps) {
     const params = await props.params;
     const session = await auth();
+
+    // Get Google Maps API key from environment variables
+    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+    const googleMapsId = process.env.GOOGLE_MAPS_ID;
 
     // Get profile by ID
     const profileId = parseInt(params.id);
@@ -126,8 +131,22 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
                     {/* Location */}
                     <div className="mb-8">
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Ubicación</h2>
-                        <p className="text-gray-700 dark:text-gray-300">{profile.address}</p>
-                        <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-gray-700 dark:text-gray-300 mb-4">{profile.address}</p>
+                        
+                        {/* Map display */}
+                        {profile.latitude && profile.longitude && (
+                            <div className="mt-4">
+                                <ProfileDetailMapWrapper 
+                                    latitude={profile.latitude} 
+                                    longitude={profile.longitude} 
+                                    name={profile.name}
+                                    apiKey={googleMapsApiKey}
+                                    mapId={googleMapsId}
+                                />
+                            </div>
+                        )}
+                        
+                        <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                             Coordenadas: {profile.latitude}, {profile.longitude}
                         </div>
                     </div>
