@@ -112,23 +112,117 @@ export default function HomeClient({
     const [radiusValue, setRadiusValue] = useState(10); // Default 10km radius
     
     // Handle radius change (works with both the select dropdown and button group)
-    const handleRadiusChange = (e: React.ChangeEvent<HTMLSelectElement> | { target: { value: string } }) => {
+    const handleRadiusChange = async (e: React.ChangeEvent<HTMLSelectElement> | { target: { value: string } }) => {
         // Parse as float to handle decimal values like 0.2 and 0.5
         const newRadius = parseFloat(e.target.value);
         setRadiusValue(newRadius);
         
         console.log('Changed radius to:', newRadius, 'type:', typeof newRadius);
         
-        // If near me is active, update the URL params
+        // If near me is active, update the URL params and fetch profiles with this radius
         if (isNearMeActive && userLocation) {
+            // Show loading indicator briefly for UI feedback
+            setLoading(true);
+            
             const currentParams = new URLSearchParams(searchParams.toString());
             currentParams.set('radius', newRadius.toString());
             router.push(`/?${currentParams.toString()}`);
+            
+            // The useEffect for searchParams will handle the data fetch
         }
     };
     
     const router = useRouter();
     
+    // Define available radius options for search
+    const radiusOptions = [
+        { value: 0.2, label: "200 m" },
+        { value: 0.5, label: "500 m" },
+        { value: 1, label: "1 km" },
+        { value: 2, label: "2 km" },
+        { value: 5, label: "5 km" },
+        { value: 100, label: "Sin límite", className: "hidden sm:block" },
+        { value: 100, label: "∞", className: "sm:hidden" }
+    ];
+    
+    // Function to find profiles with the minimum radius needed
+    const findProfilesWithMinimumRadius = async (lat: number, lng: number) => {
+        setIsLocating(true);
+        
+        // Results cache to prevent UI updates during search
+        let foundProfiles = [];
+        let foundRadius = 0;
+        
+        // Try each radius option from smallest to largest until we find results
+        for (const option of radiusOptions) {
+            // Skip duplicate "No limit" option
+            if (option.value === 100 && option.label === "∞") continue;
+            
+            try {
+                const radius = option.value;
+                console.log(`Searching with radius: ${radius}`);
+                
+                const params = new URLSearchParams(searchParams.toString());
+                params.set('lat', lat.toString());
+                params.set('lng', lng.toString());
+                params.set('radius', radius.toString());
+                
+                const response = await fetch(`/api/profiles?${params.toString()}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profiles');
+                }
+                
+                const data = await response.json();
+                
+                // If we have results, use this radius
+                if (data.length > 0) {
+                    console.log(`Found ${data.length} profiles with radius ${radius}`);
+                    foundProfiles = data;
+                    foundRadius = radius;
+                    
+                    // Stop searching once we find results
+                    break;
+                }
+                
+                // If no results with this radius, try the next larger one
+                console.log(`No profiles found with radius ${radius}, trying larger radius`);
+                
+            } catch (error) {
+                console.error(`Error searching with radius ${option.value}:`, error);
+            }
+        }
+        
+        // After search is complete, update UI once
+        if (foundProfiles.length > 0) {
+            // We found profiles, use this radius
+            setRadiusValue(foundRadius);
+            setProfiles(foundProfiles);
+            
+            // Update URL with this radius
+            const currentParams = new URLSearchParams(searchParams.toString());
+            currentParams.set('lat', lat.toString());
+            currentParams.set('lng', lng.toString());
+            currentParams.set('radius', foundRadius.toString());
+            router.push(`/?${currentParams.toString()}`);
+            
+            return true;
+        } else {
+            // No profiles found with any radius, use the largest normal radius
+            const largestNormalRadius = radiusOptions.filter(o => o.value !== 100)[radiusOptions.filter(o => o.value !== 100).length - 1].value;
+            setRadiusValue(largestNormalRadius);
+            
+            // Update URL with this radius
+            const currentParams = new URLSearchParams(searchParams.toString());
+            currentParams.set('lat', lat.toString());
+            currentParams.set('lng', lng.toString());
+            currentParams.set('radius', largestNormalRadius.toString());
+            router.push(`/?${currentParams.toString()}`);
+            
+            return false;
+        }
+    };
+
     // Handle "Near Me" button click
     const handleNearMeClick = () => {
         if (isNearMeActive) {
@@ -151,20 +245,14 @@ export default function HomeClient({
         // Get user's geolocation
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                async (position) => {
                     const { latitude, longitude } = position.coords;
                     setUserLocation({ lat: latitude, lng: longitude });
                     setIsNearMeActive(true);
                     
-                    // Add location to URL params for filtering
-                    const currentParams = new URLSearchParams(searchParams.toString());
-                    currentParams.set('lat', latitude.toString());
-                    currentParams.set('lng', longitude.toString());
-                    currentParams.set('radius', radiusValue.toString());
+                    // Find profiles with the minimum radius needed
+                    await findProfilesWithMinimumRadius(latitude, longitude);
                     
-                    // No longer automatically showing the map
-                    
-                    router.push(`/?${currentParams.toString()}`);
                     setIsLocating(false);
                 },
                 (error) => {
@@ -281,15 +369,7 @@ export default function HomeClient({
                     {/* Radius button group - visible when Near Me is active */}
                     {isNearMeActive && (
                         <div className="flex ml-2 rounded-md shadow-sm h-full">
-                            {[
-                                { value: 0.2, label: "200 m" },
-                                { value: 0.5, label: "500 m" },
-                                { value: 1, label: "1 km" },
-                                { value: 2, label: "2 km" },
-                                { value: 5, label: "5 km" },
-                                { value: 100, label: "Sin límite", className: "hidden sm:block" },
-                                { value: 100, label: "∞", className: "sm:hidden" }
-                            ].map((option, index, arr) => {
+                            {radiusOptions.map((option, index, arr) => {
                                 // Filter out duplicates (the "Sin límite" and "∞" options both have value 100)
                                 const isLastOptionForDesktop = option.value === 100 && option.label === "Sin límite";
                                 const isLastOptionForMobile = option.value === 100 && option.label === "∞";
