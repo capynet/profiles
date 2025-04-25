@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { GoogleMap, useLoadScript, InfoWindow, Marker } from '@react-google-maps/api';
 import ProfileMapCard from './ProfileMapCard';
 
@@ -28,6 +28,8 @@ interface ProfileMapProps {
     profiles: Profile[];
     apiKey: string;
     mapId?: string;
+    userLocation?: { lat: number, lng: number } | null;
+    radius?: number; // Radius in kilometers
 }
 
 const mapContainerStyle = {
@@ -39,9 +41,10 @@ const mapContainerStyle = {
 // This prevents React from reloading the script unnecessarily
 const libraries = ["marker"] as const;
 
-export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps) {
+export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radius = 10 }: ProfileMapProps) {
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
     const mapRef = useRef<google.maps.Map | null>(null);
+    const circleRef = useRef<google.maps.Circle | null>(null);
 
     // Load the Google Maps script using the hook with static libraries array
     const { isLoaded, loadError } = useLoadScript({
@@ -49,13 +52,20 @@ export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps)
         libraries
     });
 
-    // Calculate center of map based on profile locations
+    // Calculate center of map based on user location or profile locations
     const center = useMemo(() => {
+        // If user location is provided, use that as center
+        if (userLocation) {
+            return userLocation;
+        }
+        
+        // If no profiles, use default center
         if (profiles.length === 0) {
             // Default center (e.g., Madrid, Spain)
             return { lat: 40.4168, lng: -3.7038 };
         }
 
+        // Otherwise, center map on average of all profile locations
         const sumLat = profiles.reduce((sum, profile) => sum + profile.latitude, 0);
         const sumLng = profiles.reduce((sum, profile) => sum + profile.longitude, 0);
 
@@ -63,7 +73,40 @@ export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps)
             lat: sumLat / profiles.length,
             lng: sumLng / profiles.length
         };
-    }, [profiles]);
+    }, [profiles, userLocation]);
+
+    // Create or update the circle when the map or user location changes
+    useEffect(() => {
+        // Only execute if the map is loaded and google object is available
+        if (isLoaded && mapRef.current && userLocation && window.google) {
+            // Clear existing circle
+            if (circleRef.current) {
+                circleRef.current.setMap(null);
+            }
+            
+            // Create new circle
+            circleRef.current = new window.google.maps.Circle({
+                map: mapRef.current,
+                center: userLocation,
+                radius: radius * 1000, // Convert km to meters
+                fillColor: "#22C55E",
+                fillOpacity: 0.1,
+                strokeColor: "#22C55E",
+                strokeOpacity: 0.5,
+                strokeWeight: 1,
+                clickable: false,
+                zIndex: 1
+            });
+        }
+        
+        // Clean up on unmount
+        return () => {
+            if (circleRef.current) {
+                circleRef.current.setMap(null);
+                circleRef.current = null;
+            }
+        };
+    }, [isLoaded, userLocation, radius, mapRef]);
 
     const onLoad = useCallback((map: google.maps.Map) => {
         mapRef.current = map;
@@ -94,7 +137,7 @@ export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps)
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={center}
-            zoom={12}
+            zoom={userLocation ? 13 : 12}
             onLoad={onLoad}
             onUnmount={onUnmount}
             onClick={() => setSelectedProfile(null)}
@@ -104,7 +147,27 @@ export default function ProfileMap({ profiles, apiKey, mapId }: ProfileMapProps)
                 gestureHandling: 'greedy'
             }}
         >
-            {/* Use regular Markers for now, as they're more reliable */}
+            {/* User location marker */}
+            {userLocation && (
+                <Marker
+                    position={userLocation}
+                    icon={{
+                        path: "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
+                        fillColor: "#22C55E",
+                        fillOpacity: 1,
+                        strokeWeight: 2,
+                        strokeColor: "#FFFFFF",
+                        scale: 1.2,
+                        anchor: new google.maps.Point(12, 12),
+                    }}
+                    zIndex={1000} // Keep user marker on top
+                    title="Your location"
+                />
+            )}
+            
+            {/* User location circle is handled via useEffect and circleRef */}
+
+            {/* Profile markers */}
             {profiles.map(profile => (
                 <Marker
                     key={profile.id}

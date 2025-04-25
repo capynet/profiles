@@ -3,6 +3,19 @@ import {NextRequest, NextResponse} from 'next/server';
 import {DataService} from '@/services/dataService';
 import {Prisma} from '@prisma/client';
 
+// Calculate distance between two points using Haversine formula
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+}
+
 export async function GET(request: NextRequest) {
     try {
         const searchParams = request.nextUrl.searchParams;
@@ -17,6 +30,11 @@ export async function GET(request: NextRequest) {
         const nationality = searchParams.get('nationality');
         const ethnicity = searchParams.get('ethnicity');
         const services = searchParams.get('services');
+        
+        // New location-based parameters
+        const lat = searchParams.get('lat');
+        const lng = searchParams.get('lng');
+        const radius = searchParams.get('radius');
 
         // Build filter conditions
         const whereConditions: Prisma.ProfileWhereInput = {
@@ -113,7 +131,38 @@ export async function GET(request: NextRequest) {
         }
 
         // Get profiles with filters
-        const profiles = await DataService.getProfiles(whereConditions);
+        let profiles = await DataService.getProfiles(whereConditions);
+
+        // Apply location-based filtering if parameters are provided
+        // We do this post-query because Prisma doesn't support geospatial queries natively
+        if (lat && lng && radius) {
+            const userLat = parseFloat(lat);
+            const userLng = parseFloat(lng);
+            const maxDistance = parseFloat(radius);
+            
+            if (!isNaN(userLat) && !isNaN(userLng) && !isNaN(maxDistance)) {
+                // Filter profiles by distance
+                profiles = profiles.filter(profile => {
+                    if (profile.latitude && profile.longitude) {
+                        const distance = calculateDistance(
+                            userLat, 
+                            userLng, 
+                            profile.latitude, 
+                            profile.longitude
+                        );
+                        return distance <= maxDistance;
+                    }
+                    return false;
+                });
+                
+                // Sort profiles by distance from the user
+                profiles.sort((a, b) => {
+                    const distanceA = calculateDistance(userLat, userLng, a.latitude, a.longitude);
+                    const distanceB = calculateDistance(userLat, userLng, b.latitude, b.longitude);
+                    return distanceA - distanceB;
+                });
+            }
+        }
 
         return NextResponse.json(profiles);
     } catch (error) {

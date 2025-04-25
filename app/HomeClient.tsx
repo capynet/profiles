@@ -1,7 +1,7 @@
 'use client';
 
 import {useState, useEffect} from 'react';
-import {useSearchParams} from 'next/navigation';
+import {useSearchParams, useRouter} from 'next/navigation';
 import ProfileCard from '@/components/ProfileCard';
 import SidebarFilters from '@/components/SidebarFilters';
 import ProfileMap from '@/components/ProfileMap';
@@ -86,6 +86,9 @@ export default function HomeClient({
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showMap, setShowMap] = useState(false);
     const [mapInitialized, setMapInitialized] = useState(false);
+    const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+    const [isNearMeActive, setIsNearMeActive] = useState(false);
+    const [isLocating, setIsLocating] = useState(false);
     const searchParams = useSearchParams();
 
     // Initialize map once when it's first shown
@@ -94,6 +97,84 @@ export default function HomeClient({
             setMapInitialized(true);
         }
     }, [showMap, mapInitialized]);
+    
+    // Initialize radius value from URL parameters on component load
+    useEffect(() => {
+        const radius = searchParams.get('radius');
+        if (radius) {
+            setRadiusValue(parseInt(radius));
+        }
+    }, [searchParams]);
+
+    const [radiusValue, setRadiusValue] = useState(10); // Default 10km radius
+    
+    // Handle radius change
+    const handleRadiusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newRadius = parseInt(e.target.value);
+        setRadiusValue(newRadius);
+        
+        // If near me is active, update the URL params
+        if (isNearMeActive && userLocation) {
+            const currentParams = new URLSearchParams(searchParams.toString());
+            currentParams.set('radius', newRadius.toString());
+            router.push(`/?${currentParams.toString()}`);
+        }
+    };
+    
+    const router = useRouter();
+    
+    // Handle "Near Me" button click
+    const handleNearMeClick = () => {
+        if (isNearMeActive) {
+            // If already active, deactivate it and reset
+            setIsNearMeActive(false);
+            setUserLocation(null);
+            
+            // Reset the URL params to remove location-based filtering
+            const currentParams = new URLSearchParams(searchParams.toString());
+            currentParams.delete('lat');
+            currentParams.delete('lng');
+            currentParams.delete('radius');
+            router.push(`/?${currentParams.toString()}`);
+            
+            return;
+        }
+        
+        setIsLocating(true);
+        
+        // Get user's geolocation
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLocation({ lat: latitude, lng: longitude });
+                    setIsNearMeActive(true);
+                    
+                    // Add location to URL params for filtering
+                    const currentParams = new URLSearchParams(searchParams.toString());
+                    currentParams.set('lat', latitude.toString());
+                    currentParams.set('lng', longitude.toString());
+                    currentParams.set('radius', radiusValue.toString());
+                    
+                    // Enable map to show the results
+                    setShowMap(true);
+                    
+                    router.push(`/?${currentParams.toString()}`);
+                    setIsLocating(false);
+                },
+                (error) => {
+                    console.error('Error getting location:', error);
+                    alert('Unable to get your location. Please ensure location services are enabled.');
+                    setIsLocating(false);
+                    setIsNearMeActive(false);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser');
+            setIsLocating(false);
+        }
+    };
 
     // Fetch profiles based on filters
     useEffect(() => {
@@ -109,6 +190,18 @@ export default function HomeClient({
 
                 const data = await response.json();
                 setProfiles(data);
+                
+                // Check if near me filter is active based on URL params
+                if (params.has('lat') && params.has('lng')) {
+                    setIsNearMeActive(true);
+                    setUserLocation({
+                        lat: parseFloat(params.get('lat') || '0'), 
+                        lng: parseFloat(params.get('lng') || '0')
+                    });
+                } else {
+                    setIsNearMeActive(false);
+                    setUserLocation(null);
+                }
             } catch (error) {
                 console.error('Error fetching profiles:', error);
             } finally {
@@ -149,6 +242,36 @@ export default function HomeClient({
                             <span>{showMap ? "Hide map" : "Show map"}</span>
                         </div>
                     </button>
+                    
+                    {/* Near Me button */}
+                    <button
+                        onClick={() => handleNearMeClick()}
+                        disabled={isLocating}
+                        className={`px-3 py-2 text-sm rounded-md border ${
+                            isNearMeActive
+                                ? 'bg-green-600 text-white border-green-600'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                        }`}
+                        aria-label="Find profiles near me"
+                        title="Find profiles near me"
+                    >
+                        <div className="flex items-center space-x-1">
+                            {isLocating ? (
+                                <>
+                                    <div className="h-5 w-5 border-t-2 border-green-500 rounded-full animate-spin"></div>
+                                    <span>Locating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>Near Me</span>
+                                </>
+                            )}
+                        </div>
+                    </button>
 
                     {/* Mobile filter toggle */}
                     <button
@@ -180,14 +303,33 @@ export default function HomeClient({
                     {/* Map (rendered once then kept in DOM) */}
                     <div
                         className={`mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out ${
-                            showMap ? 'opacity-100 max-h-[600px]' : 'opacity-0 max-h-0 overflow-hidden'
+                            showMap ? 'opacity-100 max-h-[650px]' : 'opacity-0 max-h-0 overflow-hidden'
                         }`}
                     >
-                        {mapInitialized && profiles.length > 0 && (
+                        {/* Radius control for Near Me */}
+                        {isNearMeActive && showMap && (
+                            <div className="bg-white dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700 flex items-center">
+                                <span className="mr-3 text-sm text-gray-700 dark:text-gray-300">Search radius:</span>
+                                <select
+                                    value={radiusValue}
+                                    onChange={handleRadiusChange}
+                                    className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm py-1 px-2"
+                                >
+                                    <option value="1">1 km</option>
+                                    <option value="2">2 km</option>
+                                    <option value="3">3 km</option>
+                                    <option value="5">5 km</option>
+                                </select>
+                            </div>
+                        )}
+                        
+                        {mapInitialized && (profiles.length > 0 || userLocation) && (
                             <ProfileMap
                                 profiles={profiles}
                                 apiKey={googleMapsApiKey}
                                 mapId={googleMapsId}
+                                userLocation={userLocation}
+                                radius={radiusValue}
                             />
                         )}
                     </div>
