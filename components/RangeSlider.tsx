@@ -44,7 +44,7 @@ export default function RangeSlider({
     }, [minVal, maxVal, min, max]);
 
     return (
-        <div className="space-y-2 mb-8">
+        <div className="space-y-2 mb-6">
             <div className="flex justify-between">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
                 {showInputs && (
@@ -57,7 +57,7 @@ export default function RangeSlider({
             </div>
 
             {/* Single slider approach - more reliable */}
-            <div className="pt-2 pb-4">                
+            <div className="pt-6 pb-6">                
                 <div className="relative">
                     {/* Track background */}
                     <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-300 dark:bg-gray-600 rounded"></div>
@@ -84,7 +84,7 @@ export default function RangeSlider({
                             transform: minPercent < 10 ? 'translateX(0)' : 'translateX(-50%)'
                         }}
                     >
-                        <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1 rounded-sm">
+                        <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1.5 rounded">
                             {label === "Price (€)" ? `${minVal}€` : minVal}
                         </div>
                     </div>
@@ -98,16 +98,16 @@ export default function RangeSlider({
                             transform: maxPercent > 90 ? 'translateX(-90%)' : 'translateX(-50%)'
                         }}
                     >
-                        <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1 rounded-sm">
+                        <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1.5 rounded">
                             {label === "Price (€)" ? `${maxVal}€` : maxVal}
                         </div>
                     </div>
                     
-                    {/* Range values at track ends */}
-                    <div className="absolute left-0 top-4 text-xs text-gray-500 dark:text-gray-400">
+                    {/* Range values at track ends - now at the top */}
+                    <div className="absolute left-0 -top-6 text-xs text-gray-500 dark:text-gray-400 mb-6">
                         {label === "Price (€)" ? `${min}€` : min}
                     </div>
-                    <div className="absolute right-0 top-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="absolute right-0 -top-6 text-xs text-gray-500 dark:text-gray-400">
                         {label === "Price (€)" ? `${max}€` : max}
                     </div>
 
