@@ -23,6 +23,9 @@ interface SeedProfile {
     address: string;
     latitude: number;
     longitude: number;
+    phone: string;
+    hasWhatsapp: boolean;
+    hasTelegram: boolean;
     images: SeedImage[];
     languages: number[];
     paymentMethods: number[];
@@ -143,6 +146,15 @@ function generateSeedData(): SeedData[] {
         // Random location in Málaga
         const coords = getRandomMalagaCoords();
         const address = getRandomMalagaAddress();
+        
+        // Generate random Spanish phone number
+        const phonePrefixes = ['+34', '+34 '];
+        const prefix = phonePrefixes[Math.floor(Math.random() * phonePrefixes.length)];
+        const phone = prefix + (Math.floor(Math.random() * 100000000) + 600000000).toString();
+        
+        // Random WhatsApp and Telegram availability (70% chance for WhatsApp, 40% chance for Telegram)
+        const hasWhatsapp = Math.random() < 0.7;
+        const hasTelegram = Math.random() < 0.4;
 
         // Random number of images (1-3)
         const numImages = Math.floor(Math.random() * 3) + 1;
@@ -220,6 +232,9 @@ function generateSeedData(): SeedData[] {
                 address,
                 latitude: coords.lat,
                 longitude: coords.lng,
+                phone,
+                hasWhatsapp,
+                hasTelegram,
                 images,
                 languages,
                 paymentMethods,
@@ -269,6 +284,9 @@ export default async function seedProfiles(prisma: PrismaClient) {
                     latitude: data.profile.latitude,
                     longitude: data.profile.longitude,
                     address: data.profile.address,
+                    phone: data.profile.phone,
+                    hasWhatsapp: data.profile.hasWhatsapp,
+                    hasTelegram: data.profile.hasTelegram,
                     published: true,
                 },
             });
