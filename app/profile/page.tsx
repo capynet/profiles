@@ -6,6 +6,7 @@ import {prisma} from '@/prisma';
 import {DataService} from '@/services/dataService';
 import ProfilePageClient from './ProfilePageClient';
 import CreateProfileBanner from '@/components/CreateProfileBanner';
+import { formatDateFriendly } from '@/lib/date-utils';
 
 export const metadata = {
     title: 'Mi Perfil',
@@ -121,7 +122,7 @@ export default async function ProfilePage() {
                                 </Link>
                                 <span className="text-xs text-blue-400 mx-2">•</span>
                                 <span className="text-xs text-blue-400">
-                                    Last updated: {new Date(draftProfile.updatedAt).toLocaleDateString()}
+                                    Last updated: {formatDateFriendly(draftProfile.updatedAt)}
                                 </span>
                             </p>
                         </div>
@@ -143,7 +144,7 @@ export default async function ProfilePage() {
                             <p className="text-xs mt-1">You are viewing your profile draft. It will be visible to others after administrator approval.</p>
                             <p className="mt-2">
                                 <span className="text-xs text-blue-400">
-                                    Created: {new Date(newProfileDraft.updatedAt).toLocaleDateString()}
+                                    Created: {formatDateFriendly(newProfileDraft.updatedAt)}
                                 </span>
                             </p>
                         </div>

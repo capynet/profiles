@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { formatDateFriendly } from '@/lib/date-utils';
 
 interface ProfileDraft {
     id: number;
@@ -166,7 +167,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(draft.updatedAt).toLocaleDateString()}
+                                {formatDateFriendly(draft.updatedAt)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 space-x-3">
                                 <Link

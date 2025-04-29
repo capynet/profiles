@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { formatDateFriendly } from '@/lib/date-utils';
 
 interface Profile {
     id: number;
@@ -328,7 +329,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {new Date(user.createdAt).toLocaleDateString()}
+                                    {formatDateFriendly(user.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 space-x-3">
                                     {user.profile ? (
