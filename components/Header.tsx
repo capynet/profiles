@@ -5,6 +5,7 @@ import {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {handleSignOut} from '@/app/auth-actions';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 interface User {
     id: string;
@@ -44,6 +45,10 @@ export default function Header({user}: HeaderProps) {
 
                     {/* User Section */}
                     <div className="flex items-center">
+                        {/* Language Switcher */}
+                        <div className="mr-4">
+                            <LanguageSwitcher />
+                        </div>
 
                         {user && user.role === 'admin' && (
                             <Link
