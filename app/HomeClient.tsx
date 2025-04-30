@@ -2,6 +2,7 @@
 
 import {useState, useEffect} from 'react';
 import {useSearchParams, useRouter} from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import ProfileCard from '@/components/ProfileCard';
 import SidebarFilters from '@/components/SidebarFilters';
 import ProfileMap from '@/components/ProfileMap';
@@ -81,6 +82,8 @@ export default function HomeClient({
                                        googleMapsId,
                                        user
                                    }: HomeClientProps) {
+    const t = useTranslations('Search');
+    
     const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
     const [loading, setLoading] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -146,7 +149,7 @@ export default function HomeClient({
         { value: 1, label: "1 km" },
         { value: 2, label: "2 km" },
         { value: 5, label: "5 km" },
-        { value: 100, label: "Sin límite", className: "hidden sm:block" },
+        { value: 100, label: t('noLimitLong'), className: "hidden sm:block" },
         { value: 100, label: "∞", className: "sm:hidden" }
     ];
     
@@ -323,7 +326,7 @@ export default function HomeClient({
 
             {/* Header with toggle for map */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Encuentra Perfiles</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{t('searchProfiles')}</h1>
 
                 <div className="flex items-center flex-wrap gap-2 sm:flex-nowrap sm:space-x-2">
                     {/* Map toggle button */}
@@ -334,14 +337,14 @@ export default function HomeClient({
                                 ? 'bg-indigo-600 text-white border-indigo-600'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
                         }`}
-                        aria-label={showMap ? "Hide map" : "Show map"}
-                        title={showMap ? "Hide map" : "Show map"}
+                        aria-label={showMap ? t('hideMap') : t('showMap')}
+                        title={showMap ? t('hideMap') : t('showMap')}
                     >
                         <div className="flex items-center space-x-1">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
                             </svg>
-                            <span>{showMap ? "Hide map" : "Show map"}</span>
+                            <span>{showMap ? t('hideMap') : t('showMap')}</span>
                         </div>
                     </button>
                     
@@ -354,14 +357,14 @@ export default function HomeClient({
                                 ? 'bg-green-600 text-white border-green-600'
                                 : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
                         }`}
-                        aria-label="Find profiles near me"
-                        title="Find profiles near me"
+                        aria-label={t('nearMe')}
+                        title={t('nearMe')}
                     >
                         <div className="flex items-center space-x-1">
                             {isLocating ? (
                                 <>
                                     <div className="h-5 w-5 border-t-2 border-green-500 rounded-full animate-spin"></div>
-                                    <span>Locating...</span>
+                                    <span>{t('locating')}</span>
                                 </>
                             ) : (
                                 <>
@@ -369,7 +372,7 @@ export default function HomeClient({
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    <span>Near Me</span>
+                                    <span>{t('nearMe')}</span>
                                 </>
                             )}
                         </div>
@@ -402,7 +405,7 @@ export default function HomeClient({
                                             focus:z-10 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500
                                             ${option.className || ''}
                                         `}
-                                        title={option.value === 100 ? "Sin límite de distancia" : `Radio de búsqueda: ${option.label}`}
+                                        title={option.value === 100 ? t('noLimitLong') : `${t('searchRadius')}: ${option.label}`}
                                     >
                                         {option.label}
                                     </button>
@@ -419,7 +422,7 @@ export default function HomeClient({
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                         </svg>
-                        <span>Filtros</span>
+                        <span>{t('filters')}</span>
                     </button>
                 </div>
             </div>
@@ -482,7 +485,7 @@ export default function HomeClient({
                                   searchParams.has('nationality') || searchParams.has('ethnicity') ||
                                   searchParams.has('services')) && (
                                     <p className="mt-1 text-xs italic">
-                                        Los resultados están filtrados según los criterios de búsqueda seleccionados.
+                                        {t('filteredResults')}
                                     </p>
                                 )}
                                 {!showMap && (
@@ -490,7 +493,7 @@ export default function HomeClient({
                                         onClick={() => setShowMap(true)}
                                         className="mt-1 text-green-600 dark:text-green-400 underline hover:no-underline text-sm"
                                     >
-                                        Mostrar mapa
+                                        {t('showMap')}
                                     </button>
                                 )}
                             </div>
@@ -526,8 +529,8 @@ export default function HomeClient({
                                 </div>
                             ) : (
                                 <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md text-center">
-                                    <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No se encontraron perfiles</h3>
-                                    <p className="text-gray-600 dark:text-gray-400">Intenta modificar los filtros de búsqueda</p>
+                                    <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">{t('noResultsFound')}</h3>
+                                    <p className="text-gray-600 dark:text-gray-400">{t('tryModifyingFilters')}</p>
                                 </div>
                             )}
                         </>
