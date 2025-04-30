@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { formatDateFriendly } from '@/lib/date-utils';
+import { useTranslations } from 'next-intl';
 
 interface Profile {
     id: number;
@@ -33,6 +34,7 @@ interface AdminUserTableProps {
 }
 
 export default function AdminUserTable({ users }: AdminUserTableProps) {
+    const t = useTranslations('AdminUserTable');
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
             // Show success message
             setStatusMessage({
                 type: 'success',
-                text: `User role updated to ${newRole} successfully!`
+                text: t('roleUpdated', {role: newRole})
             });
 
             // Refresh the page data
@@ -87,7 +89,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
             console.error('Error updating user role:', error);
             setStatusMessage({
                 type: 'error',
-                text: 'Failed to update user role. Please try again.'
+                text: t('failedRoleUpdate')
             });
         } finally {
             setIsUpdating(false);
@@ -115,7 +117,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
             // Show success message
             setStatusMessage({
                 type: 'success',
-                text: `Profile ${!currentlyPublished ? 'published' : 'unpublished'} successfully!`
+                text: !currentlyPublished ? t('profilePublished') : t('profileUnpublished')
             });
 
             // Refresh the page data
@@ -129,7 +131,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
             console.error('Error updating publication status:', error);
             setStatusMessage({
                 type: 'error',
-                text: 'Failed to update publication status. Please try again.'
+                text: t('failedPublishUpdate')
             });
         } finally {
             // Unmark this profile as updating
@@ -143,7 +145,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
 
     // Handle profile deletion
     const handleDeleteProfile = async (profileId: number) => {
-        if (!window.confirm('Are you sure you want to delete this profile? This action cannot be undone.')) {
+        if (!window.confirm(t('deleteConfirmation'))) {
             return;
         }
 
@@ -159,7 +161,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
 
             setStatusMessage({
                 type: 'success',
-                text: 'Profile deleted successfully!'
+                text: t('profileDeleted')
             });
 
             // Refresh the page data
@@ -173,7 +175,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
             console.error('Error deleting profile:', error);
             setStatusMessage({
                 type: 'error',
-                text: 'Failed to delete profile. Please try again.'
+                text: t('failedProfileDelete')
             });
         } finally {
             setIsUpdating(false);
@@ -198,7 +200,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                 <div className="flex-1">
                     <input
                         type="text"
-                        placeholder="Search by name or email..."
+                        placeholder={t('searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -211,9 +213,9 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                         onChange={(e) => setFilterRole(e.target.value || null)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     >
-                        <option value="">All Roles</option>
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
+                        <option value="">{t('allRoles')}</option>
+                        <option value="user">{t('user')}</option>
+                        <option value="admin">{t('admin')}</option>
                     </select>
                 </div>
             </div>
@@ -291,7 +293,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                         </div>
                                     ) : (
                                         <span className="text-sm text-gray-500 dark:text-gray-400">
-                                            No profile
+                                            {t('noProfile')}
                                         </span>
                                     )}
                                 </td>
@@ -299,7 +301,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                     {user.profile ? (
                                         <span
                                             className={`text-lg ${!updatingProfileIds[user.profile.id] ? 'cursor-pointer hover:opacity-70' : 'opacity-50'}`}
-                                            title={user.profile.published ? "Click to unpublish" : "Click to publish"}
+                                            title={user.profile.published ? t('clickToUnpublish') : t('clickToPublish')}
                                             onClick={() => {
                                                 if (!updatingProfileIds[user.profile.id]) {
                                                     handleTogglePublished(user.profile.id, user.profile.published);

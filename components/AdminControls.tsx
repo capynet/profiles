@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface AdminControlsProps {
     isPublished: boolean;
@@ -19,6 +20,8 @@ export default function AdminControls({
                                           userName,
                                           userEmail
                                       }: AdminControlsProps) {
+    const t = useTranslations('AdminControls');
+    
     // Local state to manage checkbox
     const [localPublished, setLocalPublished] = useState(isPublished);
 
@@ -41,22 +44,22 @@ export default function AdminControls({
     return (
         <div className="space-y-2 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-start">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Admin Options</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{t('title')}</h3>
 
                 {profileId && (
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-            Profile ID: {profileId}
-          </span>
+                        {t('profileId')}: {profileId}
+                    </span>
                 )}
             </div>
 
             {/* Profile info summary */}
             {(profileName || userName || userEmail) && (
                 <div className="mb-4 text-sm text-gray-700 dark:text-gray-300">
-                    {profileName && <div>Profile: <span className="font-medium">{profileName}</span></div>}
+                    {profileName && <div>{t('profileLabel')}: <span className="font-medium">{profileName}</span></div>}
                     {(userName || userEmail) && (
                         <div>
-                            User: <span className="font-medium">{userName || userEmail}</span>
+                            {t('userLabel')}: <span className="font-medium">{userName || userEmail}</span>
                         </div>
                     )}
                 </div>
@@ -74,32 +77,32 @@ export default function AdminControls({
                         className={checkboxClassName}
                     />
                     <label htmlFor="published" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Publish profile (visible to public)
+                        {t('publishCheckbox')}
                     </label>
                 </div>
 
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    Only published profiles are visible in search results and the main page.
-                    {!localPublished && " This profile will only be visible to the owner and administrators."}
+                    {t('visibilityDescription')}
+                    {!localPublished && ` ${t('privateVisibility')}`}
                 </p>
 
                 {/* Show additional warning if changing from published to unpublished */}
                 {isPublished && !localPublished && (
                     <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 text-yellow-800 dark:text-yellow-200 text-xs">
-                        <strong>Warning:</strong> Unpublishing this profile will make it invisible to users immediately.
+                        <strong>Warning:</strong> {t('unpublishWarning')}
                     </div>
                 )}
 
                 {/* Show success message if changing from unpublished to published */}
                 {!isPublished && localPublished && (
                     <div className="mt-3 p-2 bg-green-50 dark:bg-green-900/30 border-l-4 border-green-400 text-green-800 dark:text-green-200 text-xs">
-                        <strong>Note:</strong> Publishing will make this profile immediately visible to all users.
+                        <strong>Note:</strong> {t('publishNote')}
                     </div>
                 )}
 
                 {/* Debug info */}
                 <div className="mt-2 text-xs text-gray-500">
-                    Current status: {localPublished ? "Published ✅" : "Not Published ❌"}
+                    {t('currentStatus')}: {localPublished ? t('publishedStatus') : t('unpublishedStatus')}
                 </div>
             </div>
 
@@ -115,7 +118,7 @@ export default function AdminControls({
                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             onClick={() => window.open(`/admin/profiles/${profileId}/view`, '_blank')}
                         >
-                            View Details
+                            {t('viewDetailsButton')}
                         </button>
 
                         <button
@@ -126,7 +129,7 @@ export default function AdminControls({
                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             onClick={() => window.open(`/profile/${profileId}`, '_blank')}
                         >
-                            View Public Profile
+                            {t('viewPublicProfileButton')}
                         </button>
                     </>
                 )}
@@ -134,12 +137,12 @@ export default function AdminControls({
 
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
                 <p>
-                    <strong>Admin Notes:</strong>
+                    <strong>{t('adminNotesTitle')}</strong>
                 </p>
                 <ul className="list-disc pl-5 mt-1 space-y-1">
-                    <li>Changes made in admin mode take effect immediately</li>
-                    <li>User will not be notified of changes made by administrators</li>
-                    <li>Profile history and changes are logged for auditing purposes</li>
+                    <li>{t('adminNote1')}</li>
+                    <li>{t('adminNote2')}</li>
+                    <li>{t('adminNote3')}</li>
                 </ul>
             </div>
         </div>

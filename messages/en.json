@@ -7,7 +7,8 @@
     "create": "create",
     "editProfile": "Edit profile",
     "logout": "Logout",
-    "login": "Login"
+    "login": "Login",
+    "profiles": "Profiles"
   },
   "Footer": {
     "copyright": "© 2025 Profiles. All rights reserved."
@@ -31,7 +32,8 @@
     "loading": "Loading...",
     "noResults": "No results found",
     "error": "An error occurred",
-    "success": "Operation successful"
+    "success": "Operation successful",
+    "processing": "Processing..."
   },
   "Profile": {
     "createProfile": "Create Profile",
@@ -64,5 +66,88 @@
     "settings": "Settings",
     "approvals": "Approvals",
     "statistics": "Statistics"
+  },
+  "AdminControls": {
+    "title": "Admin Options",
+    "profileId": "Profile ID",
+    "profileLabel": "Profile",
+    "userLabel": "User",
+    "publishCheckbox": "Publish profile (visible to public)",
+    "visibilityDescription": "Only published profiles are visible in search results and the main page.",
+    "privateVisibility": "This profile will only be visible to the owner and administrators.",
+    "unpublishWarning": "Warning: Unpublishing this profile will make it invisible to users immediately.",
+    "publishNote": "Note: Publishing will make this profile immediately visible to all users.",
+    "currentStatus": "Current status",
+    "publishedStatus": "Published ✅",
+    "unpublishedStatus": "Not Published ❌",
+    "viewDetailsButton": "View Details",
+    "viewPublicProfileButton": "View Public Profile",
+    "adminNotesTitle": "Admin Notes:",
+    "adminNote1": "Changes made in admin mode take effect immediately",
+    "adminNote2": "User will not be notified of changes made by administrators",
+    "adminNote3": "Profile history and changes are logged for auditing purposes"
+  },
+  "AdminDraftsTable": {
+    "noPendingDrafts": "No pending drafts to review",
+    "draftApproved": "Draft approved successfully!",
+    "draftRejected": "Draft rejected successfully!",
+    "failedToApprove": "Failed to approve draft. Please try again.",
+    "failedToReject": "Failed to reject draft. Please try again.",
+    "user": "User",
+    "profile": "Profile",
+    "lastUpdated": "Last Updated",
+    "actions": "Actions",
+    "noName": "No name",
+    "draftForOriginalProfile": "Draft for original profile",
+    "newProfileDraft": "New profile draft awaiting approval",
+    "viewDraft": "View Draft",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "AdminProfileActionButtons": {
+    "approveDraft": "Approve Draft",
+    "rejectDraft": "Reject Draft",
+    "deleteProfile": "Delete Profile",
+    "processing": "Processing...",
+    "deleteConfirmation": "Are you sure you want to permanently delete this profile? This action cannot be undone."
+  },
+  "AdminUserTable": {
+    "statusSuccess": "Operation successful!",
+    "statusError": "Operation failed. Please try again.",
+    "roleUpdated": "User role updated to {role} successfully!",
+    "failedRoleUpdate": "Failed to update user role. Please try again.",
+    "profilePublished": "Profile published successfully!",
+    "profileUnpublished": "Profile unpublished successfully!",
+    "failedPublishUpdate": "Failed to update publication status. Please try again.",
+    "profileDeleted": "Profile deleted successfully!",
+    "failedProfileDelete": "Failed to delete profile. Please try again.",
+    "searchPlaceholder": "Search by name or email...",
+    "allRoles": "All Roles",
+    "user": "User",
+    "admin": "Admin",
+    "profile": "Profile",
+    "published": "Published",
+    "role": "Role",
+    "created": "Created",
+    "actions": "Actions",
+    "noUsers": "No users found",
+    "noProfile": "No profile",
+    "draft": "Draft",
+    "years": "years",
+    "clickToPublish": "Click to publish",
+    "clickToUnpublish": "Click to unpublish",
+    "editProfile": "Edit Profile",
+    "delete": "Delete",
+    "createProfile": "Create Profile",
+    "makeUser": "Make User",
+    "makeAdmin": "Make Admin",
+    "deleteConfirmation": "Are you sure you want to delete this profile? This action cannot be undone."
+  },
+  "EthnicitySelector": {
+    "title": "Ethnicity",
+    "loading": "Loading ethnicities...",
+    "failedToLoad": "Failed to load ethnicities. Please try again.",
+    "noEthnicities": "No ethnicities available"
   }
+}
 }

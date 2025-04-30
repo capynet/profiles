@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Ethnicity {
     id: number;
@@ -19,6 +20,7 @@ export default function EthnicitySelector({
                                               onChange,
                                               error
                                           }: EthnicitySelectorProps) {
+    const t = useTranslations('EthnicitySelector');
     const [ethnicities, setEthnicities] = useState<Ethnicity[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -37,14 +39,14 @@ export default function EthnicitySelector({
                 setEthnicities(data);
             } catch (error) {
                 console.error('Error fetching ethnicities:', error);
-                setLoadError('Failed to load ethnicities. Please try again.');
+                setLoadError(t('failedToLoad'));
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchEthnicities();
-    }, []);
+    }, [t]);
 
     // CSS classes
     const radioClassName = "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300";
@@ -52,12 +54,12 @@ export default function EthnicitySelector({
     return (
         <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Ethnicity
+                {t('title')}
             </label>
 
             {isLoading ? (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
-                    Loading ethnicities...
+                    {t('loading')}
                 </div>
             ) : loadError ? (
                 <div className="p-3 text-sm text-red-500 dark:text-red-400">
@@ -86,7 +88,7 @@ export default function EthnicitySelector({
                         ))
                     ) : (
                         <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">
-                            No ethnicities available
+                            {t('noEthnicities')}
                         </div>
                     )}
                 </div>

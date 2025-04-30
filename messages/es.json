@@ -7,7 +7,8 @@
     "create": "crear",
     "editProfile": "Editar perfil",
     "logout": "Cerrar sesión",
-    "login": "Iniciar sesión"
+    "login": "Iniciar sesión",
+    "profiles": "Perfiles"
   },
   "Footer": {
     "copyright": "© 2025 Perfiles. Todos los derechos reservados."
@@ -31,7 +32,8 @@
     "loading": "Cargando...",
     "noResults": "No se encontraron resultados",
     "error": "Ocurrió un error",
-    "success": "Operación exitosa"
+    "success": "Operación exitosa",
+    "processing": "Procesando..."
   },
   "Profile": {
     "createProfile": "Crear Perfil",
@@ -64,5 +66,87 @@
     "settings": "Configuración",
     "approvals": "Aprobaciones",
     "statistics": "Estadísticas"
+  },
+  "AdminControls": {
+    "title": "Opciones de Administración",
+    "profileId": "ID del Perfil",
+    "profileLabel": "Perfil",
+    "userLabel": "Usuario",
+    "publishCheckbox": "Publicar perfil (visible para el público)",
+    "visibilityDescription": "Solo los perfiles publicados son visibles en los resultados de búsqueda y en la página principal.",
+    "privateVisibility": "Este perfil solo será visible para el propietario y los administradores.",
+    "unpublishWarning": "Advertencia: Despublicar este perfil lo hará invisible para los usuarios inmediatamente.",
+    "publishNote": "Nota: La publicación hará que este perfil sea inmediatamente visible para todos los usuarios.",
+    "currentStatus": "Estado actual",
+    "publishedStatus": "Publicado ✅",
+    "unpublishedStatus": "No Publicado ❌",
+    "viewDetailsButton": "Ver Detalles",
+    "viewPublicProfileButton": "Ver Perfil Público",
+    "adminNotesTitle": "Notas del Administrador:",
+    "adminNote1": "Los cambios realizados en modo administrador tienen efecto inmediato",
+    "adminNote2": "El usuario no será notificado de los cambios realizados por los administradores",
+    "adminNote3": "El historial de perfiles y cambios se registran con fines de auditoría"
+  },
+  "AdminDraftsTable": {
+    "noPendingDrafts": "No hay borradores pendientes para revisar",
+    "draftApproved": "¡Borrador aprobado con éxito!",
+    "draftRejected": "¡Borrador rechazado con éxito!",
+    "failedToApprove": "Error al aprobar el borrador. Por favor, inténtalo de nuevo.",
+    "failedToReject": "Error al rechazar el borrador. Por favor, inténtalo de nuevo.",
+    "user": "Usuario",
+    "profile": "Perfil",
+    "lastUpdated": "Última Actualización",
+    "actions": "Acciones",
+    "noName": "Sin nombre",
+    "draftForOriginalProfile": "Borrador para el perfil original",
+    "newProfileDraft": "Nuevo borrador de perfil pendiente de aprobación",
+    "viewDraft": "Ver Borrador",
+    "approve": "Aprobar",
+    "reject": "Rechazar"
+  },
+  "AdminProfileActionButtons": {
+    "approveDraft": "Aprobar Borrador",
+    "rejectDraft": "Rechazar Borrador",
+    "deleteProfile": "Eliminar Perfil",
+    "processing": "Procesando...",
+    "deleteConfirmation": "¿Estás seguro de que quieres eliminar permanentemente este perfil? Esta acción no se puede deshacer."
+  },
+  "AdminUserTable": {
+    "statusSuccess": "¡Operación exitosa!",
+    "statusError": "La operación falló. Por favor, inténtalo de nuevo.",
+    "roleUpdated": "¡Rol de usuario actualizado a {role} con éxito!",
+    "failedRoleUpdate": "Error al actualizar el rol del usuario. Por favor, inténtalo de nuevo.",
+    "profilePublished": "¡Perfil publicado con éxito!",
+    "profileUnpublished": "¡Perfil despublicado con éxito!",
+    "failedPublishUpdate": "Error al actualizar el estado de publicación. Por favor, inténtalo de nuevo.",
+    "profileDeleted": "¡Perfil eliminado con éxito!",
+    "failedProfileDelete": "Error al eliminar el perfil. Por favor, inténtalo de nuevo.",
+    "searchPlaceholder": "Buscar por nombre o email...",
+    "allRoles": "Todos los Roles",
+    "user": "Usuario",
+    "admin": "Administrador",
+    "profile": "Perfil",
+    "published": "Publicado",
+    "role": "Rol",
+    "created": "Creado",
+    "actions": "Acciones",
+    "noUsers": "No se encontraron usuarios",
+    "noProfile": "Sin perfil",
+    "draft": "Borrador",
+    "years": "años",
+    "clickToPublish": "Clic para publicar",
+    "clickToUnpublish": "Clic para despublicar",
+    "editProfile": "Editar Perfil",
+    "delete": "Eliminar",
+    "createProfile": "Crear Perfil",
+    "makeUser": "Convertir en Usuario",
+    "makeAdmin": "Convertir en Administrador",
+    "deleteConfirmation": "¿Estás seguro de que quieres eliminar este perfil? Esta acción no se puede deshacer."
+  },
+  "EthnicitySelector": {
+    "title": "Etnia",
+    "loading": "Cargando etnias...",
+    "failedToLoad": "Error al cargar etnias. Por favor, inténtalo de nuevo.",
+    "noEthnicities": "No hay etnias disponibles"
   }
 }

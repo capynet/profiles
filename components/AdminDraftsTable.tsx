@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatDateFriendly } from '@/lib/date-utils';
+import { useTranslations } from 'next-intl';
 
 interface ProfileDraft {
     id: number;
@@ -25,6 +26,8 @@ interface AdminDraftsTableProps {
 }
 
 export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
+    const t = useTranslations('AdminDraftsTable');
+    const common = useTranslations('Common');
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState<number | null>(null);
     const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -46,7 +49,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
 
             setStatusMessage({
                 type: 'success',
-                text: 'Draft approved successfully!'
+                text: t('draftApproved')
             });
 
             // Refresh the page data
@@ -60,7 +63,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
             console.error('Error approving draft:', error);
             setStatusMessage({
                 type: 'error',
-                text: 'Failed to approve draft. Please try again.'
+                text: t('failedToApprove')
             });
         } finally {
             setIsProcessing(null);
@@ -84,7 +87,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
 
             setStatusMessage({
                 type: 'success',
-                text: 'Draft rejected successfully!'
+                text: t('draftRejected')
             });
 
             // Refresh the page data
@@ -98,7 +101,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
             console.error('Error rejecting draft:', error);
             setStatusMessage({
                 type: 'error',
-                text: 'Failed to reject draft. Please try again.'
+                text: t('failedToReject')
             });
         } finally {
             setIsProcessing(null);
@@ -108,7 +111,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
     if (drafts.length === 0) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 text-center">
-                <p className="text-gray-500 dark:text-gray-400">No pending drafts to review</p>
+                <p className="text-gray-500 dark:text-gray-400">{t('noPendingDrafts')}</p>
             </div>
         );
     }
@@ -131,16 +134,16 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                     <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            User
+                            {t('user')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Profile
+                            {t('profile')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Last Updated
+                            {t('lastUpdated')}
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Actions
+                            {t('actions')}
                         </th>
                     </tr>
                     </thead>
@@ -149,7 +152,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                         <tr key={draft.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {draft.user.name || 'No name'}
+                                    {draft.user.name || t('noName')}
                                 </div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
                                     {draft.user.email}
@@ -161,8 +164,8 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                                 </div>
                                 <div className="text-xs text-gray-500 dark:text-gray-400">
                                     {draft.originalProfile
-                                        ? `Draft for original profile: ${draft.originalProfile.name} (#${draft.originalProfile.id})`
-                                        : "New profile draft awaiting approval"
+                                        ? `${t('draftForOriginalProfile')}: ${draft.originalProfile.name} (#${draft.originalProfile.id})`
+                                        : t('newProfileDraft')
                                     }
                                 </div>
                             </td>
@@ -174,21 +177,21 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                                     href={`/admin/profiles/${draft.id}/view`}
                                     className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                                 >
-                                    View Draft
+                                    {t('viewDraft')}
                                 </Link>
                                 <button
                                     onClick={() => handleApprove(draft.id)}
                                     disabled={isProcessing === draft.id}
                                     className={`text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 ${isProcessing === draft.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    {isProcessing === draft.id ? 'Processing...' : 'Approve'}
+                                    {isProcessing === draft.id ? common('processing') : t('approve')}
                                 </button>
                                 <button
                                     onClick={() => handleReject(draft.id)}
                                     disabled={isProcessing === draft.id}
                                     className={`text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 ${isProcessing === draft.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    Reject
+                                    {t('reject')}
                                 </button>
                             </td>
                         </tr>

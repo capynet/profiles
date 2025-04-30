@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {handleSignOut} from '@/app/auth-actions';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useTranslations } from 'next-intl';
 
 interface User {
     id: string;
@@ -21,6 +22,7 @@ interface HeaderProps {
 }
 
 export default function Header({user}: HeaderProps) {
+    const t = useTranslations('Header');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -30,16 +32,16 @@ export default function Header({user}: HeaderProps) {
                 <div className="flex items-center justify-between">
                     {/* Logo/Brand */}
                     <Link href="/" className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                        Profiles
+                        {t('profiles')}
                     </Link>
 
                     {/* Main Navigation */}
                     <nav className="hidden md:flex items-center space-x-6">
                         <Link href="/" className="text-gray-700 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400">
-                            Home
+                            {t('home')}
                         </Link>
                         <Link href="/search" className="text-gray-700 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400">
-                            Search
+                            {t('search')}
                         </Link>
                     </nav>
 
@@ -56,7 +58,7 @@ export default function Header({user}: HeaderProps) {
                                 className="block mr-4 px-4 py-2 text-sm text-indigo-600 hover:bg-gray-100 dark:text-indigo-400 dark:hover:bg-gray-700"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Admin Dashboard
+                                {t('adminDashboard')}
                             </Link>
                         )}
 
@@ -105,7 +107,7 @@ export default function Header({user}: HeaderProps) {
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
-                                            My profile {!user.hasProfile && <span className="text-indigo-600 dark:text-indigo-400">(create)</span>}
+                                            {t('myProfile')} {!user.hasProfile && <span className="text-indigo-600 dark:text-indigo-400">({t('create')})</span>}
                                         </Link>
 
                                         {user.hasProfile && (
@@ -114,7 +116,7 @@ export default function Header({user}: HeaderProps) {
                                                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                                 onClick={() => setIsMenuOpen(false)}
                                             >
-                                                Edit profile
+                                                {t('editProfile')}
                                             </Link>
                                         )}
 
@@ -125,7 +127,7 @@ export default function Header({user}: HeaderProps) {
                                                 type="submit"
                                                 className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                                             >
-                                                Logout
+                                                {t('logout')}
                                             </button>
                                         </form>
                                     </div>
@@ -136,13 +138,12 @@ export default function Header({user}: HeaderProps) {
                                 href="/login"
                                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             >
-                                Iniciar sesión
+                                {t('login')}
                             </Link>
                         )}
                     </div>
                 </div>
             </div>
         </header>
-    )
-        ;
+    );
 }

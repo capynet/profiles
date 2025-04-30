@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface AdminProfileActionButtonsProps {
     profileId: number;
@@ -12,6 +13,7 @@ interface AdminProfileActionButtonsProps {
 export default function AdminProfileActionButtons({ profileId, isDraft, hasOriginal }: AdminProfileActionButtonsProps) {
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
+    const t = useTranslations('AdminProfileActionButtons');
 
     const handleApprove = async () => {
         try {
@@ -66,7 +68,7 @@ export default function AdminProfileActionButtons({ profileId, isDraft, hasOrigi
     };
 
     const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to permanently delete this profile? This action cannot be undone.')) {
+        if (!window.confirm(t('deleteConfirmation'))) {
             return;
         }
 
@@ -101,7 +103,7 @@ export default function AdminProfileActionButtons({ profileId, isDraft, hasOrigi
                         disabled={isProcessing}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isProcessing ? 'Processing...' : 'Approve Draft'}
+                        {isProcessing ? t('processing') : t('approveDraft')}
                     </button>
 
                     <button
@@ -109,7 +111,7 @@ export default function AdminProfileActionButtons({ profileId, isDraft, hasOrigi
                         disabled={isProcessing}
                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {isProcessing ? 'Processing...' : 'Reject Draft'}
+                        {isProcessing ? t('processing') : t('rejectDraft')}
                     </button>
                 </>
             )}
@@ -119,7 +121,7 @@ export default function AdminProfileActionButtons({ profileId, isDraft, hasOrigi
                 disabled={isProcessing}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {isProcessing ? 'Processing...' : 'Delete Profile'}
+                {isProcessing ? t('processing') : t('deleteProfile')}
             </button>
         </div>
     );
