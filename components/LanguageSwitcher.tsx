@@ -3,17 +3,18 @@
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
+import { setLocaleCookie, SupportedLocale } from '@/lib/cookie-utils';
 
 export default function LanguageSwitcher() {
   const locale = useLocale();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const switchLocale = (newLocale: string) => {
+  const switchLocale = (newLocale: SupportedLocale) => {
     if (newLocale === locale) return;
     
     // Set the cookie
-    document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=${60 * 60 * 24 * 365};samesite=strict`;
+    setLocaleCookie(newLocale);
     
     // Reload the current page to apply the new locale
     startTransition(() => {

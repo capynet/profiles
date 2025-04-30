@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import {prisma} from "@/prisma";
 import "./globals.css";
 import {cookies} from 'next/headers';
+import { LOCALE_COOKIE, getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
 
 const geistSans = Geist({
@@ -30,7 +31,8 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     const cookieStore = await cookies();
-    const locale = cookieStore.get('NEXT_LOCALE' as string)?.value || 'en';
+    const cookieValue = cookieStore.get(LOCALE_COOKIE)?.value;
+    const locale = getLocaleFromCookie(cookieValue);
     const session = await auth();
 
     // Check if user has any type of profile (including drafts)
