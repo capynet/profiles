@@ -12,6 +12,11 @@
   "Footer": {
     "copyright": "© 2025 Profiles. All rights reserved."
   },
+  "CreateProfileBanner": {
+    "title": "Complete your profile to get started!",
+    "description": "To appear in searches and showcase your services, you need to create a professional profile.",
+    "button": "Create Profile"
+  },
   "Common": {
     "save": "Save",
     "cancel": "Cancel",

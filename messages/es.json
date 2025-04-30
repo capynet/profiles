@@ -12,6 +12,11 @@
   "Footer": {
     "copyright": "© 2025 Perfiles. Todos los derechos reservados."
   },
+  "CreateProfileBanner": {
+    "title": "¡Completa tu perfil para empezar!",
+    "description": "Para aparecer en las búsquedas y mostrar tus servicios, necesitas crear un perfil profesional.",
+    "button": "Crear Perfil"
+  },
   "Common": {
     "save": "Guardar",
     "cancel": "Cancelar",
