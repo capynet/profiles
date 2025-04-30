@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import RangeSlider from './RangeSlider';
 
 interface Language {
@@ -48,6 +49,7 @@ export default function SidebarFilters({
                                            isOpen,
                                            onClose
                                        }: SidebarFiltersProps) {
+    const t = useTranslations('SidebarFilters');
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -231,7 +233,7 @@ export default function SidebarFilters({
             >
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                        Filtros
+                        {t('title')}
                         {activeFiltersCount > 0 && (
                             <span className="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">
                                 {activeFiltersCount}
@@ -259,7 +261,7 @@ export default function SidebarFilters({
                         maxValue={maxPrice}
                         onMinChange={setMinPrice}
                         onMaxChange={setMaxPrice}
-                        label="Price (€)"
+                        label={t('price')}
                         showInputs={false}
                     />
 
@@ -272,13 +274,13 @@ export default function SidebarFilters({
                         maxValue={maxAge}
                         onMinChange={setMinAge}
                         onMaxChange={setMaxAge}
-                        label="Age"
+                        label={t('age')}
                         showInputs={false}
                     />
 
                     {/* Languages */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Languages</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('languages')}</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             {languages.map(language => (
                                 <div key={language.id} className="flex items-center">
@@ -302,7 +304,7 @@ export default function SidebarFilters({
 
                     {/* Payment Methods */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Payment methods</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('paymentMethods')}</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             {paymentMethods.map(method => (
                                 <div key={method.id} className="flex items-center">
@@ -326,7 +328,7 @@ export default function SidebarFilters({
                     
                     {/* Nationalities */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nationality</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('nationality')}</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             <div className="flex items-center mb-2">
                                 <input
@@ -341,7 +343,7 @@ export default function SidebarFilters({
                                     htmlFor="nationality-none"
                                     className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                 >
-                                    Any
+                                    {t('any')}
                                 </label>
                             </div>
                             {nationalities.map(nationality => (
@@ -367,7 +369,7 @@ export default function SidebarFilters({
                     
                     {/* Ethnicities */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ethnicity</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('ethnicity')}</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             <div className="flex items-center mb-2">
                                 <input
@@ -382,7 +384,7 @@ export default function SidebarFilters({
                                     htmlFor="ethnicity-none"
                                     className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                 >
-                                    Any
+                                    {t('any')}
                                 </label>
                             </div>
                             {ethnicities.map(ethnicity => (
@@ -408,7 +410,7 @@ export default function SidebarFilters({
                     
                     {/* Services */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Services</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('services')}</h3>
                         <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
                             {services.map(service => (
                                 <div key={service.id} className="flex items-center">
@@ -442,13 +444,13 @@ export default function SidebarFilters({
                             onClick={handleFilter}
                             className="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
-                            Apply filters
+                            {t('applyFilters')}
                         </button>
                         <button
                             onClick={handleReset}
                             className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
                         >
-                            Reset
+                            {t('reset')}
                         </button>
                     </div>
                 </div>
@@ -456,51 +458,51 @@ export default function SidebarFilters({
                 {/* Active filters summary */}
                 {activeFiltersCount > 0 && (
                     <div className="p-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Filtros activos</h3>
+                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('activeFilters')}</h3>
                         <div className="flex flex-wrap gap-2">
                             {minPrice && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    Min: {minPrice}€
+                                    {t('minPrice', { value: minPrice })}
                                 </span>
                             )}
                             {maxPrice && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    Max: {maxPrice}€
+                                    {t('maxPrice', { value: maxPrice })}
                                 </span>
                             )}
                             {minAge && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    Age min: {minAge}
+                                    {t('minAge', { value: minAge })}
                                 </span>
                             )}
                             {maxAge && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    Age max: {maxAge}
+                                    {t('maxAge', { value: maxAge })}
                                 </span>
                             )}
                             {selectedLanguages.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs">
-                                    {selectedLanguages.length} idioma(s)
+                                    {t('languagesCount', { count: selectedLanguages.length })}
                                 </span>
                             )}
                             {selectedPaymentMethods.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">
-                                    {selectedPaymentMethods.length} método(s) de pago
+                                    {t('paymentMethodsCount', { count: selectedPaymentMethods.length })}
                                 </span>
                             )}
                             {selectedNationality && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
-                                    Nacionalidad: {nationalities.find(n => n.id === selectedNationality)?.name}
+                                    {t('nationalityLabel', { name: nationalities.find(n => n.id === selectedNationality)?.name })}
                                 </span>
                             )}
                             {selectedEthnicity && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs">
-                                    Etnicidad: {ethnicities.find(e => e.id === selectedEthnicity)?.name}
+                                    {t('ethnicityLabel', { name: ethnicities.find(e => e.id === selectedEthnicity)?.name })}
                                 </span>
                             )}
                             {selectedServices.length > 0 && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-xs">
-                                    {selectedServices.length} servicio(s)
+                                    {t('servicesCount', { count: selectedServices.length })}
                                 </span>
                             )}
                         </div>

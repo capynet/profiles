@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import { Area, Point } from 'react-easy-crop/types';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface ImageToProcess {
     id: string;
@@ -27,6 +28,7 @@ export default function ImageCropModal({
                                            onClose,
                                            aspectRatio = 9 / 16
                                        }: ImageCropModalProps) {
+    const t = useTranslations('ImageCropModal');
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -158,7 +160,7 @@ export default function ImageCropModal({
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-4xl w-full p-4">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Crop New Images (9:16)
+                        {t('title')}
                     </h3>
                     <button
                         onClick={onClose}
@@ -222,7 +224,7 @@ export default function ImageCropModal({
 
                                 <div className="mb-4">
                                     <label htmlFor="zoom" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Zoom
+                                        {t('zoom')}
                                     </label>
                                     <input
                                         id="zoom"
@@ -243,11 +245,11 @@ export default function ImageCropModal({
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        <p className="mt-2 text-lg font-medium text-gray-900 dark:text-white">All images processed!</p>
-                                        <p className="text-gray-500 dark:text-gray-400">Click Done to continue</p>
+                                        <p className="mt-2 text-lg font-medium text-gray-900 dark:text-white">{t('allProcessed')}</p>
+                                        <p className="text-gray-500 dark:text-gray-400">{t('clickDone')}</p>
                                     </div>
                                 ) : (
-                                    <p className="text-gray-500 dark:text-gray-400">Select an image to crop</p>
+                                    <p className="text-gray-500 dark:text-gray-400">{t('selectImage')}</p>
                                 )}
                             </div>
                         )}
@@ -259,7 +261,7 @@ export default function ImageCropModal({
                         onClick={onClose}
                         className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                     >
-                        {allImagesProcessed ? 'Done' : 'Cancel'}
+                        {allImagesProcessed ? t('done') : t('cancel')}
                     </button>
 
                     {selectedImage && !selectedImage.processed && (
@@ -267,7 +269,7 @@ export default function ImageCropModal({
                             onClick={handleCrop}
                             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
                         >
-                            Crop & Save
+                            {t('cropSave')}
                         </button>
                     )}
                 </div>

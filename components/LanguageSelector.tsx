@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Language {
     id: number;
@@ -19,6 +20,7 @@ export default function LanguageSelector({
                                              onChange,
                                              error
                                          }: LanguageSelectorProps) {
+    const t = useTranslations('LanguageSelector');
     const [languages, setLanguages] = useState<Language[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -40,14 +42,14 @@ export default function LanguageSelector({
                 setLanguages(data);
             } catch (error) {
                 console.error('Error fetching languages:', error);
-                setLoadError('Failed to load languages. Please try again.');
+                setLoadError(t('failedToLoad'));
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchLanguages();
-    }, []);
+    }, [t]);
 
     // Handle language selection/deselection
     const handleLanguageChange = (languageId: number) => {
@@ -64,12 +66,12 @@ export default function LanguageSelector({
     return (
         <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Languages
+                {t('title')}
             </label>
 
             {isLoading ? (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
-                    Loading languages...
+                    {t('loading')}
                 </div>
             ) : loadError ? (
                 <div className="p-3 text-sm text-red-500 dark:text-red-400">
@@ -97,7 +99,7 @@ export default function LanguageSelector({
                         ))
                     ) : (
                         <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">
-                            No languages available
+                            {t('noLanguages')}
                         </div>
                     )}
                 </div>
@@ -111,7 +113,7 @@ export default function LanguageSelector({
                 <div className="mt-2 flex flex-wrap gap-1">
                     {selectedLanguages.length > 0 && (
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-              {selectedLanguages.length} language(s) selected
+              {t('selected', { count: selectedLanguages.length })}
             </span>
                     )}
                 </div>

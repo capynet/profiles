@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface RangeSliderProps {
     min: number;
@@ -26,6 +27,9 @@ export default function RangeSlider({
                                         label,
                                         showInputs = true
                                     }: RangeSliderProps) {
+    // Get translations
+    const t = useTranslations('SidebarFilters');
+    
     // Convert to numbers for calculations
     const minVal = minValue === '' ? min : Number(minValue);
     const maxVal = maxValue === '' ? max : Number(maxValue);
@@ -85,7 +89,7 @@ export default function RangeSlider({
                         }}
                     >
                         <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1.5 rounded">
-                            {label === "Price (€)" ? `${minVal}€` : minVal}
+                            {label === t('price') ? `${minVal}€` : minVal}
                         </div>
                     </div>
                     
@@ -99,16 +103,16 @@ export default function RangeSlider({
                         }}
                     >
                         <div className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs py-0.5 px-1.5 rounded">
-                            {label === "Price (€)" ? `${maxVal}€` : maxVal}
+                            {label === t('price') ? `${maxVal}€` : maxVal}
                         </div>
                     </div>
                     
                     {/* Range values at track ends - now at the top */}
                     <div className="absolute left-0 -top-6 text-xs text-gray-500 dark:text-gray-400 mb-6">
-                        {label === "Price (€)" ? `${min}€` : min}
+                        {label === t('price') ? `${min}€` : min}
                     </div>
                     <div className="absolute right-0 -top-6 text-xs text-gray-500 dark:text-gray-400">
-                        {label === "Price (€)" ? `${max}€` : max}
+                        {label === t('price') ? `${max}€` : max}
                     </div>
 
                     {/* Slider thumbs */}

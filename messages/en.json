@@ -148,6 +148,143 @@
     "loading": "Loading ethnicities...",
     "failedToLoad": "Failed to load ethnicities. Please try again.",
     "noEthnicities": "No ethnicities available"
+  },
+  "ImageCropModal": {
+    "title": "Crop New Images (9:16)",
+    "allProcessed": "All images processed!",
+    "clickDone": "Click Done to continue",
+    "selectImage": "Select an image to crop",
+    "zoom": "Zoom",
+    "done": "Done",
+    "cancel": "Cancel",
+    "cropSave": "Crop & Save"
+  },
+  "LanguageSelector": {
+    "title": "Languages",
+    "loading": "Loading languages...",
+    "failedToLoad": "Failed to load languages. Please try again.",
+    "noLanguages": "No languages available",
+    "selected": "{count} language(s) selected"
+  },
+  "NationalitySelector": {
+    "title": "Nationality",
+    "loading": "Loading nationalities...",
+    "failedToLoad": "Failed to load nationalities. Please try again.",
+    "noNationalities": "No nationalities available"
+  },
+  "PaymentMethodSelector": {
+    "title": "Payment Methods",
+    "loading": "Loading payment methods...",
+    "failedToLoad": "Failed to load payment methods. Please try again.",
+    "noPaymentMethods": "No payment methods available",
+    "selected": "{count} payment method(s) selected"
+  },
+  "ProfileCard": {
+    "location": "LOCATION",
+    "languages": "LANGUAGES",
+    "paymentMethods": "PAYMENT METHODS",
+    "nationality": "NATIONALITY",
+    "ethnicity": "ETHNICITY",
+    "services": "SERVICES",
+    "noLanguages": "No languages available",
+    "viewProfile": "View Profile",
+    "ageYears": "{age} years"
+  },
+  "ProfileDetailMap": {
+    "errorLoading": "Error loading maps: {error}",
+    "getDirections": "Get Directions"
+  },
+  "ProfileFilters": {
+    "title": "Filters",
+    "hide": "Hide",
+    "show": "Show",
+    "price": "Price (€)",
+    "age": "Age",
+    "languages": "Languages",
+    "paymentMethods": "Payment methods",
+    "applyFilters": "Apply filters",
+    "reset": "Reset",
+    "minPrice": "Min: {value}€",
+    "maxPrice": "Max: {value}€",
+    "minAge": "Age min: {value}",
+    "maxAge": "Age max: {value}",
+    "languagesCount": "{count} language(s)",
+    "paymentMethodsCount": "{count} payment method(s)"
+  },
+  "ProfileForm": {
+    "loading": "Loading form data...",
+    "adminEditMode": "Admin Mode: Editing profile #{id} for user {user}",
+    "adminCreateMode": "Admin Mode: Creating profile for user ID: {userId}",
+    "draftNotice": "Your changes will create a draft that requires administrator approval before becoming public. Your current published profile will remain visible until your changes are approved.",
+    "editingDraft": "You are editing a draft version of your profile. Your changes will need to be approved before becoming public.",
+    "name": "Name",
+    "price": "Price",
+    "age": "Age",
+    "description": "Description",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "address": "Address",
+    "locationSection": "Location",
+    "contactSection": "Contact Information",
+    "phone": "Phone Number",
+    "hasWhatsapp": "I have WhatsApp",
+    "hasTelegram": "I have Telegram",
+    "additionalSection": "Additional Information",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "update": "Update",
+    "create": "Create"
+  },
+  "ProfileImageManager": {
+    "title": "Profile Images",
+    "noImages": "No images uploaded",
+    "imageCount": "{count} images (first is primary)",
+    "clickToUpload": "Click to upload",
+    "dragAndDrop": "or drag and drop",
+    "fileTypes": "PNG, JPG, GIF up to 10MB",
+    "processingNote": "Images will be cropped to a 9:16 ratio, converted to WebP, and stored in Google Cloud Storage.",
+    "imagesLabel": "Images",
+    "dragInstructions": "(drag to reorder, first image is main)"
+  },
+  "ProfileMap": {
+    "errorLoading": "Error loading maps: {error}",
+    "yourLocation": "Your location"
+  },
+  "ProfileMapCard": {
+    "ageYears": "{age} years",
+    "viewProfile": "View Profile"
+  },
+  "ServiceSelector": {
+    "title": "Services",
+    "noServices": "No services available"
+  },
+  "SidebarFilters": {
+    "title": "Filters",
+    "price": "Price (€)",
+    "age": "Age",
+    "languages": "Languages",
+    "paymentMethods": "Payment methods",
+    "nationality": "Nationality",
+    "any": "Any",
+    "ethnicity": "Ethnicity",
+    "services": "Services",
+    "applyFilters": "Apply filters",
+    "reset": "Reset",
+    "activeFilters": "Active filters",
+    "minPrice": "Min: {value}€",
+    "maxPrice": "Max: {value}€",
+    "minAge": "Age min: {value}",
+    "maxAge": "Age max: {value}",
+    "languagesCount": "{count} language(s)",
+    "paymentMethodsCount": "{count} payment method(s)",
+    "nationalityLabel": "Nationality: {name}",
+    "ethnicityLabel": "Ethnicity: {name}",
+    "servicesCount": "{count} service(s)"
+  },
+  "SortableImageGallery": {
+    "main": "Main",
+    "new": "New",
+    "remove": "Remove image"
   }
 }
 }

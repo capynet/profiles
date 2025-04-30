@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Service {
   id: number;
@@ -14,6 +15,7 @@ interface ServiceSelectorProps {
 }
 
 export default function ServiceSelector({ selectedServices, onChange, error }: ServiceSelectorProps) {
+  const t = useTranslations('ServiceSelector');
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export default function ServiceSelector({ selectedServices, onChange, error }: S
     };
 
     fetchServices();
-  }, []);
+  }, [t]);
 
   // Handle service selection
   const handleServiceChange = (serviceId: number) => {
@@ -50,7 +52,7 @@ export default function ServiceSelector({ selectedServices, onChange, error }: S
     return (
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Services
+          {t('title')}
         </label>
         <div className="mt-1 h-10 w-full bg-gray-100 dark:bg-gray-700 animate-pulse rounded-md"></div>
       </div>
@@ -60,7 +62,7 @@ export default function ServiceSelector({ selectedServices, onChange, error }: S
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-        Services
+        {t('title')}
       </label>
       <div className="mt-1 space-y-2">
         {services.map(service => (
@@ -81,7 +83,7 @@ export default function ServiceSelector({ selectedServices, onChange, error }: S
           </div>
         ))}
         {services.length === 0 && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No services available</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('noServices')}</p>
         )}
       </div>
       {error && <p className="mt-1 text-sm text-red-600 font-medium">{error}</p>}

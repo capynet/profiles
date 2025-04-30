@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface ProfileImage {
     id: number;
@@ -26,6 +27,8 @@ export default function ProfileMapCard({
                                            images,
                                            address
                                        }: ProfileMapCardProps) {
+    const t = useTranslations('ProfileMapCard');
+    
     const imageUrl = images.length > 0 ?
         (images[0].thumbnailUrl || images[0].mediumUrl) :
         '/api/placeholder/120/120';
@@ -47,7 +50,7 @@ export default function ProfileMapCard({
                 </div>
                 <div className="flex-1">
                     <h3 className="font-semibold text-sm text-gray-900">{name}</h3>
-                    <p className="text-xs text-gray-600">{age} años</p>
+                    <p className="text-xs text-gray-600">{t('ageYears', { age })}</p>
                     <div className="mt-1 px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs inline-block">
                         {price}€
                     </div>
@@ -62,7 +65,7 @@ export default function ProfileMapCard({
                 href={profileUrl}
                 className="mt-2 block w-full text-center px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-md transition-colors"
             >
-                Ver Perfil
+                {t('viewProfile')}
             </Link>
         </div>
     );

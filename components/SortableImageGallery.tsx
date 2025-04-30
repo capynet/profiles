@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface ImageItem {
     id: string | number;
@@ -23,6 +24,7 @@ export default function SortableImageGallery({
                                                  onRemove,
                                                  className = ''
                                              }: SortableImageGalleryProps) {
+    const t = useTranslations('SortableImageGallery');
     const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
     const [localImages, setLocalImages] = useState<ImageItem[]>([]);
 
@@ -117,14 +119,14 @@ export default function SortableImageGallery({
                     {/* Primary image badge */}
                     {image.isPrimary && (
                         <div className="absolute top-1 left-1 bg-indigo-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-sm">
-                            Main
+                            {t('main')}
                         </div>
                     )}
 
                     {/* New image badge */}
                     {image.isNew && (
                         <div className="absolute top-1 left-1 bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-sm" style={{ left: image.isPrimary ? '3.5rem' : '1rem' }}>
-                            New
+                            {t('new')}
                         </div>
                     )}
 
@@ -133,7 +135,7 @@ export default function SortableImageGallery({
                         type="button"
                         onClick={() => onRemove(image.id)}
                         className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 z-10"
-                        aria-label="Remove image"
+                        aria-label={t('remove')}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>

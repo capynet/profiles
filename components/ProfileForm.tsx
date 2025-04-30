@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Profile, ProfileImage } from '@prisma/client';
 import { createProfile, updateProfile } from '@/app/profile/actions';
 import ImageCropModal from './ImageCropModal';
@@ -41,6 +42,7 @@ type ProfileFormProps = {
 
 export default function ProfileForm({profile, isEditing = false, isAdminMode = false, userId}: ProfileFormProps) {
     const router = useRouter();
+    const t = useTranslations('ProfileForm');
 
     // Form data states - controlled inputs
     const [name, setName] = useState(profile?.name || '');
@@ -238,7 +240,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <p className="mt-2 text-gray-600 dark:text-gray-300">Loading form data...</p>
+                        <p className="mt-2 text-gray-600 dark:text-gray-300">{t('loading')}</p>
                     </div>
                 </div>
             </div>
@@ -254,8 +256,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     <div className="mb-6 p-3 bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-800 rounded-md">
                         <p className="text-purple-800 dark:text-purple-300 text-sm font-medium">
                             {isEditing
-                                ? `Admin Mode: Editing profile #${profile?.id} for user ${profile?.user?.name || profile?.user?.email}`
-                                : `Admin Mode: Creating profile for user ID: ${userId}`
+                                ? t('adminEditMode', { id: profile?.id, user: profile?.user?.name || profile?.user?.email })
+                                : t('adminCreateMode', { userId })
                             }
                         </p>
                     </div>
@@ -265,8 +267,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 {isEditingPublished && (
                     <div className="mb-6 p-3 bg-yellow-100 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-800 rounded-md">
                         <p className="text-yellow-800 dark:text-yellow-300 text-sm font-medium">
-                            Your changes will create a draft that requires administrator approval before becoming public.
-                            Your current published profile will remain visible until your changes are approved.
+                            {t('draftNotice')}
                         </p>
                     </div>
                 )}
@@ -275,7 +276,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 {isEditing && profile && profile.isDraft && !isAdminMode && (
                     <div className="mb-6 p-3 bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-md">
                         <p className="text-blue-800 dark:text-blue-300 text-sm font-medium">
-                            You are editing a draft version of your profile. Your changes will need to be approved before becoming public.
+                            {t('editingDraft')}
                         </p>
                     </div>
                 )}
@@ -283,20 +284,20 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Basic information fields - now controlled */}
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('name')}</label>
                         <input
                             type="text"
                             name="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             className={inputClassName}
-                            placeholder="Ex: John Doe"
+                            placeholder="John Doe"
                         />
                         {errors.name && <p className="mt-1 text-sm text-red-600 font-medium">{errors.name[0]}</p>}
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Price</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('price')}</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span className="text-gray-500 sm:text-sm">€</span>
@@ -315,7 +316,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Age</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('age')}</label>
                         <input
                             type="number"
                             name="age"
@@ -341,14 +342,14 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
 
                     {/* Description field - now controlled */}
                     <div className="md:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('description')}</label>
                         <textarea
                             rows={4}
                             name="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             className={`${inputClassName} resize-none`}
-                            placeholder="Describe your experience, specialties and services you offer..."
+                            placeholder="Describe your experience..."
                         />
                         {errors.description && <p className="mt-1 text-sm text-red-600 font-medium">{errors.description[0]}</p>}
                     </div>
@@ -357,13 +358,13 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
-                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Location</span>
+                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t('locationSection')}</span>
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Latitude</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('latitude')}</label>
                         <input
                             type="number"
                             step="any"
@@ -377,7 +378,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     </div>
 
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Longitude</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('longitude')}</label>
                         <input
                             type="number"
                             step="any"
@@ -391,7 +392,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     </div>
 
                     <div className="md:col-span-2 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('address')}</label>
                         <input
                             type="text"
                             name="address"
@@ -407,13 +408,13 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
-                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Contact Information</span>
+                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t('contactSection')}</span>
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
                         </div>
                     </div>
                     
                     <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('phone')}</label>
                         <input
                             type="tel"
                             name="phone"
@@ -437,7 +438,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                 />
                                 <label htmlFor="hasWhatsapp" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                                    Tengo WhatsApp
+                                    {t('hasWhatsapp')}
                                 </label>
                             </div>
                             <div className="flex items-center">
@@ -450,7 +451,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                                 />
                                 <label htmlFor="hasTelegram" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                                    Tengo Telegram
+                                    {t('hasTelegram')}
                                 </label>
                             </div>
                         </div>
@@ -460,7 +461,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     <div className="pt-4 md:col-span-2">
                         <div className="flex items-center">
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
-                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">Additional Information</span>
+                            <span className="px-3 text-sm font-medium text-gray-500 dark:text-gray-400">{t('additionalSection')}</span>
                             <div className="flex-grow h-px bg-gray-200 dark:bg-gray-600"></div>
                         </div>
                     </div>
@@ -530,7 +531,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         onClick={() => router.back()}
                         className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                        Cancel
+                        {t('cancel')}
                     </button>
                     <button
                         type="submit"
@@ -543,10 +544,10 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                Saving...
+                                {t('saving')}
                             </span>
                         ) : (
-                            isEditing ? 'Update' : 'Create'
+                            isEditing ? t('update') : t('create')
                         )}
                     </button>
                 </div>

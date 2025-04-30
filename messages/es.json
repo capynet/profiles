@@ -148,5 +148,142 @@
     "loading": "Cargando etnias...",
     "failedToLoad": "Error al cargar etnias. Por favor, inténtalo de nuevo.",
     "noEthnicities": "No hay etnias disponibles"
+  },
+  "ImageCropModal": {
+    "title": "Recortar Nuevas Imágenes (9:16)",
+    "allProcessed": "¡Todas las imágenes procesadas!",
+    "clickDone": "Haz clic en Finalizar para continuar",
+    "selectImage": "Selecciona una imagen para recortar",
+    "zoom": "Zoom",
+    "done": "Finalizar",
+    "cancel": "Cancelar",
+    "cropSave": "Recortar y Guardar"
+  },
+  "LanguageSelector": {
+    "title": "Idiomas",
+    "loading": "Cargando idiomas...",
+    "failedToLoad": "Error al cargar idiomas. Por favor, inténtalo de nuevo.",
+    "noLanguages": "No hay idiomas disponibles",
+    "selected": "{count} idioma(s) seleccionado(s)"
+  },
+  "NationalitySelector": {
+    "title": "Nacionalidad",
+    "loading": "Cargando nacionalidades...",
+    "failedToLoad": "Error al cargar nacionalidades. Por favor, inténtalo de nuevo.",
+    "noNationalities": "No hay nacionalidades disponibles"
+  },
+  "PaymentMethodSelector": {
+    "title": "Métodos de Pago",
+    "loading": "Cargando métodos de pago...",
+    "failedToLoad": "Error al cargar métodos de pago. Por favor, inténtalo de nuevo.",
+    "noPaymentMethods": "No hay métodos de pago disponibles",
+    "selected": "{count} método(s) de pago seleccionado(s)"
+  },
+  "ProfileCard": {
+    "location": "UBICACIÓN",
+    "languages": "IDIOMAS",
+    "paymentMethods": "MÉTODOS DE PAGO",
+    "nationality": "NACIONALIDAD",
+    "ethnicity": "ETNIA",
+    "services": "SERVICIOS",
+    "noLanguages": "No hay idiomas disponibles",
+    "viewProfile": "Ver Perfil",
+    "ageYears": "{age} años"
+  },
+  "ProfileDetailMap": {
+    "errorLoading": "Error al cargar mapas: {error}",
+    "getDirections": "Cómo llegar"
+  },
+  "ProfileFilters": {
+    "title": "Filtros",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "price": "Precio (€)",
+    "age": "Edad",
+    "languages": "Idiomas",
+    "paymentMethods": "Métodos de pago",
+    "applyFilters": "Aplicar filtros",
+    "reset": "Restablecer",
+    "minPrice": "Mín: {value}€",
+    "maxPrice": "Máx: {value}€",
+    "minAge": "Edad mín: {value}",
+    "maxAge": "Edad máx: {value}",
+    "languagesCount": "{count} idioma(s)",
+    "paymentMethodsCount": "{count} método(s) de pago"
+  },
+  "ProfileForm": {
+    "loading": "Cargando datos del formulario...",
+    "adminEditMode": "Modo Administrador: Editando perfil #{id} para usuario {user}",
+    "adminCreateMode": "Modo Administrador: Creando perfil para usuario ID: {userId}",
+    "draftNotice": "Tus cambios crearán un borrador que requiere aprobación del administrador antes de hacerse público. Tu perfil publicado actual seguirá visible hasta que tus cambios sean aprobados.",
+    "editingDraft": "Estás editando una versión en borrador de tu perfil. Tus cambios deberán ser aprobados antes de hacerse públicos.",
+    "name": "Nombre",
+    "price": "Precio",
+    "age": "Edad",
+    "description": "Descripción",
+    "latitude": "Latitud",
+    "longitude": "Longitud",
+    "address": "Dirección",
+    "locationSection": "Ubicación",
+    "contactSection": "Información de Contacto",
+    "phone": "Número de Teléfono",
+    "hasWhatsapp": "Tengo WhatsApp",
+    "hasTelegram": "Tengo Telegram",
+    "additionalSection": "Información Adicional",
+    "cancel": "Cancelar",
+    "saving": "Guardando...",
+    "update": "Actualizar",
+    "create": "Crear"
+  },
+  "ProfileImageManager": {
+    "title": "Imágenes de Perfil",
+    "noImages": "No hay imágenes subidas",
+    "imageCount": "{count} imágenes (la primera es la principal)",
+    "clickToUpload": "Haz clic para subir",
+    "dragAndDrop": "o arrastra y suelta",
+    "fileTypes": "PNG, JPG, GIF hasta 10MB",
+    "processingNote": "Las imágenes se recortarán a una relación 9:16, se convertirán a WebP y se almacenarán en Google Cloud Storage.",
+    "imagesLabel": "Imágenes",
+    "dragInstructions": "(arrastra para reordenar, la primera imagen es la principal)"
+  },
+  "ProfileMap": {
+    "errorLoading": "Error al cargar mapas: {error}",
+    "yourLocation": "Tu ubicación"
+  },
+  "ProfileMapCard": {
+    "ageYears": "{age} años",
+    "viewProfile": "Ver Perfil"
+  },
+  "ServiceSelector": {
+    "title": "Servicios",
+    "noServices": "No hay servicios disponibles"
+  },
+  "SidebarFilters": {
+    "title": "Filtros",
+    "price": "Precio (€)",
+    "age": "Edad",
+    "languages": "Idiomas",
+    "paymentMethods": "Métodos de pago",
+    "nationality": "Nacionalidad",
+    "any": "Cualquiera",
+    "ethnicity": "Etnia",
+    "services": "Servicios",
+    "applyFilters": "Aplicar filtros",
+    "reset": "Restablecer",
+    "activeFilters": "Filtros activos",
+    "minPrice": "Mín: {value}€",
+    "maxPrice": "Máx: {value}€",
+    "minAge": "Edad mín: {value}",
+    "maxAge": "Edad máx: {value}",
+    "languagesCount": "{count} idioma(s)",
+    "paymentMethodsCount": "{count} método(s) de pago",
+    "nationalityLabel": "Nacionalidad: {name}",
+    "ethnicityLabel": "Etnia: {name}",
+    "servicesCount": "{count} servicio(s)"
+  },
+  "SortableImageGallery": {
+    "main": "Principal",
+    "new": "Nueva",
+    "remove": "Eliminar imagen"
   }
 }
