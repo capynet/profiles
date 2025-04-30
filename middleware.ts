@@ -3,13 +3,13 @@ import type { NextRequest } from 'next/server';
 import { 
   LOCALE_COOKIE, 
   COOKIE_OPTIONS,
-  getLocaleFromCookie
-} from '@/lib/cookie-utils';
+  getLocaleFromValue
+} from '@/lib/cookie-constants';
 
 export function middleware(request: NextRequest) {
   // Check if there's a locale in the cookie
   const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
-  const locale = getLocaleFromCookie(cookieLocale);
+  const locale = getLocaleFromValue(cookieLocale);
   
   // Create a response object from the request
   const response = NextResponse.next();
