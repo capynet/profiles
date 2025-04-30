@@ -6,6 +6,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import {prisma} from "@/prisma";
 import "./globals.css";
+import {getLocale} from 'next-intl/server';
+import {NextIntlClientProvider} from "next-intl";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -27,6 +29,7 @@ export default async function RootLayout({
                                          }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const locale = await getLocale();
     const session = await auth();
 
     // Check if user has any type of profile (including drafts)
@@ -46,13 +49,13 @@ export default async function RootLayout({
     }
 
     return (
-        <html lang='en' suppressHydrationWarning>
+        <html lang={locale} suppressHydrationWarning>
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900`}
         >
         <Header user={userWithProfileInfo}/>
         <main className="flex-grow">
-            {children}
+            <NextIntlClientProvider>{children}</NextIntlClientProvider>
         </main>
         <Footer/>
         </body>

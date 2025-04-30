@@ -1,0 +1,63 @@
+{
+  "Header": {
+    "home": "Inicio",
+    "search": "Búsqueda",
+    "adminDashboard": "Panel de Administración",
+    "myProfile": "Mi perfil",
+    "create": "crear",
+    "editProfile": "Editar perfil",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión"
+  },
+  "Footer": {
+    "copyright": "© 2025 Perfiles. Todos los derechos reservados."
+  },
+  "Common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "create": "Crear",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "reset": "Restablecer",
+    "apply": "Aplicar",
+    "loading": "Cargando...",
+    "noResults": "No se encontraron resultados",
+    "error": "Ocurrió un error",
+    "success": "Operación exitosa"
+  },
+  "Profile": {
+    "createProfile": "Crear Perfil",
+    "editProfile": "Editar Perfil",
+    "viewProfile": "Ver Perfil",
+    "deleteProfile": "Eliminar Perfil",
+    "profileDetails": "Detalles del Perfil",
+    "personalInfo": "Información Personal",
+    "contactInfo": "Información de Contacto",
+    "services": "Servicios",
+    "languages": "Idiomas",
+    "paymentMethods": "Métodos de Pago",
+    "location": "Ubicación",
+    "images": "Imágenes"
+  },
+  "Search": {
+    "searchProfiles": "Buscar Perfiles",
+    "filters": "Filtros",
+    "searchResults": "Resultados de búsqueda",
+    "noResultsFound": "Ningún perfil coincide con tus criterios de búsqueda",
+    "nearMe": "Cerca de mí",
+    "distance": "Distancia",
+    "price": "Precio",
+    "sortBy": "Ordenar por"
+  },
+  "Admin": {
+    "dashboard": "Panel de Administración",
+    "userManagement": "Gestión de Usuarios",
+    "profilesManagement": "Gestión de Perfiles",
+    "settings": "Configuración",
+    "approvals": "Aprobaciones",
+    "statistics": "Estadísticas"
+  }
+}

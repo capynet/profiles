@@ -1,0 +1,63 @@
+{
+  "Header": {
+    "home": "Home",
+    "search": "Search",
+    "adminDashboard": "Admin Dashboard",
+    "myProfile": "My profile",
+    "create": "create",
+    "editProfile": "Edit profile",
+    "logout": "Logout",
+    "login": "Login"
+  },
+  "Footer": {
+    "copyright": "© 2025 Profiles. All rights reserved."
+  },
+  "Common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "apply": "Apply",
+    "loading": "Loading...",
+    "noResults": "No results found",
+    "error": "An error occurred",
+    "success": "Operation successful"
+  },
+  "Profile": {
+    "createProfile": "Create Profile",
+    "editProfile": "Edit Profile",
+    "viewProfile": "View Profile",
+    "deleteProfile": "Delete Profile",
+    "profileDetails": "Profile Details",
+    "personalInfo": "Personal Information",
+    "contactInfo": "Contact Information",
+    "services": "Services",
+    "languages": "Languages",
+    "paymentMethods": "Payment Methods",
+    "location": "Location",
+    "images": "Images"
+  },
+  "Search": {
+    "searchProfiles": "Search Profiles",
+    "filters": "Filters",
+    "searchResults": "Search Results",
+    "noResultsFound": "No profiles match your search criteria",
+    "nearMe": "Near Me",
+    "distance": "Distance",
+    "price": "Price",
+    "sortBy": "Sort by"
+  },
+  "Admin": {
+    "dashboard": "Admin Dashboard",
+    "userManagement": "User Management",
+    "profilesManagement": "Profiles Management",
+    "settings": "Settings",
+    "approvals": "Approvals",
+    "statistics": "Statistics"
+  }
+}
