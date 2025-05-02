@@ -71,7 +71,7 @@ export default function ProfileCard({
                         <div className="flex justify-between items-end">
                             <div>
                                 <h3 className="text-lg font-semibold text-white">{name}</h3>
-                                <p className="text-sm text-gray-200">{age} {t('ageYears').replace('{age}', '')}</p>
+                                <p className="text-sm text-gray-200">{t('ageYears', { age })}</p>
                             </div>
                             <div className="px-3 py-1 bg-indigo-600 text-white rounded-full text-sm font-medium">
                                 {price}€
