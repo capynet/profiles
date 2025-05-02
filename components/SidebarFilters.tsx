@@ -50,6 +50,11 @@ export default function SidebarFilters({
                                            onClose
                                        }: SidebarFiltersProps) {
     const t = useTranslations('SidebarFilters');
+    const nationalityT = useTranslations('ProfileEntities.Nationalities');
+    const ethnicityT = useTranslations('ProfileEntities.Ethnicities');
+    const languageT = useTranslations('ProfileEntities.Languages');
+    const paymentMethodT = useTranslations('ProfileEntities.PaymentMethods');
+    const serviceT = useTranslations('ProfileEntities.Services');
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -295,7 +300,7 @@ export default function SidebarFilters({
                                         htmlFor={`lang-${language.id}`}
                                         className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                     >
-                                        {language.name}
+                                        {languageT(language.name)}
                                     </label>
                                 </div>
                             ))}
@@ -319,7 +324,7 @@ export default function SidebarFilters({
                                         htmlFor={`method-${method.id}`}
                                         className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                     >
-                                        {method.name}
+                                        {paymentMethodT(method.name)}
                                     </label>
                                 </div>
                             ))}
@@ -360,7 +365,7 @@ export default function SidebarFilters({
                                         htmlFor={`nationality-${nationality.id}`}
                                         className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                     >
-                                        {nationality.name}
+                                        {nationalityT(nationality.name)}
                                     </label>
                                 </div>
                             ))}
@@ -401,7 +406,7 @@ export default function SidebarFilters({
                                         htmlFor={`ethnicity-${ethnicity.id}`}
                                         className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                     >
-                                        {ethnicity.name}
+                                        {ethnicityT(ethnicity.name)}
                                     </label>
                                 </div>
                             ))}
@@ -431,7 +436,7 @@ export default function SidebarFilters({
                                         htmlFor={`service-${service.id}`}
                                         className="ml-2 text-sm text-gray-700 dark:text-gray-300"
                                     >
-                                        {service.name}
+                                        {serviceT(service.name)}
                                     </label>
                                 </div>
                             ))}
@@ -492,12 +497,12 @@ export default function SidebarFilters({
                             )}
                             {selectedNationality && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
-                                    {t('nationalityLabel', { name: nationalities.find(n => n.id === selectedNationality)?.name })}
+                                    {t('nationalityLabel', { name: nationalityT(nationalities.find(n => n.id === selectedNationality)?.name || '') })}
                                 </span>
                             )}
                             {selectedEthnicity && (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs">
-                                    {t('ethnicityLabel', { name: ethnicities.find(e => e.id === selectedEthnicity)?.name })}
+                                    {t('ethnicityLabel', { name: ethnicityT(ethnicities.find(e => e.id === selectedEthnicity)?.name || '') })}
                                 </span>
                             )}
                             {selectedServices.length > 0 && (
