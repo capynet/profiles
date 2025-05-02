@@ -39,7 +39,7 @@ export default function ProfileCard({
                                         ethnicities,
                                         services,
                                     }: ProfileCardProps) {
-
+    const t = useTranslations('ProfileCard');
     const nationalityT = useTranslations('ProfileEntities.Nationalities');
     const ethnicityT = useTranslations('ProfileEntities.Ethnicities');
     const languageT = useTranslations('ProfileEntities.Languages');
@@ -71,7 +71,7 @@ export default function ProfileCard({
                         <div className="flex justify-between items-end">
                             <div>
                                 <h3 className="text-lg font-semibold text-white">{name}</h3>
-                                <p className="text-sm text-gray-200">{age} años</p>
+                                <p className="text-sm text-gray-200">{age} {t('ageYears').replace('{age}', '')}</p>
                             </div>
                             <div className="px-3 py-1 bg-indigo-600 text-white rounded-full text-sm font-medium">
                                 {price}€
@@ -85,13 +85,13 @@ export default function ProfileCard({
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{truncatedDescription}</p>
 
                 <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">UBICACIÓN</h4>
+                    <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('location')}</h4>
                     <p className="text-sm text-gray-700 dark:text-gray-300 truncate">{address}</p>
                 </div>
 
                 {languages.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">LANGUAGES</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('languages')}</h4>
                         <div className="flex flex-wrap gap-1">
                             {languages.map(({language}) => (
                                 <span
@@ -102,7 +102,7 @@ export default function ProfileCard({
                                 </span>
                             ))}
                             {languages.length === 0 && (
-                                <span className="text-xs text-gray-500">No languages available</span>
+                                <span className="text-xs text-gray-500">{t('noLanguages')}</span>
                             )}
                         </div>
                     </div>
@@ -110,7 +110,7 @@ export default function ProfileCard({
 
                 {paymentMethods.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">PAYMENT METHODS</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('paymentMethods')}</h4>
                         <div className="flex flex-wrap gap-1">
                             {paymentMethods.map(({paymentMethod}) => (
                                 <span
@@ -126,7 +126,7 @@ export default function ProfileCard({
 
                 {nationalities && nationalities.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">NATIONALITY</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('nationality')}</h4>
                         <div className="flex flex-wrap gap-1">
                             {nationalities.map(({nationality}) => (
                                 <span
@@ -142,7 +142,7 @@ export default function ProfileCard({
 
                 {ethnicities && ethnicities.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">ETHNICITY</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('ethnicity')}</h4>
                         <div className="flex flex-wrap gap-1">
                             {ethnicities.map(({ethnicity}) => (
                                 <span
@@ -158,7 +158,7 @@ export default function ProfileCard({
                 
                 {services && services.length > 0 && (
                     <div className="mb-3">
-                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">SERVICES</h4>
+                        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">{t('services')}</h4>
                         <div className="flex flex-wrap gap-1">
                             {services.map(({service}) => (
                                 <span
@@ -176,7 +176,7 @@ export default function ProfileCard({
                     href={profileUrl}
                     className="block w-full text-center px-4 py-2 mt-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md transition-colors"
                 >
-                    Ver Perfil
+                    {t('viewProfile')}
                 </Link>
             </div>
         </div>

@@ -47,7 +47,14 @@
     "languages": "Idiomas",
     "paymentMethods": "Métodos de Pago",
     "location": "Ubicación",
-    "images": "Imágenes"
+    "images": "Imágenes",
+    "description": "Descripción",
+    "noProfile": "No tienes un perfil creado",
+    "createPrompt": "Crea tu perfil para comenzar a ofrecer tus servicios.",
+    "clickToEnlarge": "Haz clic para ampliar",
+    "noLanguages": "No hay idiomas disponibles",
+    "noPaymentMethods": "No hay métodos de pago disponibles",
+    "ageYears": "{age} años"
   },
   "Search": {
     "searchProfiles": "Buscar Perfiles",
