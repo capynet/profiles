@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface ProfileImage {
     id: number;
@@ -38,6 +39,13 @@ export default function ProfileCard({
                                         ethnicities,
                                         services,
                                     }: ProfileCardProps) {
+
+    const nationalityT = useTranslations('ProfileEntities.Nationalities');
+    const ethnicityT = useTranslations('ProfileEntities.Ethnicities');
+    const languageT = useTranslations('ProfileEntities.Languages');
+    const paymentMethodT = useTranslations('ProfileEntities.PaymentMethods');
+    const serviceT = useTranslations('ProfileEntities.Services');
+
     const imageUrl = images.length > 0 ? images[0].mediumUrl : '/api/placeholder/352/576';
     const profileUrl = `/profile/${id}`;
 
@@ -90,7 +98,7 @@ export default function ProfileCard({
                                     key={language.id}
                                     className="px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded text-xs"
                                 >
-                                    {language.name}
+                                    {languageT(language.name)}
                                 </span>
                             ))}
                             {languages.length === 0 && (
@@ -109,7 +117,7 @@ export default function ProfileCard({
                                     key={paymentMethod.id}
                                     className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded text-xs"
                                 >
-                                    {paymentMethod.name}
+                                    {paymentMethodT(paymentMethod.name)}
                                 </span>
                             ))}
                         </div>
@@ -125,7 +133,7 @@ export default function ProfileCard({
                                     key={nationality.id}
                                     className="px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded text-xs"
                                 >
-                                    {nationality.name}
+                                    {nationalityT(nationality.name)}
                                 </span>
                             ))}
                         </div>
@@ -141,7 +149,7 @@ export default function ProfileCard({
                                     key={ethnicity.id}
                                     className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 rounded text-xs"
                                 >
-                                    {ethnicity.name}
+                                    {ethnicityT(ethnicity.name)}
                                 </span>
                             ))}
                         </div>
@@ -157,7 +165,7 @@ export default function ProfileCard({
                                     key={service.id}
                                     className="px-2 py-1 bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 rounded text-xs"
                                 >
-                                    {service.name}
+                                    {serviceT(service.name)}
                                 </span>
                             ))}
                         </div>

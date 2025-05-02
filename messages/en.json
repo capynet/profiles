@@ -294,6 +294,59 @@
     "main": "Main",
     "new": "New",
     "remove": "Remove image"
+  },
+  "ProfileEntities": {
+    "Nationalities": {
+      "N/A": "N/A",
+      "Spanish": "Spanish",
+      "African *": "African *",
+      "Asian *": "Asian *",
+      "Argentinian": "Argentinian",
+      "Belarusian": "Belarusian",
+      "Brazilian": "Brazilian",
+      "Bulgarian": "Bulgarian",
+      "Colombian": "Colombian",
+      "Czech": "Czech",
+      "Ecuadorian": "Ecuadorian",
+      "French": "French",
+      "German": "German",
+      "Greek": "Greek",
+      "Hungarian": "Hungarian",
+      "Italian": "Italian",
+      "Mexican": "Mexican",
+      "Polish": "Polish",
+      "Portuguese": "Portuguese",
+      "Puerto Rican": "Puerto Rican",
+      "Romanian": "Romanian",
+      "Russian": "Russian",
+      "Turkish": "Turkish",
+      "Ukrainian": "Ukrainian",
+      "Venezuela": "Venezuela"
+    },
+    "Ethnicities": {
+      "N/A": "N/A",
+      "African": "African",
+      "Asian": "Asian",
+      "Eastern European (Slavic)": "Eastern European (Slavic)",
+      "Latina": "Latina",
+      "European": "Europea"
+    },
+    "Languages": {
+      "English": "English",
+      "Spanish": "Spanish",
+      "French": "French",
+      "German": "German",
+      "Italian": "Italian"
+    },
+    "PaymentMethods": {
+      "Cash": "Cash",
+      "Card": "Card",
+      "Bizum": "Bizum"
+    },
+    "Services": {
+      "Girlfriend Experience": "Girlfriend Experience",
+      "Event Companion": "Event Companion",
+      "Romantic Night": "Romantic Night"
+    }
   }
-}
 }
