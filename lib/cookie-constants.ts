@@ -1,7 +1,7 @@
 // Common cookie constants and utilities
-export const LOCALE_COOKIE = 'NEXT_LOCALE' as any;
-export const DEFAULT_LOCALE = 'en' as any;
-export const SUPPORTED_LOCALES = ['en', 'es'] as any;
+export const LOCALE_COOKIE = 'NEXT_LOCALE';
+export const DEFAULT_LOCALE = 'en';
+export const SUPPORTED_LOCALES = ['en', 'es'] as const;
 
 export type SupportedLocale = typeof SUPPORTED_LOCALES[number];
 

@@ -40,7 +40,7 @@ async function testCredentials() {
         const [files] = await bucket.getFiles({maxResults: 1});
         console.log('Success! Found', files.length, 'files');
     } catch (error) {
-        console.error('ERROR:', error.message);
+        console.error('ERROR:', error instanceof Error ? error.message : 'Unknown error');
         console.error('Full error:', error);
     }
 }

@@ -5,6 +5,7 @@ import {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {handleSignOut} from '@/app/auth-actions';
+import {toggleProfilePublication} from '@/app/profile/actions';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useTranslations } from 'next-intl';
 
@@ -15,6 +16,7 @@ interface User {
     image?: string | null;
     role?: string;
     hasProfile?: boolean;
+    profilePublished?: boolean;
 }
 
 interface HeaderProps {
@@ -24,7 +26,23 @@ interface HeaderProps {
 export default function Header({user}: HeaderProps) {
     const t = useTranslations('Header');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isToggling, setIsToggling] = useState(false);
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+    const handleTogglePublication = async () => {
+        setIsToggling(true);
+        try {
+            await toggleProfilePublication();
+            setIsMenuOpen(false);
+            // Refresh the page to update the publication status
+            window.location.reload();
+        } catch (error) {
+            console.error('Error toggling publication:', error);
+            alert('Failed to toggle profile publication. Please try again.');
+        } finally {
+            setIsToggling(false);
+        }
+    };
 
     return (
         <header className="bg-white shadow-sm dark:bg-gray-900">
@@ -103,21 +121,25 @@ export default function Header({user}: HeaderProps) {
                                     <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
 
                                         <Link
-                                            href="/profile"
+                                            href={user.hasProfile ? "/profile/edit" : "/profile/create"}
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
-                                            {t('myProfile')} {!user.hasProfile && <span className="text-indigo-600 dark:text-indigo-400">({t('create')})</span>}
+                                            {user.hasProfile ? t('editProfile') : `${t('myProfile')} (${t('create')})`}
                                         </Link>
 
-                                        {user.hasProfile && (
-                                            <Link
-                                                href="/profile/edit"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                                                onClick={() => setIsMenuOpen(false)}
+                                        {/* Show publish/unpublish option for users with profiles (non-admin) */}
+                                        {user.hasProfile && user.role !== 'admin' && (
+                                            <button
+                                                onClick={handleTogglePublication}
+                                                disabled={isToggling}
+                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 disabled:opacity-50"
                                             >
-                                                {t('editProfile')}
-                                            </Link>
+                                                {isToggling ? 
+                                                    t('updating') : 
+                                                    (user.profilePublished ? t('unpublishProfile') : t('publishProfile'))
+                                                }
+                                            </button>
                                         )}
 
                                         <div className="border-t border-gray-100 dark:border-gray-700"></div>

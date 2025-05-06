@@ -5,7 +5,11 @@
     "adminDashboard": "Panel de Administración",
     "myProfile": "Mi perfil",
     "create": "crear",
+    "draft": "borrador",
     "editProfile": "Editar perfil",
+    "publishProfile": "Publicar perfil",
+    "unpublishProfile": "Despublicar perfil",
+    "updating": "Actualizando...",
     "logout": "Cerrar sesión",
     "login": "Iniciar sesión",
     "profiles": "Perfiles"
@@ -17,6 +21,12 @@
     "title": "¡Completa tu perfil para empezar!",
     "description": "Para aparecer en las búsquedas y mostrar tus servicios, necesitas crear un perfil profesional.",
     "button": "Crear Perfil"
+  },
+  "PublishProfileBanner": {
+    "title": "¡Tu perfil no es público!",
+    "description": "Tu perfil existe pero no es visible para otros. Publícalo para aparecer en los resultados de búsqueda y mostrar tus servicios.",
+    "button": "Publicar Perfil",
+    "publishing": "Publicando..."
   },
   "Common": {
     "save": "Guardar",

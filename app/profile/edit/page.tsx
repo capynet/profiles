@@ -40,9 +40,15 @@ export default async function EditProfilePage() {
         redirect(`/profile/edit/${draftProfile.id}`);
     }
 
-    // Otherwise get the original profile
-    const profiles = await DataService.getProfiles({userId: session.user.id});
-    const profile = profiles[0];
+    // Otherwise get the original profile (including unpublished profiles)
+    const profiles = await DataService.getProfiles({
+        userId: session.user.id
+    }, true, {
+        userId: session.user.id,
+        isAdmin: session.user.role === 'admin'
+    });
+    // Filter out drafts to get only the main profile (published or unpublished)
+    const profile = profiles.find(p => !p.isDraft);
 
     if (!profile) {
         redirect('/profile/create');

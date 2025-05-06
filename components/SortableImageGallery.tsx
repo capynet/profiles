@@ -9,6 +9,7 @@ interface ImageItem {
     url: string;
     isPrimary?: boolean;
     isNew?: boolean;
+    isExisting: boolean;
 }
 
 interface SortableImageGalleryProps {
@@ -43,7 +44,7 @@ export default function SortableImageGallery({
             setLocalImages(updatedImages);
             onReorder(updatedImages);
         }
-    }, [localImages.length]);
+    }, [localImages.length, localImages, onReorder]);
 
     const handleDragStart = (e: React.DragEvent, index: number) => {
         // Set the dragged item index

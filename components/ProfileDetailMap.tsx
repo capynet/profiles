@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
 
 interface ProfileDetailMapProps {
@@ -18,7 +18,7 @@ const mapContainerStyle = {
 };
 
 // Define libraries as a static constant outside the component
-const libraries = ["marker"] as const;
+const libraries: ("marker")[] = ["marker"];
 
 export default function ProfileDetailMap({ latitude, longitude, name, apiKey, mapId }: ProfileDetailMapProps) {
     const mapRef = useRef<google.maps.Map | null>(null);

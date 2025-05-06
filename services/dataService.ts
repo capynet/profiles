@@ -71,7 +71,7 @@ export const DataService = {
                 include: {
                     languages: {include: {language: true}},
                     paymentMethods: {include: {paymentMethod: true}},
-                    user: {select: {name: true, email: true}},
+                    user: {select: {id: true, name: true, email: true}},
                     images: {
                         orderBy: {
                             position: 'asc'
@@ -129,7 +129,7 @@ export const DataService = {
                         await tx.profileLanguage.create({
                             data: {
                                 profileId: profile.id,
-                                languageId: lang.id
+                                languageId: (lang as any).id
                             }
                         });
                     }
@@ -143,7 +143,7 @@ export const DataService = {
                         await tx.profilePaymentMethod.create({
                             data: {
                                 profileId: profile.id,
-                                paymentMethodId: method.id
+                                paymentMethodId: (method as any).id
                             }
                         });
                     }
@@ -266,12 +266,14 @@ export const DataService = {
             console.log('Created draft profile:', draftProfile.id);
 
             // 2. Clone language relationships if provided in updateData, otherwise use original
+            console.log('Processing languages for draft. updateData.languages:', updateData.languages);
             const languageIds = updateData.languages
                 ? updateData.languages instanceof Array
-                    ? updateData.languages.map((id: string) => Number(id))
+                    ? updateData.languages.map((id: any) => Number(id))
                     : []
                 : originalProfile.languages.map(l => l.languageId);
 
+            console.log('Language IDs to be added to draft:', languageIds);
             if (languageIds.length > 0) {
                 for (const langId of languageIds) {
                     await tx.profileLanguage.create({
@@ -280,13 +282,14 @@ export const DataService = {
                             languageId: langId
                         }
                     });
+                    console.log(`Added language ${langId} to draft profile ${draftProfile.id}`);
                 }
             }
 
             // 3. Clone payment method relationships
             const paymentMethodIds = updateData.paymentMethods
                 ? updateData.paymentMethods instanceof Array
-                    ? updateData.paymentMethods.map((id: string) => Number(id))
+                    ? updateData.paymentMethods.map((id: any) => Number(id))
                     : []
                 : originalProfile.paymentMethods.map(pm => pm.paymentMethodId);
 
@@ -338,7 +341,7 @@ export const DataService = {
             // 6. Clone or update services
             const serviceIds = updateData.services 
                 ? (updateData.services instanceof Array 
-                    ? updateData.services.map((id: string) => Number(id))
+                    ? updateData.services.map((id: any) => Number(id))
                     : [])
                 : (originalProfile.services && originalProfile.services.length > 0)
                     ? originalProfile.services.map(s => s.serviceId)
@@ -479,7 +482,8 @@ export const DataService = {
                     languages: true,
                     paymentMethods: true,
                     nationalities: true,
-                    ethnicities: true
+                    ethnicities: true,
+                    services: true
                 }
             });
 
@@ -656,6 +660,31 @@ export const DataService = {
                 });
             }
 
+            // Delete all relationships for the draft before deleting the profile
+            await tx.profileLanguage.deleteMany({
+                where: {profileId: draftId}
+            });
+
+            await tx.profilePaymentMethod.deleteMany({
+                where: {profileId: draftId}
+            });
+
+            await tx.profileNationality.deleteMany({
+                where: {profileId: draftId}
+            });
+
+            await tx.profileEthnicity.deleteMany({
+                where: {profileId: draftId}
+            });
+
+            await tx.profileService.deleteMany({
+                where: {profileId: draftId}
+            });
+
+            await tx.profileImage.deleteMany({
+                where: {profileId: draftId}
+            });
+
             // Delete the draft
             await tx.profile.delete({
                 where: {id: draftId}
@@ -675,7 +704,7 @@ export const DataService = {
         phone?: string,
         hasWhatsapp?: boolean,
         hasTelegram?: boolean
-    }, userContext?: { userId: string, isAdmin: boolean }) {
+    }, userContext?: { userId: string, isAdmin: boolean }): Promise<any> {
         try {
             // Extract the custom fields
             const {
@@ -692,9 +721,9 @@ export const DataService = {
             } = data;
             
             // Add contact fields back to profileData
-            if (phone !== undefined) profileData.phone = phone;
-            if (hasWhatsapp !== undefined) profileData.hasWhatsapp = hasWhatsapp;
-            if (hasTelegram !== undefined) profileData.hasTelegram = hasTelegram;
+            if (phone !== undefined) (profileData as any).phone = phone;
+            if (hasWhatsapp !== undefined) (profileData as any).hasWhatsapp = hasWhatsapp;
+            if (hasTelegram !== undefined) (profileData as any).hasTelegram = hasTelegram;
 
             // Get the profile to update
             const existingProfile = await prisma.profile.findUnique({
@@ -714,12 +743,10 @@ export const DataService = {
             }
 
             // Check if a draft should be created
-            // 1. Profile is published
-            // 2. User is not an admin
-            // 3. This profile is not already a draft
-            const shouldCreateDraft = existingProfile.published &&
-                !userContext?.isAdmin &&
-                !existingProfile.isDraft;
+            // Create a draft for any existing profile that is not already a draft
+            // This applies to both published and unpublished profiles
+            // Note: Both admins and regular users should create drafts when editing existing profiles
+            const shouldCreateDraft = !existingProfile.isDraft;
 
             // If should create draft, check if one already exists
             if (shouldCreateDraft) {
@@ -737,9 +764,23 @@ export const DataService = {
                     return this.updateProfile(existingDraft.id, data, userContext);
                 }
 
-                console.log('Creating new draft for published profile');
-                // Create a new draft based on the original
-                return this.createProfileDraft(existingProfile, {...data, images});
+                console.log('Creating new draft for existing profile');
+                // Extract and convert language and payment method data for draft creation
+                const languageIds = data.languages
+                    ? (data.languages as any).connect?.map((item: any) => item.id) || []
+                    : [];
+                
+                const paymentMethodIds = data.paymentMethods
+                    ? (data.paymentMethods as any).connect?.map((item: any) => item.id) || []
+                    : [];
+
+                // Create a new draft based on the original with properly formatted data
+                return this.createProfileDraft(existingProfile, {
+                    ...data,
+                    languages: languageIds,
+                    paymentMethods: paymentMethodIds,
+                    images
+                });
             }
 
             // Normal update logic for drafts or when admin is updating

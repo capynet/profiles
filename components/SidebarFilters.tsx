@@ -77,6 +77,8 @@ export default function SidebarFilters({
 
     // Initialize filters from URL params
     useEffect(() => {
+        if (!searchParams) return;
+        
         const minPriceParam = searchParams.get('minPrice');
         const maxPriceParam = searchParams.get('maxPrice');
         const minAgeParam = searchParams.get('minAge');
@@ -115,7 +117,7 @@ export default function SidebarFilters({
 
     const handleFilter = () => {
         // Start with current URL params to preserve location params (lat, lng, radius)
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(searchParams?.toString() || '');
         
         // Preserve only location params (lat, lng, radius) and remove any existing filter params
         const locationParams = new URLSearchParams();
@@ -173,7 +175,7 @@ export default function SidebarFilters({
         setSelectedServices([]);
         
         // Preserve location parameters if they exist
-        const currentParams = new URLSearchParams(searchParams.toString());
+        const currentParams = new URLSearchParams(searchParams?.toString() || '');
         const locationParams = new URLSearchParams();
         
         if (currentParams.has('lat')) locationParams.append('lat', currentParams.get('lat')!);

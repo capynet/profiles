@@ -5,7 +5,11 @@
     "adminDashboard": "Admin Dashboard",
     "myProfile": "My profile",
     "create": "create",
+    "draft": "draft",
     "editProfile": "Edit profile",
+    "publishProfile": "Publish profile",
+    "unpublishProfile": "Unpublish profile",
+    "updating": "Updating...",
     "logout": "Logout",
     "login": "Login",
     "profiles": "Profiles"
@@ -17,6 +21,12 @@
     "title": "Complete your profile to get started!",
     "description": "To appear in searches and showcase your services, you need to create a professional profile.",
     "button": "Create Profile"
+  },
+  "PublishProfileBanner": {
+    "title": "Your profile is not public!",
+    "description": "Your profile exists but is not visible to others. Publish it to appear in search results and showcase your services.",
+    "button": "Publish Profile",
+    "publishing": "Publishing..."
   },
   "Common": {
     "save": "Save",

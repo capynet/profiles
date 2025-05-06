@@ -6,6 +6,7 @@ import {DataService} from '@/services/dataService';
 import {ImageService} from '@/services/imageService';
 import {auth} from '@/auth';
 import {prisma} from '@/prisma';
+import {redirect} from 'next/navigation';
 
 type ValidationError = {
     path: string[];
@@ -16,6 +17,7 @@ type ValidationError = {
 export type ValidationResult = {
     success: boolean;
     errors?: Record<string, string[]>;
+    profileId?: number;
 };
 
 interface ServiceError extends Error {
@@ -96,7 +98,7 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
     console.log('Form validation passed');
 
     try {
-        // Convert language and payment IDs to numbers
+        // Convert IDs to numbers
         const languageIds = formData.getAll('languages').map(id => Number(id));
         const paymentMethodIds = formData.getAll('paymentMethods').map(id => Number(id));
         const serviceIds = formData.getAll('services').map(id => Number(id));
@@ -143,9 +145,15 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         const hasWhatsapp = formData.get('hasWhatsapp') === 'true';
         const hasTelegram = formData.get('hasTelegram') === 'true';
 
-        // Prepare data for profile creation
+        // Create the profile data for DataService.createProfile which expects:
+        // 1. Standard Prisma fields (user, name, etc.)
+        // 2. Special fields it handles separately (nationality, ethnicity, services, processedImages)
         const profileData = {
-            userId: targetUserId,
+            // User relation (standard Prisma format)
+            user: {
+                connect: { id: targetUserId }
+            },
+            // Basic profile fields
             name: formData.get('name') as string,
             price: Number(formData.get('price')),
             age: Number(formData.get('age')),
@@ -157,27 +165,29 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
             hasWhatsapp: hasWhatsapp,
             hasTelegram: hasTelegram,
             published: publishedValue,
-            isDraft: isDraftValue, // Add isDraft field
-            languages: {
-                connect: languageIds.map(id => ({id}))
-            },
-            paymentMethods: {
-                connect: paymentMethodIds.map(id => ({id}))
-            },
-            // Pass nationality directly as a parameter
-            nationality: nationalityId,
-            // Pass ethnicity directly as a parameter
-            ethnicity: ethnicityId,
-            // Pass services as a parameter 
+            isDraft: isDraftValue,
+            // Additional fields handled specially by DataService
+            nationality: nationalityId ?? undefined,
+            ethnicity: ethnicityId ?? undefined,
             services: serviceIds,
+            // Format languages and paymentMethods in Prisma connect format
+            languages: languageIds.length > 0 ? {
+                connect: languageIds.map(id => ({id}))
+            } : undefined,
+            paymentMethods: paymentMethodIds.length > 0 ? {
+                connect: paymentMethodIds.map(id => ({id}))
+            } : undefined,
             processedImages: processedImages.length > 0 ? processedImages : undefined
         };
 
-        await DataService.createProfile(profileData);
+        const createdProfile = await DataService.createProfile(profileData as Parameters<typeof DataService.createProfile>[0]);
 
-        revalidatePath('/profile');
+        if (!createdProfile) {
+            throw new Error('Failed to create profile - profile not found after creation');
+        }
+
         revalidatePath('/admin');
-        return {success: true};
+        return {success: true, profileId: createdProfile.id};
     } catch (error: unknown) {
         console.error('Error in createProfile action:', error);
 
@@ -356,18 +366,19 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
             hasWhatsapp: hasWhatsapp,
             hasTelegram: hasTelegram,
             published: publishedValue,
-            languages: {
-                connect: languageIds.map(id => ({id}))
-            },
-            paymentMethods: {
-                connect: paymentMethodIds.map(id => ({id}))
-            },
             // Pass nationality directly as a parameter
             nationality: nationalityId,
             // Pass ethnicity directly as a parameter
             ethnicity: ethnicityId,
             // Pass services as a parameter
             services: serviceIds,
+            // Languages and payment methods in connect format for DataService
+            languages: {
+                connect: languageIds.map(id => ({id}))
+            },
+            paymentMethods: {
+                connect: paymentMethodIds.map(id => ({id}))
+            },
             // Pass processed images and images to keep to the service,
             // now with order information
             processedImages: processedImages.length > 0 ? processedImages : undefined,
@@ -377,18 +388,18 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         };
 
         // Pasar el contexto del usuario para que DataService sepa que es un admin
-        await DataService.updateProfile(profileId, profileData, {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const updatedProfile = await DataService.updateProfile(profileId, profileData as any, {
             userId: session.user.id,
             isAdmin: session.user.role === 'admin'
         });
 
         // Revalidate multiple paths to ensure fresh data
-        revalidatePath('/profile');
         revalidatePath('/profile/edit');
         revalidatePath(`/profile/${profileId}`);
         revalidatePath('/admin');
 
-        return {success: true};
+        return {success: true, profileId: updatedProfile.id};
     } catch (error: unknown) {
         console.error('Error updating profile:', error);
 
@@ -414,5 +425,46 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
                 form: ['An unexpected error occurred. Please try again.']
             }
         };
+    }
+}
+
+export async function toggleProfilePublication() {
+    const session = await auth();
+
+    if (!session || !session.user) {
+        redirect('/login');
+    }
+
+    try {
+        // Get user's published profile (not drafts)
+        const profile = await prisma.profile.findFirst({
+            where: {
+                userId: session.user.id,
+                isDraft: false
+            }
+        });
+
+        if (!profile) {
+            throw new Error('No published profile found');
+        }
+
+        // Toggle the published status
+        await prisma.profile.update({
+            where: {
+                id: profile.id
+            },
+            data: {
+                published: !profile.published
+            }
+        });
+
+        // Revalidate relevant pages
+        revalidatePath('/');
+        revalidatePath(`/profile/${profile.id}`);
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error toggling profile publication:', error);
+        throw new Error('Failed to toggle profile publication');
     }
 }

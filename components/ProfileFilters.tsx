@@ -40,6 +40,8 @@ export default function ProfileFilters({ languages, paymentMethods }: ProfileFil
 
     // Initialize filters from URL params
     useEffect(() => {
+        if (!searchParams) return;
+        
         const minPriceParam = searchParams.get('minPrice');
         const maxPriceParam = searchParams.get('maxPrice');
         const minAgeParam = searchParams.get('minAge');

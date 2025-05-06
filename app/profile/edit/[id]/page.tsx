@@ -1,7 +1,6 @@
 // app/profile/edit/[id]/page.tsx
 import {redirect} from 'next/navigation';
 import ProfileForm from '@/components/ProfileForm';
-import {DataService} from '@/services/dataService';
 import {auth} from '@/auth';
 import {prisma} from '@/prisma';
 
@@ -44,6 +43,13 @@ export default async function EditDraftProfilePage(props: EditDraftProfilePagePr
             nationalities: true,
             ethnicities: true,
             services: true,
+            user: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true
+                }
+            },
         },
     });
 

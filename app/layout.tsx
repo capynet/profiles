@@ -2,9 +2,9 @@
 import type {Metadata} from "next";
 import {Geist, Geist_Mono} from "next/font/google";
 import {auth} from "@/auth";
+import {prisma} from "@/prisma";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import {prisma} from "@/prisma";
 import "./globals.css";
 import { getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
@@ -31,20 +31,21 @@ export default async function RootLayout({
 }>) {
     const locale = await getLocaleFromCookie();
     const session = await auth();
-
-    // Check if user has any type of profile (including drafts)
+    
     let userWithProfileInfo = null;
     if (session?.user) {
-        // Check for any profile (published or draft)
-        const profileCount = await prisma.profile.count({
+        // Get user's published profile (not drafts)
+        const profile = await prisma.profile.findFirst({
             where: {
-                userId: session.user.id
+                userId: session.user.id,
+                isDraft: false
             }
         });
-
+        
         userWithProfileInfo = {
             ...session.user,
-            hasProfile: profileCount > 0
+            hasProfile: !!profile,
+            profilePublished: profile?.published || false
         };
     }
 

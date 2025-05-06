@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl';
 interface ProfileDraft {
     id: number;
     name: string;
-    originalProfileId: number;
+    originalProfileId: number | null;
     updatedAt: Date;
     user: {
         name: string | null;
@@ -18,7 +18,7 @@ interface ProfileDraft {
     originalProfile: {
         id: number;
         name: string;
-    }
+    } | null
 }
 
 interface AdminDraftsTableProps {

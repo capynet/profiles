@@ -7,6 +7,7 @@ import ProfileCard from '@/components/ProfileCard';
 import SidebarFilters from '@/components/SidebarFilters';
 import ProfileMap from '@/components/ProfileMap';
 import CreateProfileBanner from '@/components/CreateProfileBanner';
+import PublishProfileBanner from '@/components/PublishProfileBanner';
 
 interface ProfileImage {
     id: number;
@@ -68,6 +69,7 @@ interface HomeClientProps {
     user?: {
         id: string;
         hasProfile: boolean;
+        profilePublished?: boolean;
     } | null;
 }
 
@@ -103,12 +105,14 @@ export default function HomeClient({
     
     // Initialize radius value from URL parameters on component load
     useEffect(() => {
-        const radius = searchParams.get('radius');
-        if (radius) {
-            // Use parseFloat to handle decimal values like 0.2 and 0.5
-            const radiusValue = parseFloat(radius);
-            console.log('Setting radius from URL to:', radiusValue);
-            setRadiusValue(radiusValue);
+        if (searchParams) {
+            const radius = searchParams.get('radius');
+            if (radius) {
+                // Use parseFloat to handle decimal values like 0.2 and 0.5
+                const radiusValue = parseFloat(radius);
+                console.log('Setting radius from URL to:', radiusValue);
+                setRadiusValue(radiusValue);
+            }
         }
     }, [searchParams]);
 
@@ -128,7 +132,7 @@ export default function HomeClient({
             setLoading(true);
             
             // Preserve all existing parameters (including filters)
-            const currentParams = new URLSearchParams(searchParams.toString());
+            const currentParams = new URLSearchParams(searchParams ? searchParams.toString() : '');
             
             // Update only the radius parameter
             currentParams.set('radius', newRadius.toString());
@@ -162,7 +166,7 @@ export default function HomeClient({
         let foundRadius = 0;
         
         // Preserve existing filters
-        const currentParams = new URLSearchParams(searchParams.toString());
+        const currentParams = new URLSearchParams(searchParams ? searchParams.toString() : '');
         
         // Try each radius option from smallest to largest until we find results
         for (const option of radiusOptions) {
@@ -243,7 +247,7 @@ export default function HomeClient({
             setUserLocation(null);
             
             // Remove only location params but preserve other filters
-            const currentParams = new URLSearchParams(searchParams.toString());
+            const currentParams = new URLSearchParams(searchParams ? searchParams.toString() : '');
             currentParams.delete('lat');
             currentParams.delete('lng');
             currentParams.delete('radius');
@@ -286,7 +290,7 @@ export default function HomeClient({
         const fetchProfiles = async () => {
             try {
                 setLoading(true);
-                const params = new URLSearchParams(searchParams);
+                const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
                 const response = await fetch(`/api/profiles?${params.toString()}`);
 
                 if (!response.ok) {
@@ -322,6 +326,11 @@ export default function HomeClient({
             {/* Show create profile banner for logged-in users without a profile */}
             {user && !user.hasProfile && (
                 <CreateProfileBanner className="mb-8" />
+            )}
+
+            {/* Show publish profile banner for logged-in users with unpublished profile */}
+            {user && user.hasProfile && !user.profilePublished && (
+                <PublishProfileBanner className="mb-8" />
             )}
 
             {/* Header with toggle for map */}
@@ -479,11 +488,11 @@ export default function HomeClient({
                                     )}
                                 </p>
                                 {/* Active filters message */}
-                                {(searchParams.has('minPrice') || searchParams.has('maxPrice') || 
+                                {(searchParams && (searchParams.has('minPrice') || searchParams.has('maxPrice') || 
                                   searchParams.has('minAge') || searchParams.has('maxAge') || 
                                   searchParams.has('languages') || searchParams.has('paymentMethods') ||
                                   searchParams.has('nationality') || searchParams.has('ethnicity') ||
-                                  searchParams.has('services')) && (
+                                  searchParams.has('services'))) && (
                                     <p className="mt-1 text-xs italic">
                                         {t('filteredResults')}
                                     </p>

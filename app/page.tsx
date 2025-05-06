@@ -9,10 +9,21 @@ export default async function Home() {
     // Determine if user has a profile
     let userWithProfileInfo = null;
     if (session?.user) {
-        const userProfiles = await DataService.getProfiles({userId: session.user.id});
+        // Get ALL user profiles (including unpublished and drafts) to check if user has any profile
+        const allUserProfiles = await DataService.getProfiles({
+            userId: session.user.id
+        }, true, {
+            userId: session.user.id,
+            isAdmin: session.user.role === 'admin'
+        });
+        
+        // Filter out drafts to get only the main profile (published or unpublished)
+        const mainProfile = allUserProfiles.find(profile => !profile.isDraft);
+        
         userWithProfileInfo = {
             id: session.user.id,
-            hasProfile: userProfiles.length > 0
+            hasProfile: !!mainProfile,
+            profilePublished: mainProfile ? mainProfile.published : false
         };
     }
 

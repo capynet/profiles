@@ -223,18 +223,18 @@ export const ImageService = {
 
                 let x, y;
 
-                if (config.position.includes('west')) {
+                if (config.position === sharp.gravity.west || config.position === sharp.gravity.northwest || config.position === sharp.gravity.southwest) {
                     x = Math.max(safeMargin, config.padding + textWidth / 2);
-                } else if (config.position.includes('east')) {
+                } else if (config.position === sharp.gravity.east || config.position === sharp.gravity.northeast || config.position === sharp.gravity.southeast) {
                     x = dimensions.width - Math.max(safeMargin, config.padding + textWidth / 2);
                 } else {
                     // center, north, south
                     x = dimensions.width / 2;
                 }
 
-                if (config.position.includes('north')) {
+                if (config.position === sharp.gravity.north || config.position === sharp.gravity.northeast || config.position === sharp.gravity.northwest) {
                     y = config.padding + textHeight;
-                } else if (config.position.includes('south')) {
+                } else if (config.position === sharp.gravity.south || config.position === sharp.gravity.southeast || config.position === sharp.gravity.southwest) {
                     y = dimensions.height - config.padding;
                 } else {
                     // center, east, west
@@ -257,8 +257,7 @@ export const ImageService = {
 
                 return imageProcessor.composite([{
                     input: Buffer.from(svgText),
-                    gravity: 'northwest',
-                    opacity: config.opacity
+                    gravity: 'northwest'
                 }]);
             } else if (config.type === 'image' && config.imagePath) {
                 if (!fs.existsSync(config.imagePath)) {
@@ -268,8 +267,7 @@ export const ImageService = {
 
                 return imageProcessor.composite([{
                     input: config.imagePath,
-                    gravity: config.position,
-                    opacity: config.opacity
+                    gravity: config.position
                 }]);
             }
 

@@ -130,7 +130,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
         }
     }, [profile]);
 
-    const handleSubmit = async (formData: FormData) => {
+    const handleSubmit = async () => {
         setIsSubmitting(true);
         setErrors({});
 
@@ -207,7 +207,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     setErrors(result.errors || {});
                 } else {
                     // Redirect to appropriate page based on mode
-                    window.location.href = isAdminMode ? '/admin' : '/profile';
+                    window.location.href = isAdminMode ? '/admin' : '/profile/' + profile.id;
                 }
             } else {
                 const result = await createProfile(updatedFormData);
@@ -217,7 +217,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     // Redirect to appropriate page based on mode
                     window.location.href = isAdminMode
                         ? '/admin'
-                        : '/profile';
+                        : '/profile/' + result.profileId;
                 }
             }
         } catch (error) {
@@ -256,8 +256,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     <div className="mb-6 p-3 bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-800 rounded-md">
                         <p className="text-purple-800 dark:text-purple-300 text-sm font-medium">
                             {isEditing
-                                ? t('adminEditMode', { id: profile?.id, user: profile?.user?.name || profile?.user?.email })
-                                : t('adminCreateMode', { userId })
+                                ? t('adminEditMode', { id: profile?.id ?? 'unknown', user: profile?.user?.name || profile?.user?.email || 'unknown' })
+                                : t('adminCreateMode', { userId: userId ?? 'unknown' })
                             }
                         </p>
                     </div>
@@ -519,7 +519,7 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                         onPublishedChange={setIsPublished}
                         profileId={profile?.id}
                         profileName={profile?.name}
-                        userName={profile?.user?.name}
+                        userName={profile?.user?.name ?? undefined}
                         userEmail={profile?.user?.email}
                     />
                 )}

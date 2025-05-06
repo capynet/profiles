@@ -4,7 +4,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
-import { Area, Point } from 'react-easy-crop/types';
+import { Area, Point } from 'react-easy-crop';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 

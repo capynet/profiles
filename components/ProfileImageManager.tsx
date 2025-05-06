@@ -6,7 +6,7 @@ interface Image {
     id: string | number;
     url: string;
     isPrimary?: boolean;
-    isExisting?: boolean;
+    isExisting: boolean;
 }
 
 interface ProfileImageManagerProps {

@@ -39,7 +39,7 @@ const mapContainerStyle = {
 
 // Define libraries as a static constant outside the component
 // This prevents React from reloading the script unnecessarily
-const libraries = ["marker"] as const;
+const libraries: ("marker")[] = ["marker"];
 
 export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radius = 10 }: ProfileMapProps) {
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);

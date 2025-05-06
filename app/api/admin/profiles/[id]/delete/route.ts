@@ -53,7 +53,48 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ id
 
         // Use a transaction to ensure all related records are deleted
         await prisma.$transaction(async (tx) => {
-            // First delete all profile relationships
+            // First, find and delete any drafts related to this profile
+            const drafts = await tx.profile.findMany({
+                where: {
+                    originalProfileId: profileId
+                }
+            });
+
+            // Delete all relationships for each draft first
+            for (const draft of drafts) {
+                await tx.profilePaymentMethod.deleteMany({
+                    where: { profileId: draft.id }
+                });
+
+                await tx.profileLanguage.deleteMany({
+                    where: { profileId: draft.id }
+                });
+
+                await tx.profileNationality.deleteMany({
+                    where: { profileId: draft.id }
+                });
+
+                await tx.profileEthnicity.deleteMany({
+                    where: { profileId: draft.id }
+                });
+
+                await tx.profileService.deleteMany({
+                    where: { profileId: draft.id }
+                });
+
+                await tx.profileImage.deleteMany({
+                    where: { profileId: draft.id }
+                });
+            }
+
+            // Now delete the draft profiles themselves
+            await tx.profile.deleteMany({
+                where: {
+                    originalProfileId: profileId
+                }
+            });
+
+            // Delete all profile relationships for the main profile
             await tx.profilePaymentMethod.deleteMany({
                 where: { profileId }
             });
@@ -62,16 +103,21 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ id
                 where: { profileId }
             });
 
-            // Then delete profile images
-            await tx.profileImage.deleteMany({
+            await tx.profileNationality.deleteMany({
                 where: { profileId }
             });
 
-            // Delete any drafts related to this profile
-            await tx.profile.deleteMany({
-                where: {
-                    originalProfileId: profileId
-                }
+            await tx.profileEthnicity.deleteMany({
+                where: { profileId }
+            });
+
+            await tx.profileService.deleteMany({
+                where: { profileId }
+            });
+
+            // Then delete profile images
+            await tx.profileImage.deleteMany({
+                where: { profileId }
             });
 
             // Finally delete the profile itself

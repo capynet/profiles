@@ -4,7 +4,10 @@ import { auth } from '@/auth';
 import { prisma } from '@/prisma';
 import { revalidatePath } from 'next/cache';
 
-export async function PATCH(request: NextRequest, props: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
     try {
         const session = await auth();
 
@@ -16,7 +19,8 @@ export async function PATCH(request: NextRequest, props: { params: { id: string 
             );
         }
 
-        const profileId = parseInt(props.params.id);
+        const params = await props.params;
+        const profileId = parseInt(params.id);
         if (isNaN(profileId)) {
             return NextResponse.json(
                 { error: 'Invalid profile ID' },

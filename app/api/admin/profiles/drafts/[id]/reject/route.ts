@@ -62,6 +62,18 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
                 where: { profileId: draftId }
             });
 
+            await tx.profileNationality.deleteMany({
+                where: { profileId: draftId }
+            });
+
+            await tx.profileEthnicity.deleteMany({
+                where: { profileId: draftId }
+            });
+
+            await tx.profileService.deleteMany({
+                where: { profileId: draftId }
+            });
+
             // Then delete profile images
             await tx.profileImage.deleteMany({
                 where: { profileId: draftId }
