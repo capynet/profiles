@@ -4,10 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --experimental-https",
-    "build": "prisma generate && next build && npm run setup:dev:conditional",
-    "setup:dev:conditional": "if [ \"$VERCEL_GIT_COMMIT_REF\" = \"develop\" ]; then npm run setup:dev; fi",
-    "setup:dev": "npm run db:reset && npm run db:seed && npm run db:seed-samples && npm run admin:set capy.net@gmail.com",
-    "postinstall": "prisma generate",
+    "build": "prisma generate --no-hints && next build",
+    "build:development": "npm run build && npm run db:seed && npm run db:seed-samples && npm run admin:set -- capy.net@gmail.com -y",
     "start": "next start",
     "lint": "next lint",
     "test:storage-connectivity": "tsx tests/test-credentials.ts",
