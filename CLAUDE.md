@@ -5,6 +5,7 @@
 - https://next-intl-docs.vercel.app
 - https://vercel.com/docs/concepts/i18n
 - https://react.dev/reference/react
+- https://vercel.com/docs/cli
 
 ## Commands to run
 - Lint: npm run lint
