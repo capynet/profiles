@@ -20,7 +20,11 @@ declare module "next-auth" {
 
 export const {handlers, auth, signIn, signOut} = NextAuth({
     adapter: PrismaAdapter(prisma),
-    providers: [Google],
+    providers: [
+        Google({
+            allowDangerousEmailAccountLinking: true
+        })
+    ],
     callbacks: {
         async session({session, user}) {
             // Include the user's role and ID in the session
