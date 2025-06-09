@@ -18,7 +18,7 @@ docker exec postgres pg_dump -U admin -d db -W > backup_file.sql
 npm run admin:set
 
 # Make a user admin by providing email directly
-npm run admin:set capy.net@gmail.com
+npm run admin:set -- capy.net@gmail.com --yes
 
 ## Prisma schemas:
 # Apply new schema modification

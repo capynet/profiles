@@ -32,10 +32,15 @@ async function makeUserAdmin() {
     try {
         console.log('=== Make User Admin ===');
 
+        // Parse command line arguments
+        const args = process.argv.slice(2);
+        const skipConfirmation = args.includes('-y') || args.includes('--yes');
+        
         // Get email from command line argument or ask for it
         let email: string;
-        if (process.argv.length > 2) {
-            email = process.argv[2].trim();
+        const emailArg = args.find(arg => !arg.startsWith('-'));
+        if (emailArg) {
+            email = emailArg.trim();
             console.log(`Using provided email: ${email}`);
         } else {
             email = await askForEmail();
@@ -58,8 +63,13 @@ async function makeUserAdmin() {
             return;
         }
 
-        // Confirm action
-        const confirmed = await confirmAction(email);
+        // Confirm action (skip if -y flag is provided)
+        let confirmed = skipConfirmation;
+        if (!skipConfirmation) {
+            confirmed = await confirmAction(email);
+        } else {
+            console.log(`Skipping confirmation due to -y flag.`);
+        }
 
         if (!confirmed) {
             console.log('Operation cancelled.');
