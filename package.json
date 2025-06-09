@@ -5,13 +5,14 @@
   "scripts": {
     "dev": "next dev --turbopack --experimental-https",
     "build": "prisma generate --no-hints && next build",
-    "build:development": "npm run build && npm run db:seed && npm run db:seed-samples && npm run admin:set -- capy.net@gmail.com -y",
+    "build:development": "npm run build && npm run db:seed && npm run db:seed-samples && npm run db:seed-admin",
     "start": "next start",
     "lint": "next lint",
     "test:storage-connectivity": "tsx tests/test-credentials.ts",
-    "db:reset": "prisma migrate reset",
+    "db:reset": "prisma migrate reset --force",
     "db:seed": "prisma db seed",
     "db:seed-samples": "tsx prisma/seed-samples.ts",
+    "db:seed-admin": "tsx prisma/seed-admin.ts",
     "admin:set": "tsx scripts/set-admin.ts"
   },
   "prisma": {
