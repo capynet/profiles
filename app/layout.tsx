@@ -55,6 +55,7 @@ export default async function RootLayout({
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900`}
         >
+        <SpeedInsights/>
         <NextIntlClientProvider locale={locale}>
             <Header user={userWithProfileInfo}/>
             <main className="flex-grow">
@@ -62,7 +63,6 @@ export default async function RootLayout({
             </main>
             <Footer/>
         </NextIntlClientProvider>
-        <SpeedInsights/>
         </body>
         </html>
     );
