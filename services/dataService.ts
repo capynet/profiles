@@ -2,6 +2,7 @@
 import {Prisma, ProfileImage, Profile} from "@prisma/client";
 import {prisma} from "@/prisma";
 import {ImageService, ProcessedImage} from "./imageService";
+import {unstable_cache} from 'next/cache';
 
 // Enhanced interface for processed images with order information
 interface ProcessedImageWithOrder extends ProcessedImage {
@@ -10,27 +11,45 @@ interface ProcessedImageWithOrder extends ProcessedImage {
 
 export const DataService = {
     async getAllLanguages() {
-        try {
-            return await prisma.language.findMany({
-                select: {id: true, name: true},
-                orderBy: {name: Prisma.SortOrder.asc}
-            });
-        } catch (error) {
-            console.error('Error fetching languages:', error);
-            return [];
-        }
+        return unstable_cache(
+            async () => {
+                try {
+                    return await prisma.language.findMany({
+                        select: {id: true, name: true},
+                        orderBy: {name: Prisma.SortOrder.asc}
+                    });
+                } catch (error) {
+                    console.error('Error fetching languages:', error);
+                    return [];
+                }
+            },
+            ['languages'],
+            {
+                tags: ['languages', 'reference-data'],
+                revalidate: 86400
+            }
+        )();
     },
 
     async getAllPaymentMethods() {
-        try {
-            return await prisma.paymentMethod.findMany({
-                select: {id: true, name: true},
-                orderBy: {name: Prisma.SortOrder.asc}
-            });
-        } catch (error) {
-            console.error('Error fetching payment methods:', error);
-            return [];
-        }
+        return unstable_cache(
+            async () => {
+                try {
+                    return await prisma.paymentMethod.findMany({
+                        select: {id: true, name: true},
+                        orderBy: {name: Prisma.SortOrder.asc}
+                    });
+                } catch (error) {
+                    console.error('Error fetching payment methods:', error);
+                    return [];
+                }
+            },
+            ['payment-methods'],
+            {
+                tags: ['payment-methods', 'reference-data'],
+                revalidate: 86400
+            }
+        )();
     },
 
     async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false, userContext?: { userId?: string, isAdmin?: boolean }) {
@@ -1078,38 +1097,65 @@ export const DataService = {
     },
 
     async getAllNationalities() {
-        try {
-            return await prisma.nationality.findMany({
-                select: {id: true, name: true},
-                orderBy: {name: Prisma.SortOrder.asc}
-            });
-        } catch (error) {
-            console.error('Error fetching nationalities:', error);
-            return [];
-        }
+        return unstable_cache(
+            async () => {
+                try {
+                    return await prisma.nationality.findMany({
+                        select: {id: true, name: true},
+                        orderBy: {name: Prisma.SortOrder.asc}
+                    });
+                } catch (error) {
+                    console.error('Error fetching nationalities:', error);
+                    return [];
+                }
+            },
+            ['nationalities'],
+            {
+                tags: ['nationalities', 'reference-data'],
+                revalidate: 86400
+            }
+        )();
     },
 
     async getAllEthnicities() {
-        try {
-            return await prisma.ethnicity.findMany({
-                select: {id: true, name: true},
-                orderBy: {name: Prisma.SortOrder.asc}
-            });
-        } catch (error) {
-            console.error('Error fetching ethnicities:', error);
-            return [];
-        }
+        return unstable_cache(
+            async () => {
+                try {
+                    return await prisma.ethnicity.findMany({
+                        select: {id: true, name: true},
+                        orderBy: {name: Prisma.SortOrder.asc}
+                    });
+                } catch (error) {
+                    console.error('Error fetching ethnicities:', error);
+                    return [];
+                }
+            },
+            ['ethnicities'],
+            {
+                tags: ['ethnicities', 'reference-data'],
+                revalidate: 86400
+            }
+        )();
     },
     
     async getAllServices() {
-        try {
-            return await prisma.service.findMany({
-                select: {id: true, name: true},
-                orderBy: {name: Prisma.SortOrder.asc}
-            });
-        } catch (error) {
-            console.error('Error fetching services:', error);
-            return [];
-        }
+        return unstable_cache(
+            async () => {
+                try {
+                    return await prisma.service.findMany({
+                        select: {id: true, name: true},
+                        orderBy: {name: Prisma.SortOrder.asc}
+                    });
+                } catch (error) {
+                    console.error('Error fetching services:', error);
+                    return [];
+                }
+            },
+            ['services'],
+            {
+                tags: ['services', 'reference-data'],
+                revalidate: 86400
+            }
+        )();
     }
 };

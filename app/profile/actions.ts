@@ -1,7 +1,7 @@
 // app/profile/actions.ts
 'use server';
 
-import {revalidatePath} from 'next/cache';
+import {revalidatePath, revalidateTag} from 'next/cache';
 import {DataService} from '@/services/dataService';
 import {ImageService} from '@/services/imageService';
 import {auth} from '@/auth';
@@ -187,6 +187,8 @@ export async function createProfile(formData: FormData): Promise<ValidationResul
         }
 
         revalidatePath('/admin');
+        revalidateTag('profiles');
+        revalidateTag('profile-list');
         return {success: true, profileId: createdProfile.id};
     } catch (error: unknown) {
         console.error('Error in createProfile action:', error);
@@ -398,6 +400,9 @@ export async function updateProfile(profileId: number, formData: FormData): Prom
         revalidatePath('/profile/edit');
         revalidatePath(`/profile/${profileId}`);
         revalidatePath('/admin');
+        revalidateTag('profiles');
+        revalidateTag('profile-list');
+        revalidateTag(`profile-${profileId}`);
 
         return {success: true, profileId: updatedProfile.id};
     } catch (error: unknown) {
@@ -461,6 +466,9 @@ export async function toggleProfilePublication() {
         // Revalidate relevant pages
         revalidatePath('/');
         revalidatePath(`/profile/${profile.id}`);
+        revalidateTag('profiles');
+        revalidateTag('profile-list');
+        revalidateTag(`profile-${profile.id}`);
         
         return { success: true };
     } catch (error) {

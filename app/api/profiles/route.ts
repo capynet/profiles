@@ -3,6 +3,8 @@ import {NextRequest, NextResponse} from 'next/server';
 import {DataService} from '@/services/dataService';
 import {Prisma} from '@prisma/client';
 
+export const revalidate = 300;
+
 // Calculate distance between two points using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371; // Earth radius in kilometers
@@ -164,7 +166,18 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        return NextResponse.json(profiles);
+        const cacheKey = JSON.stringify({
+            minPrice, maxPrice, minAge, maxAge, languages, paymentMethods,
+            nationality, ethnicity, services, lat, lng, radius
+        });
+        const cacheHash = Buffer.from(cacheKey).toString('base64').slice(0, 32);
+        
+        return NextResponse.json(profiles, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+                'ETag': cacheHash
+            }
+        });
     } catch (error) {
         console.error('Error fetching profiles:', error);
         return NextResponse.json({error: 'Failed to fetch profiles'}, {status: 500});

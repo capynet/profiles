@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/prisma';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export async function PATCH(
   request: NextRequest,
@@ -45,9 +45,12 @@ export async function PATCH(
             data: { published }
         });
 
-        // Revalidate paths
+        // Revalidate paths and cache tags
         revalidatePath('/admin');
         revalidatePath(`/profile/${profileId}`);
+        revalidateTag('profiles');
+        revalidateTag('profile-list');
+        revalidateTag(`profile-${profileId}`);
 
         return NextResponse.json(updatedProfile);
     } catch (error) {

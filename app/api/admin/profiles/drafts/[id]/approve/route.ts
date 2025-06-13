@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { DataService } from '@/services/dataService';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
     const params = await props.params;
@@ -27,9 +27,12 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
 
         await DataService.approveProfileDraft(draftId);
 
-        // Revalidate relevant paths
+        // Revalidate relevant paths and cache tags
         revalidatePath('/admin');
         revalidatePath('/profile');
+        revalidateTag('profiles');
+        revalidateTag('profile-list');
+        revalidateTag('profile-drafts');
 
         return NextResponse.json({ success: true });
     } catch (error) {
