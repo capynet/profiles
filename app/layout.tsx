@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import "./globals.css";
 import { getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -60,6 +61,7 @@ export default async function RootLayout({
                 {children}
             </main>
             <Footer/>
+            <SpeedInsights/>
         </NextIntlClientProvider>
         </body>
         </html>
