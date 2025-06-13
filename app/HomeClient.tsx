@@ -5,7 +5,16 @@ import {useSearchParams, useRouter} from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import ProfileCard from '@/components/ProfileCard';
 import SidebarFilters from '@/components/SidebarFilters';
-import ProfileMap from '@/components/ProfileMap';
+import dynamic from 'next/dynamic';
+
+const ProfileMap = dynamic(() => import('@/components/ProfileMap'), {
+    ssr: false,
+    loading: () => (
+        <div className="flex justify-center items-center h-[600px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+    )
+});
 import CreateProfileBanner from '@/components/CreateProfileBanner';
 import PublishProfileBanner from '@/components/PublishProfileBanner';
 
@@ -518,7 +527,7 @@ export default function HomeClient({
                         <>
                             {profiles.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {profiles.map(profile => (
+                                    {profiles.map((profile, index) => (
                                         <ProfileCard
                                             key={profile.id}
                                             id={profile.id}
@@ -533,6 +542,7 @@ export default function HomeClient({
                                             nationalities={profile.nationalities}
                                             ethnicities={profile.ethnicities}
                                             services={profile.services}
+                                            priority={index < 4}
                                         />
                                     ))}
                                 </div>

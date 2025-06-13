@@ -24,6 +24,28 @@ const nextConfig: NextConfig = {
                 hostname: '*.googleusercontent.com',
             }
         ],
+        formats: ['image/webp', 'image/avif'],
+    },
+    compress: true,
+    webpack: (config, { isServer }) => {
+        if (!isServer) {
+            config.optimization.splitChunks.cacheGroups = {
+                ...config.optimization.splitChunks.cacheGroups,
+                googlemaps: {
+                    test: /[\\/]node_modules[\\/]@react-google-maps[\\/]/,
+                    name: 'googlemaps',
+                    chunks: 'all',
+                    priority: 10,
+                },
+                vendor: {
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all',
+                    priority: 5,
+                }
+            };
+        }
+        return config;
     },
     reactStrictMode: true
 };

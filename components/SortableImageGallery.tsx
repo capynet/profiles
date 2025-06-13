@@ -114,6 +114,7 @@ export default function SortableImageGallery({
                             sizes="(max-width: 768px) 100vw, 112px"
                             className="object-cover"
                             priority={index === 0}
+                            loading={index === 0 ? "eager" : "lazy"}
                         />
                     </div>
 

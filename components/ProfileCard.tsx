@@ -23,6 +23,7 @@ interface ProfileCardProps {
     nationalities?: Array<{ nationality: { id: number; name: string } }>;
     ethnicities?: Array<{ ethnicity: { id: number; name: string } }>;
     services?: Array<{ service: { id: number; name: string } }>;
+    priority?: boolean;
 }
 
 export default function ProfileCard({
@@ -38,6 +39,7 @@ export default function ProfileCard({
                                         nationalities,
                                         ethnicities,
                                         services,
+                                        priority = false,
                                     }: ProfileCardProps) {
     const t = useTranslations('ProfileCard');
     const nationalityT = useTranslations('ProfileEntities.Nationalities');
@@ -65,7 +67,8 @@ export default function ProfileCard({
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         className="object-cover"
-                        priority
+                        priority={priority}
+                        loading={priority ? "eager" : "lazy"}
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                         <div className="flex justify-between items-end">
