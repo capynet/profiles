@@ -2,6 +2,9 @@ import {DataService} from '@/services/dataService';
 import {auth} from '@/auth';
 import HomeClient from "./HomeClient";
 
+// Enable ISR for home page with 5 minute revalidation
+export const revalidate = 300;
+
 export default async function Home() {
     // Get authenticated user
     const session = await auth();
@@ -28,13 +31,17 @@ export default async function Home() {
     }
 
     // Get all languages, payment methods, nationalities, ethnicities, and services for filters
+    // These are cached and will be served from static generation
     const [languages, paymentMethods, nationalities, ethnicities, services, initialProfiles] = await Promise.all([
         DataService.getAllLanguages(),
         DataService.getAllPaymentMethods(),
         DataService.getAllNationalities(),
         DataService.getAllEthnicities(),
         DataService.getAllServices(),
-        DataService.getProfiles() // No filters for initial load
+        DataService.getProfiles({
+            published: true,
+            isDraft: false
+        }) // Only published profiles for initial load
     ]);
 
     // Get Google Maps API key and Map ID from environment variables

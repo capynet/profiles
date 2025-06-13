@@ -12,6 +12,90 @@ interface ProfilePageProps {
     }>;
 }
 
+// Enable ISR with 60 seconds revalidation
+export const revalidate = 60;
+
+// Generate metadata for SEO
+export async function generateMetadata({ params }: ProfilePageProps) {
+    const { id } = await params;
+    const profileId = parseInt(id);
+    
+    if (isNaN(profileId)) {
+        return {
+            title: 'Profile Not Found',
+        };
+    }
+
+    try {
+        const profile = await prisma.profile.findUnique({
+            where: { id: profileId, published: true, isDraft: false },
+            select: {
+                name: true,
+                description: true,
+                address: true,
+                images: {
+                    select: { mediumUrl: true },
+                    take: 1
+                }
+            }
+        });
+
+        if (!profile) {
+            return {
+                title: 'Profile Not Found',
+            };
+        }
+
+        const imageUrl = profile.images[0]?.mediumUrl;
+        
+        return {
+            title: `${profile.name} - Profile`,
+            description: profile.description.substring(0, 160),
+            openGraph: {
+                title: `${profile.name} - Profile`,
+                description: profile.description.substring(0, 160),
+                images: imageUrl ? [{ url: imageUrl }] : [],
+                type: 'profile',
+            },
+            twitter: {
+                card: 'summary_large_image',
+                title: `${profile.name} - Profile`,
+                description: profile.description.substring(0, 160),
+                images: imageUrl ? [imageUrl] : [],
+            },
+        };
+    } catch (error) {
+        console.error('Error generating metadata:', error);
+        return {
+            title: 'Profile',
+        };
+    }
+}
+
+// Generate static params for popular profiles
+export async function generateStaticParams() {
+    try {
+        // Get all published profiles for static generation
+        const profiles = await prisma.profile.findMany({
+            where: {
+                published: true,
+                isDraft: false
+            },
+            select: {
+                id: true
+            },
+            take: 100 // Generate first 100 profiles statically
+        });
+
+        return profiles.map((profile) => ({
+            id: profile.id.toString(),
+        }));
+    } catch (error) {
+        console.error('Error generating static params:', error);
+        return [];
+    }
+}
+
 export default async function ProfileDetailPage(props: ProfilePageProps) {
     const params = await props.params;
     const session = await auth();
