@@ -5,6 +5,7 @@ import {auth} from "@/auth";
 import {prisma} from "@/prisma";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 import "./globals.css";
 import { getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
@@ -76,6 +77,11 @@ export default async function RootLayout({
         <SpeedInsights/>
         <Toaster position="top-right" richColors />
         <NextIntlClientProvider locale={locale}>
+            <ImpersonationBanner
+                impersonatingUserId={session?.impersonatingUserId}
+                originalAdminId={session?.originalAdminId}
+                userName={session?.user?.name}
+            />
             <Header user={userWithProfileInfo}/>
             <main className="flex-grow">
                 {children}

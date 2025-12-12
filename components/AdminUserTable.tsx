@@ -139,6 +139,39 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
         }
     };
 
+    // Handle impersonate user
+    const handleImpersonate = async (userId: string) => {
+        if (!window.confirm('Are you sure you want to impersonate this user? You will be logged in as them.')) {
+            return;
+        }
+
+        try {
+            setIsUpdating(true);
+
+            const response = await fetch('/api/admin/impersonate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to impersonate user');
+            }
+
+            // Redirect to home page as the impersonated user
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Error impersonating user:', error);
+            setStatusMessage({
+                type: 'error',
+                text: 'Failed to impersonate user'
+            });
+            setIsUpdating(false);
+        }
+    };
+
     // Toggle profile publication status
     const handleTogglePublished = async (profileId: number, currentlyPublished: boolean) => {
         try {
@@ -533,30 +566,40 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                     {user.profile?.updatedAt ? formatDateFriendly(user.profile.updatedAt) : <span className="text-gray-400">—</span>}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {user.profile ? (
-                                        <div className="flex gap-3">
+                                    <div className="flex gap-3">
+                                        {user.profile ? (
+                                            <>
+                                                <Link
+                                                    href={`/admin/profiles/${user.profile?.id}/edit`}
+                                                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                >
+                                                    Edit
+                                                </Link>
+                                                <button
+                                                    onClick={() => user.profile && handleDeleteProfile(user.profile.id)}
+                                                    disabled={isUpdating}
+                                                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </>
+                                        ) : (
                                             <Link
-                                                href={`/admin/profiles/${user.profile?.id}/edit`}
-                                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                href={`/admin/profiles/create?userId=${user.id}`}
+                                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                                             >
-                                                Edit
+                                                Create Profile
                                             </Link>
-                                            <button
-                                                onClick={() => user.profile && handleDeleteProfile(user.profile.id)}
-                                                disabled={isUpdating}
-                                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                            >
-                                                Delete
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <Link
-                                            href={`/admin/profiles/create?userId=${user.id}`}
-                                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                        )}
+                                        <button
+                                            onClick={() => handleImpersonate(user.id)}
+                                            disabled={isUpdating}
+                                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                                            title="Impersonate user"
                                         >
-                                            Create Profile
-                                        </Link>
-                                    )}
+                                            👤 Impersonate
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))
