@@ -15,7 +15,7 @@ export async function revalidateProfile(profileId?: number) {
         }
         
         // Revalidate profile-related tags
-        revalidateTag('profiles');
+        revalidateTag('profiles', 'default');
         
         console.log('Cache revalidated for profile:', profileId || 'all');
     } catch (error) {
@@ -29,10 +29,10 @@ export async function revalidateProfile(profileId?: number) {
 export async function revalidateReferenceData(type?: 'languages' | 'nationalities' | 'ethnicities' | 'payment-methods' | 'services') {
     try {
         if (type) {
-            revalidateTag(type);
+            revalidateTag(type, 'default');
         } else {
             // Revalidate all reference data
-            revalidateTag('reference-data');
+            revalidateTag('reference-data', 'default');
         }
         
         console.log('Reference data cache revalidated:', type || 'all');

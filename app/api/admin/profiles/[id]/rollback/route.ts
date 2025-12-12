@@ -1,25 +1,25 @@
-// app/api/admin/profiles/[id]/publish/route.ts
+// app/api/admin/profiles/[id]/rollback/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { prisma } from '@/prisma';
+import { DataService } from '@/services/dataService';
 import { revalidatePath, revalidateTag } from 'next/cache';
 
-export async function PATCH(
-  request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+export async function POST(
+    request: NextRequest,
+    props: { params: Promise<{ id: string }> }
 ) {
+    const params = await props.params;
     try {
         const session = await auth();
 
         // Check if user is authenticated and has admin role
         if (!session || session.user?.role !== 'admin') {
             return NextResponse.json(
-                { error: 'Unauthorized' },
+                { error: 'Unauthorized - Admin only' },
                 { status: 403 }
             );
         }
 
-        const params = await props.params;
         const profileId = parseInt(params.id);
         if (isNaN(profileId)) {
             return NextResponse.json(
@@ -28,35 +28,37 @@ export async function PATCH(
             );
         }
 
-        // Get the published state from request body
         const body = await request.json();
-        const { published } = body;
+        const { versionId, comment } = body;
 
-        if (typeof published !== 'boolean') {
+        if (!versionId || isNaN(parseInt(versionId))) {
             return NextResponse.json(
-                { error: 'Published state must be a boolean' },
+                { error: 'Invalid version ID' },
                 { status: 400 }
             );
         }
 
-        // Update the profile's published state
-        const updatedProfile = await prisma.profile.update({
-            where: { id: profileId },
-            data: { published }
-        });
+        const restoredProfile = await DataService.rollbackToVersion(
+            profileId,
+            parseInt(versionId),
+            session.user.id,
+            comment
+        );
 
-        // Revalidate paths and cache tags
+        // Revalidate relevant paths
         revalidatePath('/admin');
-        revalidatePath(`/profile/${profileId}`);
+        revalidatePath(`/admin/profiles/${profileId}`);
         revalidateTag('profiles', 'default');
         revalidateTag('profile-list', 'default');
-        revalidateTag(`profile-${profileId}`, 'default');
 
-        return NextResponse.json(updatedProfile);
+        return NextResponse.json({
+            success: true,
+            profile: restoredProfile
+        });
     } catch (error) {
-        console.error('Error updating profile publish state:', error);
+        console.error('Error rolling back profile:', error);
         return NextResponse.json(
-            { error: 'Failed to update profile' },
+            { error: error instanceof Error ? error.message : 'Failed to rollback profile' },
             { status: 500 }
         );
     }

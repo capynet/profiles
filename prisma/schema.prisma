@@ -32,15 +32,17 @@ model ProfileImage {
 }
 
 model Nationality {
-  id       Int                  @id @default(autoincrement())
-  name     String               @unique
-  profiles ProfileNationality[]
+  id               Int                         @id @default(autoincrement())
+  name             String                      @unique
+  profiles         ProfileNationality[]
+  versionSnapshots ProfileVersionNationality[]
 }
 
 model Ethnicity {
-  id       Int                @id @default(autoincrement())
-  name     String             @unique
-  profiles ProfileEthnicity[]
+  id               Int                       @id @default(autoincrement())
+  name             String                    @unique
+  profiles         ProfileEthnicity[]
+  versionSnapshots ProfileVersionEthnicity[]
 }
 
 model ProfileNationality {
@@ -80,6 +82,7 @@ model Profile {
   originalProfileId Int?
   originalProfile   Profile?               @relation("DraftToOriginal", fields: [originalProfileId], references: [id], onDelete: SetNull)
   drafts            Profile[]              @relation("DraftToOriginal")
+  currentVersion    Int                    @default(1) // For optimistic locking
   updatedAt         DateTime               @updatedAt
   createdAt         DateTime               @default(now())
   paymentMethods    ProfilePaymentMethod[]
@@ -89,20 +92,23 @@ model Profile {
   nationalities     ProfileNationality[]
   ethnicities       ProfileEthnicity[]
   services          ProfileService[]
+  versions          ProfileVersion[] // Version history
 
   @@index([userId, published, isDraft])
 }
 
 model PaymentMethod {
-  id       Int                    @id @default(autoincrement())
-  name     String                 @unique
-  profiles ProfilePaymentMethod[]
+  id               Int                           @id @default(autoincrement())
+  name             String                        @unique
+  profiles         ProfilePaymentMethod[]
+  versionSnapshots ProfileVersionPaymentMethod[]
 }
 
 model Language {
-  id       Int               @id @default(autoincrement())
-  name     String            @unique
-  profiles ProfileLanguage[]
+  id               Int                      @id @default(autoincrement())
+  name             String                   @unique
+  profiles         ProfileLanguage[]
+  versionSnapshots ProfileVersionLanguage[]
 }
 
 model ProfilePaymentMethod {
@@ -195,9 +201,10 @@ model Authenticator {
 }
 
 model Service {
-  id       Int              @id @default(autoincrement())
-  name     String           @unique
-  profiles ProfileService[]
+  id               Int                    @id @default(autoincrement())
+  name             String                 @unique
+  profiles         ProfileService[]
+  versionSnapshots ProfileVersionService[]
 }
 
 model ProfileService {
@@ -207,4 +214,116 @@ model ProfileService {
   serviceId Int
 
   @@id([profileId, serviceId])
+}
+
+// Profile Versioning System
+
+model ProfileVersion {
+  id        Int      @id @default(autoincrement())
+  profileId Int
+  version   Int // Sequential version number for this profile
+
+  // Snapshot of profile data at this point in time
+  name        String
+  price       Float
+  age         Int
+  description String
+  latitude    Float
+  longitude   Float
+  address     String
+  phone       String?
+  hasWhatsapp Boolean
+  hasTelegram Boolean
+  published   Boolean
+
+  // Audit trail
+  createdBy String   // User ID who triggered this version
+  createdAt DateTime @default(now())
+  comment   String? // Optional comment about what changed
+
+  // Relationships to versioned data
+  profile         Profile                       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  images          ProfileVersionImage[]
+  languages       ProfileVersionLanguage[]
+  paymentMethods  ProfileVersionPaymentMethod[]
+  nationalities   ProfileVersionNationality[]
+  ethnicities     ProfileVersionEthnicity[]
+  services        ProfileVersionService[]
+
+  @@unique([profileId, version])
+  @@index([profileId, createdAt])
+  @@index([createdBy])
+}
+
+model ProfileVersionImage {
+  id       Int @id @default(autoincrement())
+  versionId Int
+  position Int
+
+  // Store the same data as ProfileImage
+  mediumUrl        String
+  mediumCdnUrl     String?
+  mediumStorageKey String
+
+  thumbnailUrl        String?
+  thumbnailCdnUrl     String?
+  thumbnailStorageKey String?
+
+  highQualityUrl        String?
+  highQualityCdnUrl     String?
+  highQualityStorageKey String?
+
+  version ProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+}
+
+model ProfileVersionLanguage {
+  versionId  Int
+  languageId Int
+
+  version  ProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  language Language       @relation(fields: [languageId], references: [id])
+
+  @@id([versionId, languageId])
+}
+
+model ProfileVersionPaymentMethod {
+  versionId       Int
+  paymentMethodId Int
+
+  version       ProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod  @relation(fields: [paymentMethodId], references: [id])
+
+  @@id([versionId, paymentMethodId])
+}
+
+model ProfileVersionNationality {
+  versionId     Int
+  nationalityId Int
+
+  version     ProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  nationality Nationality    @relation(fields: [nationalityId], references: [id])
+
+  @@id([versionId, nationalityId])
+}
+
+model ProfileVersionEthnicity {
+  versionId   Int
+  ethnicityId Int
+
+  version   ProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  ethnicity Ethnicity      @relation(fields: [ethnicityId], references: [id])
+
+  @@id([versionId, ethnicityId])
+}
+
+model ProfileVersionService {
+  versionId Int
+  serviceId Int
+
+  version ProfileVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  service Service        @relation(fields: [serviceId], references: [id])
+
+  @@id([versionId, serviceId])
 }

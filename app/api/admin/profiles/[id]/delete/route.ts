@@ -41,10 +41,10 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ id
             );
         }
 
-        // Delete all images from storage
+        // Delete all images from storage (with reference counting)
         for (const image of profile.images) {
             try {
-                await ImageService.deleteImage(image.mediumStorageKey);
+                await ImageService.deleteImageSafe(image.mediumStorageKey);
             } catch (error) {
                 console.error(`Failed to delete image ${image.id}:`, error);
                 // Continue with other images even if one fails

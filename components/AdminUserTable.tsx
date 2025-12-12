@@ -333,39 +333,48 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     {formatDateFriendly(user.createdAt)}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 space-x-3">
-                                    {user.profile ? (
-                                        <>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    <div className="flex flex-col gap-2">
+                                        {user.profile ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                <Link
+                                                    href={`/admin/profiles/${user.profile?.id}/view`}
+                                                    className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                                                    title="View profile and version history"
+                                                >
+                                                    📊 Versions
+                                                </Link>
+                                                <Link
+                                                    href={`/admin/profiles/${user.profile?.id}/edit`}
+                                                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                >
+                                                    Edit
+                                                </Link>
+                                                <button
+                                                    onClick={() => user.profile && handleDeleteProfile(user.profile.id)}
+                                                    disabled={isUpdating}
+                                                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        ) : (
                                             <Link
-                                                href={`/admin/profiles/${user.profile?.id}/edit`}
-                                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                href={`/admin/profiles/create?userId=${user.id}`}
+                                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                                             >
-                                                Edit Profile
+                                                Create Profile
                                             </Link>
-                                            <button
-                                                onClick={() => user.profile && handleDeleteProfile(user.profile.id)}
-                                                disabled={isUpdating}
-                                                className="ml-3 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                            >
-                                                Delete
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <Link
-                                            href={`/admin/profiles/create?userId=${user.id}`}
-                                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                                        >
-                                            Create Profile
-                                        </Link>
-                                    )}
+                                        )}
 
-                                    <button
-                                        onClick={() => handleToggleRole(user.id, user.role)}
-                                        disabled={isUpdating}
-                                        className={`text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    >
-                                        {user.role === 'admin' ? 'Make User' : 'Make Admin'}
-                                    </button>
+                                        <button
+                                            onClick={() => handleToggleRole(user.id, user.role)}
+                                            disabled={isUpdating}
+                                            className={`text-left text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            {user.role === 'admin' ? 'Make User' : 'Make Admin'}
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))

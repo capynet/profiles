@@ -5,6 +5,7 @@ import {requireAdmin} from '@/lib/auth-utils';
 import Link from 'next/link';
 import Image from 'next/image';
 import AdminProfileActionButtons from '@/components/AdminProfileActionButtons';
+import ProfileVersionHistory from '@/components/ProfileVersionHistory';
 
 export const metadata = {
     title: 'Admin - View Profile',
@@ -90,9 +91,16 @@ export default async function AdminProfileViewPage(props: AdminProfileViewPagePr
         <div className="container mx-auto py-8 px-4">
             <div className="mb-6 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                        {isDraft ? "Review Draft Profile" : "View Profile"}
-                    </h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                            {isDraft ? "Review Draft Profile" : "View Profile"}
+                        </h1>
+                        {!isDraft && (
+                            <span className="px-2 py-1 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 text-sm rounded-md">
+                                v{profile.currentVersion}
+                            </span>
+                        )}
+                    </div>
                     <p className="text-gray-600 dark:text-gray-400">
                         User: {profile.user.name || profile.user.email}
                     </p>
@@ -351,6 +359,16 @@ export default async function AdminProfileViewPage(props: AdminProfileViewPagePr
                     </div>
                 </div>
             </div>
+
+            {/* Version History - Only show for non-draft profiles */}
+            {!isDraft && (
+                <div className="mt-8">
+                    <ProfileVersionHistory
+                        profileId={profile.id}
+                        currentVersion={profile.currentVersion}
+                    />
+                </div>
+            )}
         </div>
     );
 }

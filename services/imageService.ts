@@ -281,6 +281,74 @@ export const ImageService = {
     /**
      * Delete all versions of an image from Google Cloud Storage
      */
+    /**
+     * Safely delete an image with reference counting.
+     * Only deletes from GCS if no active profiles or versions reference it.
+     * @param mediumStorageKey - The storage key of the medium version
+     */
+    async deleteImageSafe(mediumStorageKey: string): Promise<void> {
+        try {
+            const {prisma} = await import('@/prisma');
+
+            // Extract the base name for all versions
+            const parts = mediumStorageKey.split('/');
+            const filename = parts[parts.length - 1];
+            const fileBase = filename.replace('.webp', '');
+            const dirPrefix = parts.slice(0, -1).join('/');
+
+            // Create storage keys for all three versions
+            const storageKeys = [
+                mediumStorageKey, // Medium
+                `${dirPrefix}/${fileBase}_thumb.webp`, // Thumbnail
+                `${dirPrefix}/${fileBase}_large.webp` // High quality
+            ];
+
+            // Check references for each storage key
+            for (const key of storageKeys) {
+                // Count active profile image references
+                const activeRefs = await prisma.profileImage.count({
+                    where: {
+                        OR: [
+                            {mediumStorageKey: key},
+                            {thumbnailStorageKey: key},
+                            {highQualityStorageKey: key}
+                        ]
+                    }
+                });
+
+                // Count version snapshot references
+                const versionRefs = await prisma.profileVersionImage.count({
+                    where: {
+                        OR: [
+                            {mediumStorageKey: key},
+                            {thumbnailStorageKey: key},
+                            {highQualityStorageKey: key}
+                        ]
+                    }
+                });
+
+                const totalRefs = activeRefs + versionRefs;
+
+                if (totalRefs === 0) {
+                    // Safe to delete - no references
+                    await bucket.file(key).delete().catch(err => {
+                        console.warn(`Failed to delete image ${key}:`, err);
+                    });
+                    console.log(`✓ Deleted ${key} (no references)`);
+                } else {
+                    console.log(`✗ Skipping ${key} (${activeRefs} active + ${versionRefs} version refs)`);
+                }
+            }
+        } catch (error) {
+            console.error(`Error safely deleting images with base ${mediumStorageKey}:`, error);
+            // Don't throw - we want to continue even if deletion fails
+        }
+    },
+
+    /**
+     * @deprecated Use deleteImageSafe instead to respect version references
+     * Deletes image without checking references - UNSAFE
+     */
     async deleteImage(mediumStorageKey: string): Promise<void> {
         try {
             // Extract the base name without the directory prefix

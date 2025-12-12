@@ -490,7 +490,348 @@ export const DataService = {
         });
     },
 
-    async approveProfileDraft(draftId: number) {
+    /**
+     * Creates a version snapshot of a profile with all its relationships.
+     * Used before modifying a profile to preserve its current state.
+     *
+     * @param profileId - The profile to snapshot
+     * @param userId - User ID who triggered this version
+     * @param comment - Optional comment describing the change
+     * @param tx - Optional Prisma transaction context
+     * @returns The created ProfileVersion
+     */
+    async createProfileVersion(
+        profileId: number,
+        userId: string,
+        comment?: string,
+        tx?: any
+    ) {
+        const prismaClient = tx || prisma;
+
+        // Fetch complete current state of the profile
+        const currentProfile = await prismaClient.profile.findUnique({
+            where: {id: profileId},
+            include: {
+                images: {orderBy: {position: 'asc'}},
+                languages: true,
+                paymentMethods: true,
+                nationalities: true,
+                ethnicities: true,
+                services: true
+            }
+        });
+
+        if (!currentProfile) {
+            throw new Error(`Profile ${profileId} not found`);
+        }
+
+        // Get next version number
+        const lastVersion = await prismaClient.profileVersion.findFirst({
+            where: {profileId},
+            orderBy: {version: 'desc'},
+            select: {version: true}
+        });
+
+        const nextVersion = (lastVersion?.version || 0) + 1;
+
+        // Create version snapshot
+        const version = await prismaClient.profileVersion.create({
+            data: {
+                profileId,
+                version: nextVersion,
+                name: currentProfile.name,
+                price: currentProfile.price,
+                age: currentProfile.age,
+                description: currentProfile.description,
+                latitude: currentProfile.latitude,
+                longitude: currentProfile.longitude,
+                address: currentProfile.address,
+                phone: currentProfile.phone,
+                hasWhatsapp: currentProfile.hasWhatsapp,
+                hasTelegram: currentProfile.hasTelegram,
+                published: currentProfile.published,
+                createdBy: userId,
+                comment: comment || `Version ${nextVersion} snapshot`
+            }
+        });
+
+        // Snapshot images
+        for (const img of currentProfile.images) {
+            await prismaClient.profileVersionImage.create({
+                data: {
+                    versionId: version.id,
+                    position: img.position,
+                    mediumUrl: img.mediumUrl,
+                    mediumCdnUrl: img.mediumCdnUrl,
+                    mediumStorageKey: img.mediumStorageKey,
+                    thumbnailUrl: img.thumbnailUrl,
+                    thumbnailCdnUrl: img.thumbnailCdnUrl,
+                    thumbnailStorageKey: img.thumbnailStorageKey,
+                    highQualityUrl: img.highQualityUrl,
+                    highQualityCdnUrl: img.highQualityCdnUrl,
+                    highQualityStorageKey: img.highQualityStorageKey
+                }
+            });
+        }
+
+        // Snapshot languages
+        for (const lang of currentProfile.languages) {
+            await prismaClient.profileVersionLanguage.create({
+                data: {
+                    versionId: version.id,
+                    languageId: lang.languageId
+                }
+            });
+        }
+
+        // Snapshot payment methods
+        for (const pm of currentProfile.paymentMethods) {
+            await prismaClient.profileVersionPaymentMethod.create({
+                data: {
+                    versionId: version.id,
+                    paymentMethodId: pm.paymentMethodId
+                }
+            });
+        }
+
+        // Snapshot nationalities
+        for (const nat of currentProfile.nationalities) {
+            await prismaClient.profileVersionNationality.create({
+                data: {
+                    versionId: version.id,
+                    nationalityId: nat.nationalityId
+                }
+            });
+        }
+
+        // Snapshot ethnicities
+        for (const eth of currentProfile.ethnicities) {
+            await prismaClient.profileVersionEthnicity.create({
+                data: {
+                    versionId: version.id,
+                    ethnicityId: eth.ethnicityId
+                }
+            });
+        }
+
+        // Snapshot services
+        for (const svc of currentProfile.services) {
+            await prismaClient.profileVersionService.create({
+                data: {
+                    versionId: version.id,
+                    serviceId: svc.serviceId
+                }
+            });
+        }
+
+        console.log(`✓ Created version ${nextVersion} for profile ${profileId} (userId: ${userId})`);
+        return version;
+    },
+
+    /**
+     * Get all version history for a profile
+     * @param profileId - The profile ID
+     * @returns Array of ProfileVersion with all relationships
+     */
+    async getProfileVersions(profileId: number) {
+        return await prisma.profileVersion.findMany({
+            where: {profileId},
+            orderBy: {version: 'desc'},
+            include: {
+                images: {orderBy: {position: 'asc'}},
+                languages: {include: {language: true}},
+                paymentMethods: {include: {paymentMethod: true}},
+                nationalities: {include: {nationality: true}},
+                ethnicities: {include: {ethnicity: true}},
+                services: {include: {service: true}},
+                _count: {
+                    select: {
+                        images: true,
+                        languages: true,
+                        paymentMethods: true
+                    }
+                }
+            }
+        });
+    },
+
+    /**
+     * Get a specific version with all its data
+     * @param versionId - The version ID
+     * @returns ProfileVersion or null
+     */
+    async getProfileVersion(versionId: number) {
+        return await prisma.profileVersion.findUnique({
+            where: {id: versionId},
+            include: {
+                profile: {select: {id: true, name: true, userId: true, currentVersion: true}},
+                images: {orderBy: {position: 'asc'}},
+                languages: {include: {language: true}},
+                paymentMethods: {include: {paymentMethod: true}},
+                nationalities: {include: {nationality: true}},
+                ethnicities: {include: {ethnicity: true}},
+                services: {include: {service: true}}
+            }
+        });
+    },
+
+    /**
+     * Rollback a profile to a previous version
+     * @param profileId - The profile to rollback
+     * @param versionId - The version to restore
+     * @param userId - User ID performing the rollback
+     * @param comment - Optional comment
+     * @returns The restored profile
+     */
+    async rollbackToVersion(
+        profileId: number,
+        versionId: number,
+        userId: string,
+        comment?: string
+    ) {
+        return await prisma.$transaction(async (tx) => {
+            // Verify version exists and belongs to profile
+            const version = await tx.profileVersion.findUnique({
+                where: {id: versionId},
+                include: {
+                    images: {orderBy: {position: 'asc'}},
+                    languages: true,
+                    paymentMethods: true,
+                    nationalities: true,
+                    ethnicities: true,
+                    services: true
+                }
+            });
+
+            if (!version || version.profileId !== profileId) {
+                throw new Error(`Version ${versionId} not found for profile ${profileId}`);
+            }
+
+            // Create snapshot of CURRENT state before rollback
+            await this.createProfileVersion(
+                profileId,
+                userId,
+                comment || `Pre-rollback snapshot before restoring to version ${version.version}`,
+                tx
+            );
+
+            // Clear current relationships
+            await tx.profileLanguage.deleteMany({where: {profileId}});
+            await tx.profilePaymentMethod.deleteMany({where: {profileId}});
+            await tx.profileNationality.deleteMany({where: {profileId}});
+            await tx.profileEthnicity.deleteMany({where: {profileId}});
+            await tx.profileService.deleteMany({where: {profileId}});
+
+            // Delete current images from DB (not GCS - reference counting handles that)
+            await tx.profileImage.deleteMany({where: {profileId}});
+
+            // Restore profile data from version
+            await tx.$executeRaw`
+                UPDATE "Profile"
+                SET
+                    "name" = ${version.name},
+                    "price" = ${version.price},
+                    "age" = ${version.age},
+                    "description" = ${version.description},
+                    "latitude" = ${version.latitude},
+                    "longitude" = ${version.longitude},
+                    "address" = ${version.address},
+                    "phone" = ${version.phone},
+                    "hasWhatsapp" = ${version.hasWhatsapp},
+                    "hasTelegram" = ${version.hasTelegram},
+                    "published" = ${version.published},
+                    "currentVersion" = "currentVersion" + 1,
+                    "updatedAt" = NOW()
+                WHERE "id" = ${profileId}
+            `;
+
+            // Restore languages
+            for (const lang of version.languages) {
+                await tx.profileLanguage.create({
+                    data: {
+                        profileId,
+                        languageId: lang.languageId
+                    }
+                });
+            }
+
+            // Restore payment methods
+            for (const pm of version.paymentMethods) {
+                await tx.profilePaymentMethod.create({
+                    data: {
+                        profileId,
+                        paymentMethodId: pm.paymentMethodId
+                    }
+                });
+            }
+
+            // Restore nationalities
+            for (const nat of version.nationalities) {
+                await tx.profileNationality.create({
+                    data: {
+                        profileId,
+                        nationalityId: nat.nationalityId
+                    }
+                });
+            }
+
+            // Restore ethnicities
+            for (const eth of version.ethnicities) {
+                await tx.profileEthnicity.create({
+                    data: {
+                        profileId,
+                        ethnicityId: eth.ethnicityId
+                    }
+                });
+            }
+
+            // Restore services
+            for (const svc of version.services) {
+                await tx.profileService.create({
+                    data: {
+                        profileId,
+                        serviceId: svc.serviceId
+                    }
+                });
+            }
+
+            // Restore images (references to GCS, not copies)
+            for (const img of version.images) {
+                await tx.profileImage.create({
+                    data: {
+                        profileId,
+                        position: img.position,
+                        mediumUrl: img.mediumUrl,
+                        mediumCdnUrl: img.mediumCdnUrl,
+                        mediumStorageKey: img.mediumStorageKey,
+                        thumbnailUrl: img.thumbnailUrl,
+                        thumbnailCdnUrl: img.thumbnailCdnUrl,
+                        thumbnailStorageKey: img.thumbnailStorageKey,
+                        highQualityUrl: img.highQualityUrl,
+                        highQualityCdnUrl: img.highQualityCdnUrl,
+                        highQualityStorageKey: img.highQualityStorageKey
+                    }
+                });
+            }
+
+            console.log(`✓ Rolled back profile ${profileId} to version ${version.version}`);
+
+            // Return restored profile
+            return await tx.profile.findUnique({
+                where: {id: profileId},
+                include: {
+                    languages: {include: {language: true}},
+                    paymentMethods: {include: {paymentMethod: true}},
+                    nationalities: {include: {nationality: true}},
+                    ethnicities: {include: {ethnicity: true}},
+                    services: {include: {service: true}},
+                    images: {orderBy: {position: 'asc'}}
+                }
+            });
+        });
+    },
+
+    async approveProfileDraft(draftId: number, userId: string) {
         return await prisma.$transaction(async (tx) => {
             // Get the draft profile with all relationships
             const draft = await tx.profile.findUnique({
@@ -545,6 +886,14 @@ export const DataService = {
             // Regular approval process for standard drafts
             const originalProfileId = draft.originalProfileId;
 
+            // NEW: Create version snapshot BEFORE making any changes
+            await this.createProfileVersion(
+                originalProfileId,
+                userId,
+                `Pre-approval snapshot before applying draft ${draftId}`,
+                tx
+            );
+
             // Continue with the rest of the function...
             // Get the language, payment method, nationality, ethnicity, and service IDs from the draft
             const languageIds = draft.languages.map(l => l.languageId);
@@ -574,15 +923,7 @@ export const DataService = {
                 where: {profileId: originalProfileId}
             });
 
-            // Delete original profile images
-            const originalImages = await tx.profileImage.findMany({
-                where: {profileId: originalProfileId}
-            });
-
-            for (const img of originalImages) {
-                await ImageService.deleteImage(img.mediumStorageKey);
-            }
-
+            // Delete original profile images from database (NOT from GCS - reference counting handles that)
             await tx.profileImage.deleteMany({
                 where: {profileId: originalProfileId}
             });
@@ -590,7 +931,7 @@ export const DataService = {
             // Update the original profile with the draft's data using raw query
             await tx.$executeRaw`
                 UPDATE "Profile"
-                SET 
+                SET
                     "name" = ${draft.name},
                     "price" = ${draft.price},
                     "age" = ${draft.age},
@@ -601,6 +942,7 @@ export const DataService = {
                     "phone" = ${draft.phone || null},
                     "hasWhatsapp" = ${draft.hasWhatsapp === true},
                     "hasTelegram" = ${draft.hasTelegram === true},
+                    "currentVersion" = "currentVersion" + 1,
                     "updatedAt" = NOW()
                 WHERE "id" = ${originalProfileId}
             `;
@@ -850,10 +1192,10 @@ export const DataService = {
                     !imagesToKeep.includes(img.mediumStorageKey)
                 );
 
-                // Delete images from Google Cloud Storage that won't be kept
+                // Delete images from Google Cloud Storage that won't be kept (with reference counting)
                 for (const img of imagesToDelete) {
                     console.log('Deleting image from storage:', img.mediumStorageKey);
-                    await ImageService.deleteImage(img.mediumStorageKey);
+                    await ImageService.deleteImageSafe(img.mediumStorageKey);
                 }
 
                 // Delete all existing image records from database

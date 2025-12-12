@@ -25,14 +25,14 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
             );
         }
 
-        await DataService.approveProfileDraft(draftId);
+        await DataService.approveProfileDraft(draftId, session.user.id);
 
         // Revalidate relevant paths and cache tags
         revalidatePath('/admin');
         revalidatePath('/profile');
-        revalidateTag('profiles');
-        revalidateTag('profile-list');
-        revalidateTag('profile-drafts');
+        revalidateTag('profiles', 'default');
+        revalidateTag('profile-list', 'default');
+        revalidateTag('profile-drafts', 'default');
 
         return NextResponse.json({ success: true });
     } catch (error) {
