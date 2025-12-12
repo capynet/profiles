@@ -2,16 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light Theme - Erotic/Sensual Pink & Red */
 :root {
-    --background: #ffffff;
-    --foreground: #171717;
+    --background: #fef1f5;
+    --foreground: #2d0a15;
+    --card: #ffffff;
+    --card-foreground: #2d0a15;
+    --primary: #dc2626;
+    --primary-foreground: #ffffff;
+    --secondary: #fda4af;
+    --secondary-foreground: #2d0a15;
+    --accent: #fb7185;
+    --accent-foreground: #ffffff;
+    --muted: #ffe4e6;
+    --muted-foreground: #881337;
+    --border: #fecdd3;
+    --ring: #dc2626;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background: #0a0a0a;
-        --foreground: #ededed;
-    }
+/* Dark Theme - Erotic/Sensual Deep Red & Black */
+.dark {
+    --background: #1a0410;
+    --foreground: #fce7f3;
+    --card: #2d0a15;
+    --card-foreground: #fce7f3;
+    --primary: #f43f5e;
+    --primary-foreground: #ffffff;
+    --secondary: #881337;
+    --secondary-foreground: #fce7f3;
+    --accent: #be123c;
+    --accent-foreground: #fce7f3;
+    --muted: #4c0519;
+    --muted-foreground: #fda4af;
+    --border: #7f1d1d;
+    --ring: #f43f5e;
 }
 
 /* Forzar la barra de desplazamiento para evitar flickering */

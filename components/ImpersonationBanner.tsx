@@ -44,7 +44,7 @@ export default function ImpersonationBanner({
     };
 
     return (
-        <div className="bg-yellow-500 text-black px-4 py-3 shadow-lg">
+        <div className="bg-accent text-accent-foreground px-4 py-3 shadow-lg border-b border-border">
             <div className="container mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <span className="text-2xl">👤</span>
@@ -52,7 +52,7 @@ export default function ImpersonationBanner({
                         <p className="font-bold">
                             Impersonating User
                         </p>
-                        <p className="text-sm">
+                        <p className="text-sm opacity-90">
                             You are viewing as: <span className="font-semibold">{userName || 'Unknown User'}</span>
                         </p>
                     </div>
@@ -61,7 +61,7 @@ export default function ImpersonationBanner({
                 <button
                     onClick={handleStopImpersonation}
                     disabled={isLoading}
-                    className="px-4 py-2 bg-black text-yellow-500 rounded-md font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 bg-card text-card-foreground rounded-md font-medium hover:bg-card/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border"
                 >
                     {isLoading ? 'Stopping...' : 'Stop Impersonating'}
                 </button>

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import {handleSignOut} from '@/app/auth-actions';
 import {toggleProfilePublication} from '@/app/profile/actions';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useTranslations } from 'next-intl';
 
 interface User {
@@ -45,11 +46,11 @@ export default function Header({user}: HeaderProps) {
     };
 
     return (
-        <header className="bg-white shadow-sm dark:bg-gray-900">
+        <header className="bg-card shadow-lg border-b border-border">
             <div className="container mx-auto px-4 py-3">
                 <div className="flex items-center justify-between">
                     {/* Logo/Brand */}
-                    <Link href="/" className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                    <Link href="/" className="text-xl font-bold text-primary hover:text-primary/90 transition-colors">
                         {t('profiles')}
                     </Link>
 
@@ -65,6 +66,11 @@ export default function Header({user}: HeaderProps) {
 
                     {/* User Section */}
                     <div className="flex items-center">
+                        {/* Theme Toggle */}
+                        <div className="mr-2">
+                            <ThemeToggle />
+                        </div>
+
                         {/* Language Switcher */}
                         <div className="mr-4">
                             <LanguageSwitcher />
@@ -73,7 +79,7 @@ export default function Header({user}: HeaderProps) {
                         {user && user.role === 'admin' && (
                             <Link
                                 href="/admin"
-                                className="block mr-4 px-4 py-2 text-sm text-indigo-600 hover:bg-gray-100 dark:text-indigo-400 dark:hover:bg-gray-700"
+                                className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 {t('adminDashboard')}
@@ -89,7 +95,7 @@ export default function Header({user}: HeaderProps) {
                                     aria-haspopup="true"
                                 >
                                     {user.image ? (
-                                        <div className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-indigo-500">
+                                        <div className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-primary">
                                             <Image
                                                 src={user.image}
                                                 alt={user.name || "User"}
@@ -99,15 +105,15 @@ export default function Header({user}: HeaderProps) {
                                             />
                                         </div>
                                     ) : (
-                                        <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
                                             {user.name?.charAt(0) || user.email?.charAt(0) || "U"}
                                         </div>
                                     )}
-                                    <span className="hidden sm:inline-block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="hidden sm:inline-block text-sm font-medium text-card-foreground">
                                         {user.name || user.email?.split('@')[0]}
                                     </span>
                                     <svg
-                                        className={`h-4 w-4 text-gray-500 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
+                                        className={`h-4 w-4 text-muted-foreground transition-transform ${isMenuOpen ? 'rotate-180' : ''}`}
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -118,11 +124,11 @@ export default function Header({user}: HeaderProps) {
 
                                 {/* Dropdown Menu */}
                                 {isMenuOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 py-2 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                                    <div className="absolute right-0 mt-2 w-48 py-2 bg-card rounded-md shadow-xl border border-border z-10">
 
                                         <Link
                                             href={user.hasProfile ? "/profile/edit" : "/profile/create"}
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                                            className="block px-4 py-2 text-sm text-card-foreground hover:bg-muted transition-colors"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
                                             {user.hasProfile ? t('editProfile') : `${t('myProfile')} (${t('create')})`}
@@ -133,21 +139,21 @@ export default function Header({user}: HeaderProps) {
                                             <button
                                                 onClick={handleTogglePublication}
                                                 disabled={isToggling}
-                                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 disabled:opacity-50"
+                                                className="block w-full text-left px-4 py-2 text-sm text-card-foreground hover:bg-muted transition-colors disabled:opacity-50"
                                             >
-                                                {isToggling ? 
-                                                    t('updating') : 
+                                                {isToggling ?
+                                                    t('updating') :
                                                     (user.profilePublished ? t('unpublishProfile') : t('publishProfile'))
                                                 }
                                             </button>
                                         )}
 
-                                        <div className="border-t border-gray-100 dark:border-gray-700"></div>
+                                        <div className="border-t border-border"></div>
 
                                         <form action={handleSignOut}>
                                             <button
                                                 type="submit"
-                                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
+                                                className="block w-full text-left px-4 py-2 text-sm text-primary hover:bg-muted transition-colors"
                                             >
                                                 {t('logout')}
                                             </button>
@@ -158,7 +164,7 @@ export default function Header({user}: HeaderProps) {
                         ) : (
                             <Link
                                 href="/login"
-                                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-colors"
                             >
                                 {t('login')}
                             </Link>

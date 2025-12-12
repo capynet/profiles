@@ -28,18 +28,18 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => switchLocale('en')}
         disabled={isPending}
-        className={`px-2 py-1 text-xs font-medium rounded ${locale === 'en' 
-          ? 'bg-indigo-600 text-white' 
-          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
+        className={`px-2 py-1 text-xs font-medium rounded transition-colors ${locale === 'en'
+          ? 'bg-primary text-primary-foreground'
+          : 'text-card-foreground hover:bg-muted'}`}
       >
         EN
       </button>
       <button
         onClick={() => switchLocale('es')}
         disabled={isPending}
-        className={`px-2 py-1 text-xs font-medium rounded ${locale === 'es' 
-          ? 'bg-indigo-600 text-white' 
-          : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'}`}
+        className={`px-2 py-1 text-xs font-medium rounded transition-colors ${locale === 'es'
+          ? 'bg-primary text-primary-foreground'
+          : 'text-card-foreground hover:bg-muted'}`}
       >
         ES
       </button>

@@ -6,6 +6,7 @@ import {prisma} from "@/prisma";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
+import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 import { getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
@@ -72,22 +73,24 @@ export default async function RootLayout({
     return (
         <html lang={locale} suppressHydrationWarning>
         <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900`}
+            className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-background text-foreground`}
         >
-        <SpeedInsights/>
-        <Toaster position="top-right" richColors />
-        <NextIntlClientProvider locale={locale}>
-            <ImpersonationBanner
-                impersonatingUserId={session?.impersonatingUserId}
-                originalAdminId={session?.originalAdminId}
-                userName={session?.user?.name}
-            />
-            <Header user={userWithProfileInfo}/>
-            <main className="flex-grow">
-                {children}
-            </main>
-            <Footer/>
-        </NextIntlClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SpeedInsights/>
+            <Toaster position="top-right" richColors />
+            <NextIntlClientProvider locale={locale}>
+                <ImpersonationBanner
+                    impersonatingUserId={session?.impersonatingUserId}
+                    originalAdminId={session?.originalAdminId}
+                    userName={session?.user?.name}
+                />
+                <Header user={userWithProfileInfo}/>
+                <main className="flex-grow">
+                    {children}
+                </main>
+                <Footer/>
+            </NextIntlClientProvider>
+        </ThemeProvider>
         </body>
         </html>
     );
