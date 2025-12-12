@@ -9,6 +9,7 @@ import "./globals.css";
 import { getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { unstable_cache } from 'next/cache';
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -25,6 +26,27 @@ export const metadata: Metadata = {
     description: "Find and connect with professionals",
 };
 
+// Cache user profile lookup to avoid repeated DB queries
+const getUserProfile = unstable_cache(
+    async (userId: string) => {
+        return await prisma.profile.findFirst({
+            where: {
+                userId: userId,
+                isDraft: false
+            },
+            select: {
+                id: true,
+                published: true
+            }
+        });
+    },
+    ['user-profile'],
+    {
+        tags: ['user-profile', 'profiles'],
+        revalidate: 60 // Revalidate every minute
+    }
+);
+
 export default async function RootLayout({
                                              children,
                                          }: Readonly<{
@@ -32,17 +54,12 @@ export default async function RootLayout({
 }>) {
     const locale = await getLocaleFromCookie();
     const session = await auth();
-    
+
     let userWithProfileInfo = null;
     if (session?.user) {
-        // Get user's published profile (not drafts)
-        const profile = await prisma.profile.findFirst({
-            where: {
-                userId: session.user.id,
-                isDraft: false
-            }
-        });
-        
+        // Get user's published profile (not drafts) - using cached function
+        const profile = await getUserProfile(session.user.id);
+
         userWithProfileInfo = {
             ...session.user,
             hasProfile: !!profile,

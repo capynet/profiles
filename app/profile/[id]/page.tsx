@@ -15,6 +15,9 @@ interface ProfilePageProps {
 // Enable ISR with 60 seconds revalidation
 export const revalidate = 60;
 
+// Allow dynamic params for profiles not pre-generated
+export const dynamicParams = true;
+
 // Generate metadata for SEO
 export async function generateMetadata({ params }: ProfilePageProps) {
     const { id } = await params;
