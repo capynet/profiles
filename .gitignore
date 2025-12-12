@@ -47,3 +47,5 @@ certificates
 .idea
 *.sql
 !prisma/migrations/**/*.sql
+
+.claude
