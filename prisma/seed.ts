@@ -1,12 +1,17 @@
 // prisma/seed.ts
+import 'dotenv/config'
 import {PrismaClient} from '@prisma/client'
+import {PrismaPg} from '@prisma/adapter-pg'
 import seedLanguages from './seeders/languages'
 import seedPaymentMethods from './seeders/paymentMethods'
 import seedNationalities from './seeders/nationalities'
 import seedEthnicities from './seeders/ethnicities'
 import seedServices from './seeders/services'
 
-const prisma = new PrismaClient()
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL!
+})
+const prisma = new PrismaClient({adapter})
 
 async function main() {
     // Run seeders in order
