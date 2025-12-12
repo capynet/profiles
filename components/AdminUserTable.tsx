@@ -15,6 +15,7 @@ interface Profile {
     published: boolean;
     isDraft?: boolean;
     originalProfileId?: number | null;
+    updatedAt?: Date;
 }
 
 interface User {
@@ -26,6 +27,7 @@ interface User {
     role: string;
     createdAt: Date;
     profile: Profile | null;
+    draft?: Profile | null;
     profiles?: Profile[];
 }
 
@@ -37,59 +39,100 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
     const t = useTranslations('AdminUserTable');
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterRole, setFilterRole] = useState<string | null>(null);
+    const [filterRoles, setFilterRoles] = useState<string[]>(['user']);
+    const [showOnlyDrafts, setShowOnlyDrafts] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [updatingProfileIds, setUpdatingProfileIds] = useState<Record<number, boolean>>({});
     const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
-    // Filter users based on search term and role
+    // Filter users based on search term, role, and draft status
     const filteredUsers = users.filter(user => {
         const matchesSearch =
             !searchTerm ||
             user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesRole = !filterRole || user.role === filterRole;
+        const matchesRole = filterRoles.length === 0 || filterRoles.includes(user.role);
 
-        return matchesSearch && matchesRole;
+        const matchesDraft = !showOnlyDrafts || Boolean(user.draft);
+
+        return matchesSearch && matchesRole && matchesDraft;
     });
 
-    // Toggle user role between 'user' and 'admin'
-    const handleToggleRole = async (userId: string, currentRole: string) => {
+    // Handle role filter toggle
+    const handleRoleToggle = (role: string) => {
+        setFilterRoles(prev => {
+            if (prev.includes(role)) {
+                return prev.filter(r => r !== role);
+            } else {
+                return [...prev, role];
+            }
+        });
+    };
+
+    // Handle user selection
+    const handleSelectUser = (userId: string) => {
+        setSelectedUsers(prev => {
+            if (prev.includes(userId)) {
+                return prev.filter(id => id !== userId);
+            } else {
+                return [...prev, userId];
+            }
+        });
+    };
+
+    // Handle select all
+    const handleSelectAll = () => {
+        if (selectedUsers.length === filteredUsers.length) {
+            setSelectedUsers([]);
+        } else {
+            setSelectedUsers(filteredUsers.map(u => u.id));
+        }
+    };
+
+    // Handle bulk make admin
+    const handleBulkMakeAdmin = async () => {
+        if (selectedUsers.length === 0) {
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to make ${selectedUsers.length} user(s) administrator(s)? This will grant them full access to the admin panel.`)) {
+            return;
+        }
+
         try {
             setIsUpdating(true);
-            const newRole = currentRole === 'admin' ? 'user' : 'admin';
 
-            const response = await fetch(`/api/admin/users/${userId}/role`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ role: newRole }),
-            });
+            // Update all selected users
+            const promises = selectedUsers.map(userId =>
+                fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ role: 'admin' }),
+                })
+            );
 
-            if (!response.ok) {
-                throw new Error('Failed to update user role');
-            }
+            await Promise.all(promises);
 
-            // Show success message
             setStatusMessage({
                 type: 'success',
-                text: t('roleUpdated', {role: newRole})
+                text: `Successfully updated ${selectedUsers.length} user(s) to admin`
             });
 
-            // Refresh the page data
+            setSelectedUsers([]);
             router.refresh();
 
-            // Clear the message after 3 seconds
             setTimeout(() => {
                 setStatusMessage(null);
             }, 3000);
         } catch (error) {
-            console.error('Error updating user role:', error);
+            console.error('Error updating users:', error);
             setStatusMessage({
                 type: 'error',
-                text: t('failedRoleUpdate')
+                text: 'Failed to update users'
             });
         } finally {
             setIsUpdating(false);
@@ -182,6 +225,80 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
         }
     };
 
+    // Handle draft approval
+    const handleApproveDraft = async (draftId: number) => {
+        try {
+            setIsUpdating(true);
+            const response = await fetch(`/api/admin/profiles/drafts/${draftId}/approve`, {
+                method: 'POST',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to approve draft');
+            }
+
+            setStatusMessage({
+                type: 'success',
+                text: 'Draft approved successfully'
+            });
+
+            // Refresh the page data
+            router.refresh();
+
+            // Clear the message after 3 seconds
+            setTimeout(() => {
+                setStatusMessage(null);
+            }, 3000);
+        } catch (error) {
+            console.error('Error approving draft:', error);
+            setStatusMessage({
+                type: 'error',
+                text: 'Failed to approve draft'
+            });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    // Handle draft rejection
+    const handleRejectDraft = async (draftId: number) => {
+        if (!window.confirm('Are you sure you want to reject this draft? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            setIsUpdating(true);
+            const response = await fetch(`/api/admin/profiles/drafts/${draftId}/reject`, {
+                method: 'POST',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reject draft');
+            }
+
+            setStatusMessage({
+                type: 'success',
+                text: 'Draft rejected successfully'
+            });
+
+            // Refresh the page data
+            router.refresh();
+
+            // Clear the message after 3 seconds
+            setTimeout(() => {
+                setStatusMessage(null);
+            }, 3000);
+        } catch (error) {
+            console.error('Error rejecting draft:', error);
+            setStatusMessage({
+                type: 'error',
+                text: 'Failed to reject draft'
+            });
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     return (
         <div>
             {/* Status message */}
@@ -207,16 +324,54 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                     />
                 </div>
 
+                <div className="flex items-center gap-4 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={filterRoles.includes('user')}
+                            onChange={() => handleRoleToggle('user')}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Users</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={filterRoles.includes('admin')}
+                            onChange={() => handleRoleToggle('admin')}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Admins</span>
+                    </label>
+                </div>
+
                 <div>
-                    <select
-                        value={filterRole || ''}
-                        onChange={(e) => setFilterRole(e.target.value || null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    <button
+                        onClick={() => setShowOnlyDrafts(!showOnlyDrafts)}
+                        className={`px-4 py-2 rounded-md border font-medium transition-colors ${
+                            showOnlyDrafts
+                                ? 'bg-yellow-500 text-white border-yellow-600 hover:bg-yellow-600'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                        }`}
+                        title="Show only users with pending drafts"
                     >
-                        <option value="">{t('allRoles')}</option>
-                        <option value="user">{t('user')}</option>
-                        <option value="admin">{t('admin')}</option>
-                    </select>
+                        📝 Drafts Only
+                    </button>
+                </div>
+
+                <div>
+                    <button
+                        onClick={handleBulkMakeAdmin}
+                        disabled={selectedUsers.length === 0 || isUpdating}
+                        className={`px-4 py-2 rounded-md border font-medium transition-colors ${
+                            selectedUsers.length === 0 || isUpdating
+                                ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed dark:bg-gray-800 dark:text-gray-600'
+                                : 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'
+                        }`}
+                        title="Make selected users administrators"
+                    >
+                        ⭐ Make Admin {selectedUsers.length > 0 && `(${selectedUsers.length})`}
+                    </button>
                 </div>
             </div>
 
@@ -225,20 +380,28 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-4 py-3 text-center w-12">
+                            <input
+                                type="checkbox"
+                                checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                                onChange={handleSelectAll}
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                            />
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-48">
                             User
                         </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-auto">
                             Profile
                         </th>
                         <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Published
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Role
+                            Drafts
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Created
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Updated
                         </th>
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             Actions
@@ -248,29 +411,42 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                     <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
                     {filteredUsers.length > 0 ? (
                         filteredUsers.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                <td className="px-6 py-4 whitespace-nowrap">
+                            <tr key={user.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${user.role === 'admin' ? 'bg-purple-50 dark:bg-purple-900/20' : ''}`}>
+                                <td className="px-4 py-4 text-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedUsers.includes(user.id)}
+                                        onChange={() => handleSelectUser(user.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                </td>
+                                <td className="px-4 py-4 whitespace-nowrap w-48">
                                     <div className="flex items-center">
-                                        <div className="flex-shrink-0 h-10 w-10 relative">
+                                        <div className="flex-shrink-0 h-8 w-8 relative">
                                             {user.image ? (
                                                 <Image
                                                     src={user.image}
                                                     alt={user.name || 'User'}
                                                     className="rounded-full"
                                                     fill
-                                                    sizes="40px"
+                                                    sizes="32px"
                                                 />
                                             ) : (
-                                                <div className="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                                                <div className="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs">
                                                     {user.name?.charAt(0) || user.email.charAt(0)}
                                                 </div>
                                             )}
+                                            {user.role === 'admin' && (
+                                                <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white dark:border-gray-900" title="Admin">
+                                                    ★
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="ml-4">
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                        <div className="ml-3 min-w-0 flex-1">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
                                                 {user.name || 'No name'}
                                             </div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                 {user.email}
                                             </div>
                                         </div>
@@ -278,18 +454,32 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     {user.profile ? (
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                                {user.profile.name}
-                                                {user.profile.isDraft && (
-                                                    <span className="ml-2 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded-full">
-                                                        Draft
-                                                    </span>
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={`text-lg ${user.profile && !updatingProfileIds[user.profile.id] ? 'cursor-pointer hover:opacity-70' : 'opacity-50'}`}
+                                                title={user.profile.published ? t('clickToUnpublish') : t('clickToPublish')}
+                                                onClick={() => {
+                                                    if (user.profile && !updatingProfileIds[user.profile.id]) {
+                                                        handleTogglePublished(user.profile.id, user.profile.published);
+                                                    }
+                                                }}
+                                            >
+                                                {user.profile && updatingProfileIds[user.profile.id] ? (
+                                                    <svg className="animate-spin inline-block h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                ) : (
+                                                    user.profile.published ? "✅" : "❌"
                                                 )}
-                                            </div>
-                                            <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                {user.profile.age} years • {user.profile.price}€
-                                            </div>
+                                            </span>
+                                            <Link
+                                                href={`/profile/${user.profile.id}`}
+                                                className="text-sm font-medium text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                target="_blank"
+                                            >
+                                                {user.profile.name}
+                                            </Link>
                                         </div>
                                     ) : (
                                         <span className="text-sm text-gray-500 dark:text-gray-400">
@@ -298,89 +488,81 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                                    {user.profile ? (
-                                        <span
-                                            className={`text-lg ${user.profile && !updatingProfileIds[user.profile.id] ? 'cursor-pointer hover:opacity-70' : 'opacity-50'}`}
-                                            title={user.profile.published ? t('clickToUnpublish') : t('clickToPublish')}
-                                            onClick={() => {
-                                                if (user.profile && !updatingProfileIds[user.profile.id]) {
-                                                    handleTogglePublished(user.profile.id, user.profile.published);
-                                                }
-                                            }}
+                                    {user.draft ? (
+                                        <div className="flex justify-center gap-2">
+                                            <button
+                                                onClick={() => handleApproveDraft(user.draft!.id)}
+                                                disabled={isUpdating}
+                                                className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded disabled:opacity-50 font-medium"
+                                                title="Approve draft"
+                                            >
+                                                ✓
+                                            </button>
+                                            <button
+                                                onClick={() => handleRejectDraft(user.draft!.id)}
+                                                disabled={isUpdating}
+                                                className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded disabled:opacity-50 font-medium"
+                                                title="Reject draft"
+                                            >
+                                                ✕
+                                            </button>
+                                            <Link
+                                                href={`/admin/profiles/${user.draft!.id}/versions`}
+                                                className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium inline-flex items-center"
+                                                title="View draft"
+                                            >
+                                                👁
+                                            </Link>
+                                        </div>
+                                    ) : user.profile ? (
+                                        <Link
+                                            href={`/admin/profiles/${user.profile.id}/versions`}
+                                            className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
+                                            title="View profile and version history"
                                         >
-                                            {user.profile && updatingProfileIds[user.profile.id] ? (
-                                                <svg className="animate-spin inline-block h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                            ) : (
-                                                user.profile.published ? "✅" : "❌"
-                                            )}
-                                        </span>
+                                            📊 Versions
+                                        </Link>
                                     ) : (
                                         <span className="text-sm text-gray-400">—</span>
                                     )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                        user.role === 'admin'
-                                            ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                                            : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                    }`}>
-                                      {user.role}
-                                    </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     {formatDateFriendly(user.createdAt)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    <div className="flex flex-col gap-2">
-                                        {user.profile ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                <Link
-                                                    href={`/admin/profiles/${user.profile?.id}/view`}
-                                                    className="text-purple-600 hover:text-purple-900 dark:text-purple-400 dark:hover:text-purple-300"
-                                                    title="View profile and version history"
-                                                >
-                                                    📊 Versions
-                                                </Link>
-                                                <Link
-                                                    href={`/admin/profiles/${user.profile?.id}/edit`}
-                                                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                                >
-                                                    Edit
-                                                </Link>
-                                                <button
-                                                    onClick={() => user.profile && handleDeleteProfile(user.profile.id)}
-                                                    disabled={isUpdating}
-                                                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        ) : (
+                                    {user.profile?.updatedAt ? formatDateFriendly(user.profile.updatedAt) : <span className="text-gray-400">—</span>}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                    {user.profile ? (
+                                        <div className="flex gap-3">
                                             <Link
-                                                href={`/admin/profiles/create?userId=${user.id}`}
-                                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                                                href={`/admin/profiles/${user.profile?.id}/edit`}
+                                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                                             >
-                                                Create Profile
+                                                Edit
                                             </Link>
-                                        )}
-
-                                        <button
-                                            onClick={() => handleToggleRole(user.id, user.role)}
-                                            disabled={isUpdating}
-                                            className={`text-left text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            <button
+                                                onClick={() => user.profile && handleDeleteProfile(user.profile.id)}
+                                                disabled={isUpdating}
+                                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <Link
+                                            href={`/admin/profiles/create?userId=${user.id}`}
+                                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                                         >
-                                            {user.role === 'admin' ? 'Make User' : 'Make Admin'}
-                                        </button>
-                                    </div>
+                                            Create Profile
+                                        </Link>
+                                    )}
                                 </td>
                             </tr>
                         ))
                     ) : (
                         <tr>
-                            <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+                            <td colSpan={7} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                                 No users found
                             </td>
                         </tr>

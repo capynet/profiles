@@ -116,7 +116,7 @@ export default function AdminControls({
                         bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600
                         rounded-md hover:bg-gray-50 dark:hover:bg-gray-700
                         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                            onClick={() => window.open(`/admin/profiles/${profileId}/view`, '_blank')}
+                            onClick={() => window.open(`/admin/profiles/${profileId}/versions`, '_blank')}
                         >
                             {t('viewDetailsButton')}
                         </button>

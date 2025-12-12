@@ -2,7 +2,6 @@
 import {requireAdmin} from '@/lib/auth-utils';
 import {prisma} from '@/prisma';
 import AdminUserTable from '@/components/AdminUserTable';
-import AdminDraftsTable from '@/components/AdminDraftsTable';
 
 // Force dynamic rendering to ensure fresh data on each request
 export const dynamic = 'force-dynamic';
@@ -16,25 +15,7 @@ export default async function AdminDashboardPage() {
     // This ensures only admin users can access this page
     await requireAdmin();
 
-    // Fetch all pending profile drafts
-    const drafts = await prisma.profile.findMany({
-        where: {
-            isDraft: true
-        },
-        include: {
-            user: {
-                select: { name: true, email: true }
-            },
-            originalProfile: {
-                select: { id: true, name: true }
-            }
-        },
-        orderBy: {
-            updatedAt: 'desc',
-        },
-    });
-
-    // Fetch all users with their profiles
+    // Fetch all users with their profiles (including ALL drafts)
     const users = await prisma.user.findMany({
         include: {
             profiles: {
@@ -44,14 +25,9 @@ export default async function AdminDashboardPage() {
                     age: true,
                     price: true,
                     isDraft: true,
-                    published: true, // Explicitly include published field
-                    originalProfileId: true
-                },
-                where: {
-                    OR: [
-                        { isDraft: false },
-                        { isDraft: true, originalProfileId: null } // Include drafts without originals (new profiles)
-                    ]
+                    published: true,
+                    originalProfileId: true,
+                    updatedAt: true
                 }
             },
         },
@@ -60,26 +36,20 @@ export default async function AdminDashboardPage() {
         },
     });
 
-    // Transform data to maintain compatibility with AdminUserTable component
+    // Transform data to include both profile and draft information
     const transformedUsers = users.map(user => {
-        // Find the main profile (non-draft) or the first profile if no main profile exists
-        const mainProfile = user.profiles.find(p => !p.isDraft) || user.profiles[0] || null;
+        // Find the main published profile (non-draft)
+        const mainProfile = user.profiles.find(p => !p.isDraft) || null;
+
+        // Find pending draft (either new profile or edit of existing)
+        const pendingDraft = user.profiles.find(p => p.isDraft) || null;
 
         return {
             ...user,
-            // Assign the main profile as "profile" (singular) for compatibility
-            profile: mainProfile
+            profile: mainProfile,
+            draft: pendingDraft
         };
     });
-
-    console.log("Users with profiles:", transformedUsers.map(u => ({
-        email: u.email,
-        profile: u.profile ? {
-            id: u.profile.id,
-            name: u.profile.name,
-            published: u.profile.published
-        } : null
-    })));
 
     return (
         <div className="container mx-auto py-8 px-4">
@@ -87,23 +57,7 @@ export default async function AdminDashboardPage() {
                 Admin Dashboard
             </h1>
 
-            {/* Pending Drafts Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-8">
-                <div className="p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                        Pending Profile Drafts
-                        {drafts.length > 0 && (
-                            <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100 text-xs rounded-full">
-                                {drafts.length}
-                            </span>
-                        )}
-                    </h2>
-
-                    <AdminDraftsTable drafts={drafts} />
-                </div>
-            </div>
-
-            {/* User Management Section */}
+            {/* Unified User Management Table */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                 <div className="p-6">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">

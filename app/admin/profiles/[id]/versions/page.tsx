@@ -1,4 +1,4 @@
-// app/admin/profiles/[id]/view/page.tsx
+// app/admin/profiles/[id]/versions/page.tsx
 import {notFound} from 'next/navigation';
 import {prisma} from '@/prisma';
 import {requireAdmin} from '@/lib/auth-utils';

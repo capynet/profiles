@@ -174,7 +174,7 @@ export default function AdminDraftsTable({ drafts }: AdminDraftsTableProps) {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 space-x-3">
                                 <Link
-                                    href={`/admin/profiles/${draft.id}/view`}
+                                    href={`/admin/profiles/${draft.id}/versions`}
                                     className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                                 >
                                     {t('viewDraft')}
