@@ -364,6 +364,15 @@
       "Girlfriend Experience": "Girlfriend Experience",
       "Event Companion": "Event Companion",
       "Romantic Night": "Romantic Night"
+    },
+    "ImageCropWarnings": {
+      "title": "Aspect Ratio Issues Detected",
+      "description": "The following images don't match the required 9:16 aspect ratio:",
+      "autoCrop": "Auto-crop",
+      "manualCrop": "Manual crop",
+      "imageLabel": "Image {index}",
+      "reasonTooWide": "Image is too wide - can be auto-cropped",
+      "reasonTooNarrow": "Image is too narrow - manual crop recommended"
     }
   }
 }

@@ -113,6 +113,9 @@ export default function ImageCropModal({
         });
     };
 
+    // Detect single-image mode
+    const isSingleImageMode = imagesToProcess.length === 1;
+
     // Handle the crop confirmation for the current selected image
     const handleCrop = async () => {
         if (!selectedImageId || !croppedAreaPixels) return;
@@ -123,6 +126,12 @@ export default function ImageCropModal({
         try {
             const croppedImage = await getCroppedImg(selectedImage.url, croppedAreaPixels);
             onCropComplete(croppedImage, selectedImageId);
+
+            // If single image mode, close modal after crop
+            if (isSingleImageMode) {
+                onClose();
+                return;
+            }
 
             // Find next unprocessed image
             const nextUnprocessedImage = imagesToProcess.find(img => !img.processed && img.id !== selectedImageId);
@@ -174,37 +183,39 @@ export default function ImageCropModal({
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
-                    {/* Image thumbnails sidebar */}
-                    <div className="w-full md:w-32 flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto md:max-h-96">
-                        {imagesToProcess.map((img) => (
-                            <div
-                                key={img.id}
-                                onClick={() => selectImage(img.id)}
-                                className={`relative cursor-pointer rounded-md overflow-hidden shrink-0 w-16 h-16 md:w-24 md:h-24 border-2 ${
-                                    selectedImageId === img.id
-                                        ? 'border-indigo-600 dark:border-indigo-500'
-                                        : img.processed
-                                            ? 'border-green-500 dark:border-green-400'
-                                            : 'border-gray-300 dark:border-gray-600'
-                                }`}
-                            >
-                                <Image
-                                    src={img.url}
-                                    alt={`Image ${img.id}`}
-                                    fill
-                                    sizes="(max-width: 768px) 64px, 96px"
-                                    className="object-cover"
-                                />
-                                {img.processed && (
-                                    <div className="absolute inset-0 bg-green-500 bg-opacity-30 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                    {/* Image thumbnails sidebar - HIDDEN in single-image mode */}
+                    {!isSingleImageMode && (
+                        <div className="w-full md:w-32 flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto md:max-h-96">
+                            {imagesToProcess.map((img) => (
+                                <div
+                                    key={img.id}
+                                    onClick={() => selectImage(img.id)}
+                                    className={`relative cursor-pointer rounded-md overflow-hidden shrink-0 w-16 h-16 md:w-24 md:h-24 border-2 ${
+                                        selectedImageId === img.id
+                                            ? 'border-indigo-600 dark:border-indigo-500'
+                                            : img.processed
+                                                ? 'border-green-500 dark:border-green-400'
+                                                : 'border-gray-300 dark:border-gray-600'
+                                    }`}
+                                >
+                                    <Image
+                                        src={img.url}
+                                        alt={`Image ${img.id}`}
+                                        fill
+                                        sizes="(max-width: 768px) 64px, 96px"
+                                        className="object-cover"
+                                    />
+                                    {img.processed && (
+                                        <div className="absolute inset-0 bg-green-500 bg-opacity-30 flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Cropper and controls */}
                     <div className="flex-1">

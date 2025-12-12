@@ -10,6 +10,7 @@ import { getLocaleFromCookie } from '@/lib/cookie-utils';
 import {NextIntlClientProvider} from "next-intl";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { unstable_cache } from 'next/cache';
+import { Toaster } from 'sonner';
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -73,6 +74,7 @@ export default async function RootLayout({
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900`}
         >
         <SpeedInsights/>
+        <Toaster position="top-right" richColors />
         <NextIntlClientProvider locale={locale}>
             <Header user={userWithProfileInfo}/>
             <main className="flex-grow">

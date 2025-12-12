@@ -1,5 +1,13 @@
 // hooks/useProfileImages.ts
 import { useState, useEffect, useCallback } from 'react';
+import {
+    getImageDimensions,
+    calculateAspectRatio,
+    validateImageAspectRatio,
+    centerCropImage,
+    getCroppedFileName
+} from '@/utils/imageUtils';
+import { toast } from 'sonner';
 
 interface ExistingImage {
     id: number;
@@ -22,6 +30,13 @@ interface UnifiedImage {
     file?: File;
     storageKey?: string;
     isPrimary?: boolean;
+    // NEW: Aspect ratio validation fields
+    aspectRatio?: number;
+    width?: number;
+    height?: number;
+    requiresCrop?: boolean;
+    cropReason?: string;
+    canAutoCrop?: boolean;
 }
 
 export function useProfileImages(existingImages: ExistingImage[] = []) {
@@ -66,22 +81,145 @@ export function useProfileImages(existingImages: ExistingImage[] = []) {
         }
     }, [images]);
 
-    // Handle adding files for cropping
-    const handleAddFiles = useCallback((files: File[]) => {
+    // Handle adding files - NOW adds directly with validation (no mandatory crop)
+    const handleAddFiles = useCallback(async (files: File[]) => {
         if (!files || files.length === 0) return;
 
-        const newImagesToCrop = Array.from(files).map(file => ({
-            id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            file,
-            url: URL.createObjectURL(file),
-            processed: false
-        }));
+        try {
+            // Process each file to get dimensions and validation
+            const processedFiles = await Promise.all(
+                Array.from(files).map(async (file) => {
+                    const id = `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    const url = URL.createObjectURL(file);
 
-        setImagesToCrop(newImagesToCrop);
-        setShowCropModal(true);
+                    try {
+                        // Get image dimensions
+                        const { width, height } = await getImageDimensions(file);
+                        const aspectRatio = calculateAspectRatio(width, height);
+
+                        // Validate aspect ratio (9:16 target)
+                        const TARGET_RATIO = 9 / 16;
+                        const validation = validateImageAspectRatio(aspectRatio, TARGET_RATIO, 0.01);
+
+                        return {
+                            id,
+                            file,
+                            url,
+                            isExisting: false,
+                            isPrimary: false, // Will be set by effect
+                            aspectRatio,
+                            width,
+                            height,
+                            requiresCrop: validation.requiresCrop,
+                            cropReason: validation.reason,
+                            canAutoCrop: validation.canAutoCrop
+                        };
+                    } catch (error) {
+                        console.error('Error processing image:', error);
+                        // Add image anyway but mark as needing manual crop
+                        return {
+                            id,
+                            file,
+                            url,
+                            isExisting: false,
+                            isPrimary: false,
+                            requiresCrop: true,
+                            cropReason: 'Could not validate image - manual crop recommended',
+                            canAutoCrop: false
+                        };
+                    }
+                })
+            );
+
+            // Add ALL images directly to gallery
+            setImages(prev => [...prev, ...processedFiles]);
+
+            // Show success toast
+            const validImages = processedFiles.filter(img => !img.requiresCrop).length;
+            const invalidImages = processedFiles.filter(img => img.requiresCrop).length;
+
+            if (invalidImages > 0) {
+                toast.warning(
+                    `${processedFiles.length} image(s) added. ${invalidImages} need(s) cropping.`,
+                    {
+                        description: 'Check warnings below to crop images with aspect ratio issues.'
+                    }
+                );
+            } else {
+                toast.success(`${processedFiles.length} image(s) added successfully`);
+            }
+        } catch (error) {
+            console.error('Error adding files:', error);
+            toast.error('Failed to add images. Please try again.');
+        }
     }, []);
 
-    // Handle crop completion
+    // NEW: Handle auto-crop (center crop)
+    const handleAutoCrop = useCallback(async (imageId: string | number) => {
+        const image = images.find(img => img.id === imageId);
+        if (!image || !image.file) {
+            toast.error('Cannot auto-crop: image not found');
+            return;
+        }
+
+        if (!image.canAutoCrop) {
+            toast.error('This image cannot be auto-cropped. Please use manual crop instead.');
+            return;
+        }
+
+        try {
+            // Perform center crop
+            const croppedBlob = await centerCropImage(image.file, 9 / 16);
+            const croppedFile = new File(
+                [croppedBlob],
+                getCroppedFileName(image.file.name),
+                { type: 'image/jpeg' }
+            );
+            const previewUrl = URL.createObjectURL(croppedBlob);
+
+            // Revoke old URL
+            URL.revokeObjectURL(image.url);
+
+            // Update image in array
+            setImages(prev => prev.map(img =>
+                img.id === imageId
+                    ? {
+                        ...img,
+                        file: croppedFile,
+                        url: previewUrl,
+                        requiresCrop: false,
+                        cropReason: undefined,
+                        canAutoCrop: false
+                    }
+                    : img
+            ));
+
+            toast.success('Image auto-cropped successfully');
+        } catch (error) {
+            console.error('Auto-crop error:', error);
+            toast.error('Failed to auto-crop image. Please try manual crop.');
+        }
+    }, [images]);
+
+    // NEW: Handle manual crop (open modal for specific image)
+    const handleManualCrop = useCallback((imageId: string | number) => {
+        const image = images.find(img => img.id === imageId);
+        if (!image || !image.file) {
+            toast.error('Cannot crop: image not found');
+            return;
+        }
+
+        // Set up single image for cropping
+        setImagesToCrop([{
+            id: String(imageId),
+            file: image.file,
+            url: image.url,
+            processed: false
+        }]);
+        setShowCropModal(true);
+    }, [images]);
+
+    // Handle crop completion (from modal)
     const handleCropComplete = useCallback((croppedBlob: Blob, imageId: string) => {
         // Create file from blob
         const croppedFile = new File(
@@ -93,20 +231,41 @@ export function useProfileImages(existingImages: ExistingImage[] = []) {
         // Create preview URL
         const previewUrl = URL.createObjectURL(croppedBlob);
 
-        // Update images to crop as processed
+        // Mark image as processed in crop queue
         setImagesToCrop(prev => prev.map(img =>
             img.id === imageId ? { ...img, processed: true } : img
         ));
 
-        // Add to images list
-        setImages(prev => [...prev, {
-            id: imageId,
-            file: croppedFile,
-            url: previewUrl,
-            isExisting: false,
-            isPrimary: prev.length === 0 // Primary if it's the first image
-        }]);
-    }, []);
+        // Check if image already exists in images array (manual crop of existing)
+        const existingImageIndex = images.findIndex(img => String(img.id) === imageId);
+
+        if (existingImageIndex !== -1) {
+            // Update existing image (manual crop)
+            setImages(prev => prev.map(img =>
+                String(img.id) === imageId
+                    ? {
+                        ...img,
+                        file: croppedFile,
+                        url: previewUrl,
+                        requiresCrop: false,
+                        cropReason: undefined,
+                        canAutoCrop: false
+                    }
+                    : img
+            ));
+            toast.success('Image cropped successfully');
+        } else {
+            // Add new image (old flow compatibility)
+            setImages(prev => [...prev, {
+                id: imageId,
+                file: croppedFile,
+                url: previewUrl,
+                isExisting: false,
+                isPrimary: prev.length === 0
+            }]);
+            toast.success('Image added successfully');
+        }
+    }, [images]);
 
     // Handle image removal
     const handleRemoveImage = useCallback((imageId: string | number) => {
@@ -206,6 +365,9 @@ export function useProfileImages(existingImages: ExistingImage[] = []) {
         handleRemoveImage,
         handleReorderImages,
         handleCloseCropModal,
-        prepareImagesForSubmission
+        prepareImagesForSubmission,
+        // NEW exports
+        handleAutoCrop,
+        handleManualCrop
     };
 }

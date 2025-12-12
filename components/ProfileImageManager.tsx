@@ -1,12 +1,19 @@
 // components/ProfileImageManager.tsx
-import { useRef } from 'react';
+'use client';
+
+import { useDropzone } from 'react-dropzone';
 import SortableImageGallery from './SortableImageGallery';
+import ImageCropWarnings from './ImageCropWarnings';
+import clsx from 'clsx';
 
 interface Image {
     id: string | number;
     url: string;
     isPrimary?: boolean;
     isExisting: boolean;
+    requiresCrop?: boolean;
+    cropReason?: string;
+    canAutoCrop?: boolean;
 }
 
 interface ProfileImageManagerProps {
@@ -14,74 +21,27 @@ interface ProfileImageManagerProps {
     onAddFiles: (files: File[]) => void;
     onRemoveImage: (id: string | number) => void;
     onReorderImages: (newOrder: Image[]) => void;
+    onAutoCrop: (imageId: string | number) => void;
+    onManualCrop: (imageId: string | number) => void;
 }
 
 export default function ProfileImageManager({
                                                 images,
                                                 onAddFiles,
                                                 onRemoveImage,
-                                                onReorderImages
+                                                onReorderImages,
+                                                onAutoCrop,
+                                                onManualCrop
                                             }: ProfileImageManagerProps) {
-    // File input ref for programmatic opening
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Handle file selection
-    const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            onAddFiles(Array.from(e.target.files));
-            // Reset file input for future selections
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-        }
-    };
-
-    // Handle file drop
-    const handleFileDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Reset drag effect classes
-        const dropzone = e.currentTarget.querySelector('.dropzone');
-        if (dropzone) {
-            dropzone.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-indigo-300', 'dark:border-indigo-700');
-            dropzone.classList.remove('scale-[1.02]');
-        }
-
-        // Process dropped files
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            const imageFiles = Array.from(e.dataTransfer.files)
-                .filter(file => file.type.startsWith('image/'));
-
-            if (imageFiles.length > 0) {
-                onAddFiles(imageFiles);
-            }
-        }
-    };
-
-    // Handle drag over for styling
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const dropzone = e.currentTarget.querySelector('.dropzone');
-        if (dropzone) {
-            dropzone.classList.add('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-indigo-300', 'dark:border-indigo-700');
-            dropzone.classList.add('scale-[1.02]');
-        }
-    };
-
-    // Handle drag leave for styling
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const dropzone = e.currentTarget.querySelector('.dropzone');
-        if (dropzone) {
-            dropzone.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/20', 'border-indigo-300', 'dark:border-indigo-700');
-            dropzone.classList.remove('scale-[1.02]');
-        }
-    };
+    // Setup react-dropzone
+    const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+        accept: {
+            'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+        },
+        maxSize: 10 * 1024 * 1024, // 10MB
+        multiple: true,
+        onDrop: (acceptedFiles) => onAddFiles(acceptedFiles)
+    });
 
     return (
         <div className="space-y-4">
@@ -90,33 +50,36 @@ export default function ProfileImageManager({
                     Profile Images
                 </label>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-          {images.length === 0 ? 'No images uploaded' : `${images.length} images (first is primary)`}
-        </span>
+                    {images.length === 0 ? 'No images uploaded' : `${images.length} images (first is primary)`}
+                </span>
             </div>
 
-            {/* File Upload Area */}
-            <div
-                className="relative"
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleFileDrop}
-            >
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileSelection}
-                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
-                    aria-label="Choose profile images"
-                />
+            {/* File Upload Area - Using react-dropzone */}
+            <div {...getRootProps()}>
+                <input {...getInputProps()} aria-label="Choose profile images" />
 
-                <div className="dropzone w-full px-4 py-8 flex flex-col items-center justify-center space-y-3 text-sm font-medium rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all transform active:scale-[0.98] active:bg-indigo-50 dark:active:bg-indigo-900/20">
+                <div className={clsx(
+                    'w-full px-4 py-8 flex flex-col items-center justify-center space-y-3 text-sm font-medium rounded-md border-2 border-dashed transition-all transform cursor-pointer',
+                    isDragActive && !isDragReject && 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-700 scale-[1.02]',
+                    isDragReject && 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700',
+                    !isDragActive && 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700',
+                    'active:scale-[0.98] active:bg-indigo-50 dark:active:bg-indigo-900/20'
+                )}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
-                    <div className="text-center">
-                        <span className="font-medium text-indigo-600 dark:text-indigo-400">Click to upload</span> or drag and drop
+                    <div className="text-center text-gray-700 dark:text-gray-300">
+                        {isDragActive ? (
+                            isDragReject ? (
+                                <span className="text-red-600 dark:text-red-400">Invalid file type</span>
+                            ) : (
+                                <span className="text-indigo-600 dark:text-indigo-400 font-medium">Drop images here...</span>
+                            )
+                        ) : (
+                            <>
+                                <span className="font-medium text-indigo-600 dark:text-indigo-400">Click to upload</span> or drag and drop
+                            </>
+                        )}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                         PNG, JPG, GIF up to 10MB
@@ -125,7 +88,7 @@ export default function ProfileImageManager({
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400">
-                Images will be cropped to a 9:16 ratio, converted to WebP, and stored in Google Cloud Storage.
+                Images will be validated for 9:16 aspect ratio. You can crop them if needed, or they'll be cropped automatically on the server.
             </p>
 
             {/* Sortable Image Gallery */}
@@ -138,6 +101,13 @@ export default function ProfileImageManager({
                         images={images}
                         onReorder={onReorderImages}
                         onRemove={onRemoveImage}
+                    />
+
+                    {/* Crop Warnings - NEW */}
+                    <ImageCropWarnings
+                        images={images}
+                        onAutoCrop={onAutoCrop}
+                        onManualCrop={onManualCrop}
                     />
                 </div>
             )}

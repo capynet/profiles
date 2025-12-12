@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import clsx from 'clsx';
+import ImageValidationBadge from './ImageValidationBadge';
 
 interface ImageItem {
     id: string | number;
@@ -10,6 +12,9 @@ interface ImageItem {
     isPrimary?: boolean;
     isNew?: boolean;
     isExisting: boolean;
+    requiresCrop?: boolean;
+    cropReason?: string;
+    canAutoCrop?: boolean;
 }
 
 interface SortableImageGalleryProps {
@@ -33,18 +38,6 @@ export default function SortableImageGallery({
     useEffect(() => {
         setLocalImages(images);
     }, [images]);
-
-    // Update the first image to be primary
-    useEffect(() => {
-        if (localImages.length > 0) {
-            const updatedImages = localImages.map((img, index) => ({
-                ...img,
-                isPrimary: index === 0
-            }));
-            setLocalImages(updatedImages);
-            onReorder(updatedImages);
-        }
-    }, [localImages.length, localImages, onReorder]);
 
     const handleDragStart = (e: React.DragEvent, index: number) => {
         // Set the dragged item index
@@ -90,7 +83,14 @@ export default function SortableImageGallery({
 
     const handleDragEnd = () => {
         setDraggingIndex(null);
-        onReorder(localImages);
+
+        // Update isPrimary flag before calling onReorder
+        const updatedImages = localImages.map((img, index) => ({
+            ...img,
+            isPrimary: index === 0
+        }));
+
+        onReorder(updatedImages);
     };
 
     return (
@@ -98,9 +98,12 @@ export default function SortableImageGallery({
             {localImages.map((image, index) => (
                 <div
                     key={image.id}
-                    className={`relative aspect-[9/16] w-28 rounded-md overflow-hidden 
-            ${index === draggingIndex ? 'opacity-50' : 'opacity-100'} 
-            ${image.isPrimary ? 'ring-2 ring-indigo-600 dark:ring-indigo-400' : ''}`}
+                    className={clsx(
+                        'relative aspect-[9/16] w-28 rounded-md overflow-hidden',
+                        index === draggingIndex ? 'opacity-50' : 'opacity-100',
+                        image.isPrimary && 'ring-2 ring-indigo-600 dark:ring-indigo-400',
+                        image.requiresCrop && !image.isPrimary && 'ring-2 ring-yellow-400 dark:ring-yellow-500'
+                    )}
                     draggable
                     onDragStart={(e) => handleDragStart(e, index)}
                     onDragOver={(e) => handleDragOver(e, index)}
@@ -131,6 +134,13 @@ export default function SortableImageGallery({
                             {t('new')}
                         </div>
                     )}
+
+                    {/* Validation Badge - NEW */}
+                    <ImageValidationBadge
+                        requiresCrop={image.requiresCrop || false}
+                        reason={image.cropReason || ''}
+                        canAutoCrop={image.canAutoCrop}
+                    />
 
                     {/* Remove button */}
                     <button

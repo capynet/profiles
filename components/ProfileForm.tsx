@@ -78,7 +78,9 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
         handleRemoveImage,
         handleReorderImages,
         handleCloseCropModal,
-        prepareImagesForSubmission
+        prepareImagesForSubmission,
+        handleAutoCrop,
+        handleManualCrop
     } = useProfileImages(profile?.images);
 
     // Detect if we're editing a published profile (which will create a draft)
@@ -207,7 +209,13 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                     setErrors(result.errors || {});
                 } else {
                     // Redirect to appropriate page based on mode
-                    window.location.href = isAdminMode ? '/admin' : '/profile/' + profile.id;
+                    // If result.profileId is different from profile.id, it means a draft was created
+                    if (isAdminMode) {
+                        // Redirect to the updated/created profile (could be a draft)
+                        window.location.href = `/admin/profiles/${result.profileId}/edit`;
+                    } else {
+                        window.location.href = '/profile/' + result.profileId;
+                    }
                 }
             } else {
                 const result = await createProfile(updatedFormData);
@@ -336,6 +344,8 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                             onAddFiles={handleAddFiles}
                             onRemoveImage={handleRemoveImage}
                             onReorderImages={handleReorderImages}
+                            onAutoCrop={handleAutoCrop}
+                            onManualCrop={handleManualCrop}
                         />
                         {errors.images && <p className="mt-1 text-sm text-red-600 font-medium">{errors.images[0]}</p>}
                     </div>

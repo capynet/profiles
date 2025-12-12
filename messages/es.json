@@ -364,6 +364,15 @@
       "Girlfriend Experience": "Experiencia de novia",
       "Event Companion": "Acompañante de eventos",
       "Romantic Night": "Noche romántica"
+    },
+    "ImageCropWarnings": {
+      "title": "Problemas de relación de aspecto detectados",
+      "description": "Las siguientes imágenes no coinciden con la relación de aspecto requerida de 9:16:",
+      "autoCrop": "Recortar automáticamente",
+      "manualCrop": "Recortar manualmente",
+      "imageLabel": "Imagen {index}",
+      "reasonTooWide": "La imagen es demasiado ancha - se puede recortar automáticamente",
+      "reasonTooNarrow": "La imagen es demasiado estrecha - se recomienda recorte manual"
     }
   }
 }
