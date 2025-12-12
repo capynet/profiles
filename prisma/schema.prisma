@@ -5,6 +5,7 @@ datasource db {
 generator client {
   provider   = "prisma-client-js"
   engineType = "client"
+  output     = "../node_modules/.prisma/client"
 }
 
 model ProfileImage {
