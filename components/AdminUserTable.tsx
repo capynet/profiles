@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { formatDateFriendly } from '@/lib/date-utils';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { formatDateFriendly, formatTime } from '@/lib/date-utils';
 import { useTranslations } from 'next-intl';
 
 interface Profile {
@@ -33,11 +33,13 @@ interface User {
 
 interface AdminUserTableProps {
     users: User[];
+    sortBy?: string;
 }
 
-export default function AdminUserTable({ users }: AdminUserTableProps) {
+export default function AdminUserTable({ users, sortBy = 'updated' }: AdminUserTableProps) {
     const t = useTranslations('AdminUserTable');
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRoles, setFilterRoles] = useState<string[]>(['user']);
     const [showOnlyDrafts, setShowOnlyDrafts] = useState(false);
@@ -69,6 +71,13 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                 return [...prev, role];
             }
         });
+    };
+
+    // Handle sort change
+    const handleSortChange = (newSortBy: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('sortBy', newSortBy);
+        router.push(`/admin?${params.toString()}`);
     };
 
     // Handle user selection
@@ -368,6 +377,18 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                     />
                 </div>
 
+                <div>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => handleSortChange(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                        <option value="updated">Sort by Updated</option>
+                        <option value="created">Sort by Created</option>
+                        <option value="name">Sort by Name</option>
+                    </select>
+                </div>
+
                 <div className="flex items-center gap-4 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700">
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -570,11 +591,21 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                         <span className="text-sm text-gray-400">—</span>
                                     )}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {formatDateFriendly(user.createdAt)}
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    <div className="flex flex-col">
+                                        <span>{formatDateFriendly(user.createdAt)}</span>
+                                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatTime(user.createdAt)}</span>
+                                    </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {user.profile?.updatedAt ? formatDateFriendly(user.profile.updatedAt) : <span className="text-gray-400">—</span>}
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    {user.profile?.updatedAt ? (
+                                        <div className="flex flex-col">
+                                            <span>{formatDateFriendly(user.profile.updatedAt)}</span>
+                                            <span className="text-xs text-gray-400 dark:text-gray-500">{formatTime(user.profile.updatedAt)}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-400">—</span>
+                                    )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     <div className="flex gap-3">

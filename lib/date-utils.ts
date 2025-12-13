@@ -24,11 +24,25 @@ export function formatDate(date: Date | string): string {
  */
 export function formatDateFriendly(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  
+
   // Format as DD/MM/YYYY to ensure consistency
   const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
-  
+
   return `${day}/${month}/${year}`;
+}
+
+/**
+ * Format the time portion of a date in HH:MM format
+ * Consistent between server and client rendering
+ */
+export function formatTime(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+
+  // Format as HH:MM
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
 }
