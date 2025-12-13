@@ -2,7 +2,11 @@
 import {PrismaClient} from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import {ImageService} from '@/services/imageService';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PROFILES_QTY = 20
 const MIN_PRICE = 20
@@ -260,6 +264,21 @@ export default async function seedProfiles(prisma: PrismaClient) {
         return;
     }
 
+    // Get a seeder user ID (create if doesn't exist)
+    let seederUser = await prisma.user.findFirst({
+        where: {email: 'seeder@system.local'}
+    });
+
+    if (!seederUser) {
+        seederUser = await prisma.user.create({
+            data: {
+                email: 'seeder@system.local',
+                name: 'System Seeder',
+                role: 'admin',
+            },
+        });
+    }
+
     for (const data of seedData) {
         try {
             // 1. Create user
@@ -376,8 +395,106 @@ export default async function seedProfiles(prisma: PrismaClient) {
                     },
                 });
             }
-            
+
             console.log(`Added ${data.profile.services.length} services to profile ${profile.id}`);
+
+            // 9. Create initial version snapshot (for version tracking)
+            const version = await prisma.profileVersion.create({
+                data: {
+                    profileId: profile.id,
+                    version: 1,
+                    name: profile.name,
+                    price: profile.price,
+                    age: profile.age,
+                    description: profile.description,
+                    latitude: profile.latitude,
+                    longitude: profile.longitude,
+                    address: profile.address,
+                    phone: profile.phone || '',
+                    hasWhatsapp: profile.hasWhatsapp,
+                    hasTelegram: profile.hasTelegram,
+                    published: profile.published,
+                    createdBy: seederUser.id,
+                    comment: 'Initial version created by seeder',
+                },
+            });
+
+            console.log(`Created version 1 for profile ${profile.id}`);
+
+            // 10. Copy images to version
+            const profileImages = await prisma.profileImage.findMany({
+                where: {profileId: profile.id},
+            });
+
+            for (const img of profileImages) {
+                await prisma.profileVersionImage.create({
+                    data: {
+                        versionId: version.id,
+                        position: img.position,
+                        mediumUrl: img.mediumUrl,
+                        mediumCdnUrl: img.mediumCdnUrl,
+                        mediumStorageKey: img.mediumStorageKey,
+                        thumbnailUrl: img.thumbnailUrl,
+                        thumbnailCdnUrl: img.thumbnailCdnUrl,
+                        thumbnailStorageKey: img.thumbnailStorageKey,
+                        highQualityUrl: img.highQualityUrl,
+                        highQualityCdnUrl: img.highQualityCdnUrl,
+                        highQualityStorageKey: img.highQualityStorageKey,
+                    },
+                });
+            }
+
+            // 11. Copy languages to version
+            for (const langId of data.profile.languages) {
+                await prisma.profileVersionLanguage.create({
+                    data: {
+                        versionId: version.id,
+                        languageId: langId,
+                    },
+                });
+            }
+
+            // 12. Copy payment methods to version
+            for (const methodId of data.profile.paymentMethods) {
+                await prisma.profileVersionPaymentMethod.create({
+                    data: {
+                        versionId: version.id,
+                        paymentMethodId: methodId,
+                    },
+                });
+            }
+
+            // 13. Copy nationality to version
+            if (data.profile.nationalityId) {
+                await prisma.profileVersionNationality.create({
+                    data: {
+                        versionId: version.id,
+                        nationalityId: data.profile.nationalityId,
+                    },
+                });
+            }
+
+            // 14. Copy ethnicity to version
+            if (data.profile.ethnicityId) {
+                await prisma.profileVersionEthnicity.create({
+                    data: {
+                        versionId: version.id,
+                        ethnicityId: data.profile.ethnicityId,
+                    },
+                });
+            }
+
+            // 15. Copy services to version
+            for (const serviceId of data.profile.services) {
+                await prisma.profileVersionService.create({
+                    data: {
+                        versionId: version.id,
+                        serviceId: serviceId,
+                    },
+                });
+            }
+
+            console.log(`✅ Profile ${profile.id} fully seeded with version tracking`);
         } catch (error) {
             console.error(`Error creating profile for ${data.user.email}:`, error);
         }
