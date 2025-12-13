@@ -3,6 +3,7 @@ import {NextRequest, NextResponse} from 'next/server';
 import {DataService} from '@/services/dataService';
 import {Prisma} from '@prisma/client';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 300;
 
 // Calculate distance between two points using Haversine formula
