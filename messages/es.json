@@ -69,6 +69,7 @@
   "Search": {
     "searchProfiles": "Buscar Perfiles",
     "filters": "Filtros",
+    "clearFilters": "Limpiar filtros",
     "searchResults": "Resultados de búsqueda",
     "noResultsFound": "No se encontraron perfiles",
     "tryModifyingFilters": "Intenta modificar los filtros de búsqueda",
@@ -83,7 +84,21 @@
     "showingProfilesNoLimit": "Mostrando {count} perfiles sin límite de distancia, ordenados por proximidad a tu ubicación",
     "showingProfilesWithinRadius": "Mostrando {count} perfiles dentro de {radius} de tu ubicación, ordenados por proximidad",
     "filteredResults": "Los resultados están filtrados según los criterios de búsqueda seleccionados",
-    "sortBy": "Ordenar por"
+    "sortBy": "Ordenar por",
+    "minPrice": "Mín: {value}€",
+    "maxPrice": "Máx: {value}€",
+    "minAge": "Edad mín: {value}",
+    "maxAge": "Edad máx: {value}",
+    "language": "Idioma",
+    "languages": "Idiomas",
+    "paymentMethod": "Método de pago",
+    "paymentMethods": "Métodos de pago",
+    "nationality": "Nacionalidad",
+    "nationalities": "Nacionalidades",
+    "ethnicity": "Etnia",
+    "ethnicities": "Etnias",
+    "service": "Servicio",
+    "services": "Servicios"
   },
   "Admin": {
     "dashboard": "Panel de Administración",

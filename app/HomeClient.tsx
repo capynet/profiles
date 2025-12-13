@@ -479,7 +479,7 @@ export default function HomeClient({
                                         }}
                                         className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
                                     >
-                                        Limpiar filtros
+                                        {t('clearFilters')}
                                     </button>
                                     {filters.minPrice && (
                                         <button
@@ -489,7 +489,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            Mín: {filters.minPrice}€
+                                            {t('minPrice', { value: filters.minPrice })}
                                         </button>
                                     )}
                                     {filters.maxPrice && (
@@ -500,7 +500,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            Máx: {filters.maxPrice}€
+                                            {t('maxPrice', { value: filters.maxPrice })}
                                         </button>
                                     )}
                                     {filters.minAge && (
@@ -511,7 +511,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            Edad mín: {filters.minAge}
+                                            {t('minAge', { value: filters.minAge })}
                                         </button>
                                     )}
                                     {filters.maxAge && (
@@ -522,7 +522,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            Edad máx: {filters.maxAge}
+                                            {t('maxAge', { value: filters.maxAge })}
                                         </button>
                                     )}
                                     {filters.selectedLanguages?.length > 0 && (
@@ -533,7 +533,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            {filters.selectedLanguages.length} {filters.selectedLanguages.length === 1 ? 'Idioma' : 'Idiomas'}
+                                            {filters.selectedLanguages.length} {filters.selectedLanguages.length === 1 ? t('language') : t('languages')}
                                         </button>
                                     )}
                                     {filters.selectedPaymentMethods?.length > 0 && (
@@ -544,7 +544,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            {filters.selectedPaymentMethods.length} {filters.selectedPaymentMethods.length === 1 ? 'Método de pago' : 'Métodos de pago'}
+                                            {filters.selectedPaymentMethods.length} {filters.selectedPaymentMethods.length === 1 ? t('paymentMethod') : t('paymentMethods')}
                                         </button>
                                     )}
                                     {filters.selectedNationalities?.length > 0 && (
@@ -555,7 +555,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            {filters.selectedNationalities.length} {filters.selectedNationalities.length === 1 ? 'Nacionalidad' : 'Nacionalidades'}
+                                            {filters.selectedNationalities.length} {filters.selectedNationalities.length === 1 ? t('nationality') : t('nationalities')}
                                         </button>
                                     )}
                                     {filters.selectedEthnicities?.length > 0 && (
@@ -566,7 +566,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            {filters.selectedEthnicities.length} {filters.selectedEthnicities.length === 1 ? 'Etnia' : 'Etnias'}
+                                            {filters.selectedEthnicities.length} {filters.selectedEthnicities.length === 1 ? t('ethnicity') : t('ethnicities')}
                                         </button>
                                     )}
                                     {filters.selectedServices?.length > 0 && (
@@ -577,7 +577,7 @@ export default function HomeClient({
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
-                                            {filters.selectedServices.length} {filters.selectedServices.length === 1 ? 'Servicio' : 'Servicios'}
+                                            {filters.selectedServices.length} {filters.selectedServices.length === 1 ? t('service') : t('services')}
                                         </button>
                                     )}
                                 </div>
@@ -624,13 +624,13 @@ export default function HomeClient({
                             </svg>
                             <div className="text-sm text-green-700 dark:text-green-300">
                                 <p>
-                                    {radiusValue === 100 ? (
-                                        <>Mostrando <span className="font-medium">{profiles.length} perfiles</span> <span className="font-medium">sin límite de distancia</span>, ordenados por proximidad a tu ubicación.</>
-                                    ) : (
-                                        <>Mostrando <span className="font-medium">{profiles.length} perfiles</span> dentro de <span className="font-medium">
-                                            {radiusValue < 1 ? `${radiusValue * 1000} m` : `${radiusValue} km`}
-                                        </span> de tu ubicación, ordenados por proximidad.</>
-                                    )}
+                                    {radiusValue === 100
+                                        ? t('showingProfilesNoLimit', { count: profiles.length })
+                                        : t('showingProfilesWithinRadius', {
+                                            count: profiles.length,
+                                            radius: radiusValue < 1 ? `${radiusValue * 1000} m` : `${radiusValue} km`
+                                          })
+                                    }
                                 </p>
                                 {/* Active filters message */}
                                 {(() => {

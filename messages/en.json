@@ -69,6 +69,7 @@
   "Search": {
     "searchProfiles": "Search Profiles",
     "filters": "Filters",
+    "clearFilters": "Clear filters",
     "searchResults": "Search Results",
     "noResultsFound": "No profiles found",
     "tryModifyingFilters": "Try modifying your search filters",
@@ -83,7 +84,21 @@
     "showingProfilesNoLimit": "Showing {count} profiles with no distance limit, sorted by proximity to your location",
     "showingProfilesWithinRadius": "Showing {count} profiles within {radius} of your location, sorted by proximity",
     "filteredResults": "Results are filtered according to selected search criteria",
-    "sortBy": "Sort by"
+    "sortBy": "Sort by",
+    "minPrice": "Min: {value}€",
+    "maxPrice": "Max: {value}€",
+    "minAge": "Age min: {value}",
+    "maxAge": "Age max: {value}",
+    "language": "Language",
+    "languages": "Languages",
+    "paymentMethod": "Payment method",
+    "paymentMethods": "Payment methods",
+    "nationality": "Nationality",
+    "nationalities": "Nationalities",
+    "ethnicity": "Ethnicity",
+    "ethnicities": "Ethnicities",
+    "service": "Service",
+    "services": "Services"
   },
   "Admin": {
     "dashboard": "Admin Dashboard",
