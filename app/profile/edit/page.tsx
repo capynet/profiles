@@ -16,7 +16,7 @@ export default async function EditProfilePage() {
     const session = await auth();
 
     if (!session || !session.user) {
-        redirect('/login');
+        redirect('/');
     }
 
     // First check if there's a draft profile

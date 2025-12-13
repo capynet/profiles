@@ -437,7 +437,7 @@ export async function toggleProfilePublication() {
     const session = await auth();
 
     if (!session || !session.user) {
-        redirect('/login');
+        redirect('/');
     }
 
     try {

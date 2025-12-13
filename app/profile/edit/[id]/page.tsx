@@ -20,7 +20,7 @@ export default async function EditDraftProfilePage(props: EditDraftProfilePagePr
     const session = await auth();
 
     if (!session || !session.user) {
-        redirect('/login');
+        redirect('/');
     }
 
     const draftId = parseInt(params.id);

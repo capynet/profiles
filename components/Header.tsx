@@ -5,7 +5,7 @@ import {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {usePathname} from 'next/navigation';
-import {handleSignOut} from '@/app/auth-actions';
+import {handleSignIn, handleSignOut} from '@/app/auth-actions';
 import {toggleProfilePublication} from '@/app/profile/actions';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -218,12 +218,22 @@ export default function Header({user}: HeaderProps) {
                                 )}
                             </div>
                         ) : (
-                            <Link
-                                href="/login"
-                                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-colors"
-                            >
-                                {t('login')}
-                            </Link>
+                            <form action={handleSignIn}>
+                                <button
+                                    type="submit"
+                                    className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                >
+                                    <svg
+                                        className="h-5 w-5"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                    >
+                                        <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                                    </svg>
+                                    <span>{t('login')}</span>
+                                </button>
+                            </form>
                         )}
                     </div>
                 </div>

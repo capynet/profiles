@@ -12,7 +12,7 @@ export default async function CreateProfilePage() {
     const session = await auth();
 
     if (!session || !session.user) {
-        redirect('/login');
+        redirect('/');
     }
 
     const profiles = await DataService.getProfiles({userId: session.user.id});
