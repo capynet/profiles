@@ -18,7 +18,7 @@ export default async function EntitiesPage() {
     // Fetch all entities
     const [languages, services, paymentMethods, nationalities, ethnicities] = await Promise.all([
         prisma.language.findMany({
-            orderBy: {name: 'asc'},
+            orderBy: {id: 'asc'},
         }),
         prisma.service.findMany({
             orderBy: {name: 'asc'},

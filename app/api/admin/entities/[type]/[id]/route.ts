@@ -577,3 +577,53 @@ export async function DELETE(
         return NextResponse.json({error: 'Failed to delete entity'}, {status: 500});
     }
 }
+
+// PATCH - Toggle language enabled status
+export async function PATCH(
+    request: NextRequest,
+    {params}: {params: Promise<{type: string; id: string}>}
+) {
+    const log = createApiLogger('/api/admin/entities/[type]/[id]', 'PATCH');
+
+    try {
+        await requireAdmin();
+        const session = await auth();
+
+        const {type, id} = await params;
+        const entityId = parseInt(id);
+
+        log.info({type, entityId, userId: session?.user?.id}, 'Attempting to toggle language enabled');
+
+        // Only allow PATCH for language type
+        if (type !== 'language' || isNaN(entityId)) {
+            log.warn({type, id}, 'Invalid parameters for PATCH');
+            return NextResponse.json({error: 'Invalid parameters'}, {status: 400});
+        }
+
+        const body = await request.json();
+        const {enabled} = body;
+
+        if (typeof enabled !== 'boolean') {
+            log.warn({type, entityId, enabled}, 'Invalid enabled value');
+            return NextResponse.json({error: 'Enabled must be a boolean'}, {status: 400});
+        }
+
+        const updatedLanguage = await prisma.language.update({
+            where: {id: entityId},
+            data: {enabled},
+        });
+
+        log.info({type, entityId, enabled}, 'Language enabled status updated successfully');
+
+        return NextResponse.json(updatedLanguage);
+    } catch (error) {
+        log.error({
+            type: await params.then(p => p.type),
+            entityId: await params.then(p => parseInt(p.id)),
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        }, 'Failed to toggle language enabled');
+
+        return NextResponse.json({error: 'Failed to update language'}, {status: 500});
+    }
+}

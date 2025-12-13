@@ -107,6 +107,7 @@ model PaymentMethod {
 model Language {
   id               Int                      @id @default(autoincrement())
   name             String                   @unique
+  enabled          Boolean                  @default(false)
   profiles         ProfileLanguage[]
   versionSnapshots ProfileVersionLanguage[]
 }

@@ -83,7 +83,7 @@ export default function Header({user}: HeaderProps) {
                         </div>
 
                         {user && user.role === 'admin' && (
-                            <>
+                            <div className="hidden md:flex items-center">
                                 <Link
                                     href="/admin"
                                     className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"
@@ -107,7 +107,7 @@ export default function Header({user}: HeaderProps) {
                                 >
                                     {t('manageEntities')}
                                 </Link>
-                            </>
+                            </div>
                         )}
 
                         {user ? (
@@ -149,6 +149,38 @@ export default function Header({user}: HeaderProps) {
                                 {/* Dropdown Menu */}
                                 {isMenuOpen && (
                                     <div className="absolute right-0 mt-2 w-48 py-2 bg-card rounded-md shadow-xl border border-border z-10">
+
+                                        {/* Admin links - only visible on mobile */}
+                                        {user.role === 'admin' && (
+                                            <>
+                                                <div className="md:hidden">
+                                                    <Link
+                                                        href="/admin"
+                                                        className="block px-4 py-2 text-sm text-card-foreground hover:bg-muted transition-colors"
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                    >
+                                                        {t('adminDashboard')}
+                                                    </Link>
+                                                    {currentProfileId && (
+                                                        <Link
+                                                            href={`/admin/profiles/${currentProfileId}/edit`}
+                                                            className="block px-4 py-2 text-sm text-card-foreground hover:bg-muted transition-colors"
+                                                            onClick={() => setIsMenuOpen(false)}
+                                                        >
+                                                            Edit Profile
+                                                        </Link>
+                                                    )}
+                                                    <Link
+                                                        href="/admin/entities"
+                                                        className="block px-4 py-2 text-sm text-card-foreground hover:bg-muted transition-colors"
+                                                        onClick={() => setIsMenuOpen(false)}
+                                                    >
+                                                        {t('manageEntities')}
+                                                    </Link>
+                                                    <div className="border-t border-border my-2"></div>
+                                                </div>
+                                            </>
+                                        )}
 
                                         <Link
                                             href={user.hasProfile ? "/profile/edit" : "/profile/create"}

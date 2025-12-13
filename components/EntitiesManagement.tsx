@@ -131,6 +131,32 @@ export default function EntitiesManagement({
         }
     };
 
+    const handleToggleLanguage = async (id: number, currentEnabled: boolean) => {
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/admin/entities/language/${id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ enabled: !currentEnabled }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                alert(error.error || 'Failed to update language');
+                return;
+            }
+
+            const updatedLanguage = await response.json();
+            const updated = languages.map(l => l.id === id ? updatedLanguage : l);
+            setLanguages(updated as Language[]);
+        } catch (error) {
+            console.error('Error toggling language:', error);
+            alert('Failed to toggle language');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleDelete = async (id: number, name: string) => {
         setLoading(true);
         try {
@@ -244,13 +270,15 @@ export default function EntitiesManagement({
                         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {currentTab.pluralLabel}
                         </h2>
-                        <button
-                            onClick={() => setIsAdding(!isAdding)}
-                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-                            disabled={loading}
-                        >
-                            {isAdding ? 'Cancel' : `Add ${currentTab.label}`}
-                        </button>
+                        {activeTab !== 'language' && (
+                            <button
+                                onClick={() => setIsAdding(!isAdding)}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                                disabled={loading}
+                            >
+                                {isAdding ? 'Cancel' : `Add ${currentTab.label}`}
+                            </button>
+                        )}
                     </div>
 
                     {/* Add new entity form */}
@@ -288,8 +316,13 @@ export default function EntitiesManagement({
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Name
                                     </th>
+                                    {activeTab === 'language' && (
+                                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                    )}
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Actions
+                                        {activeTab === 'language' ? 'Enable/Disable' : 'Actions'}
                                     </th>
                                 </tr>
                             </thead>
@@ -300,7 +333,9 @@ export default function EntitiesManagement({
                                             {entity.id}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                            {editingId === entity.id ? (
+                                            {activeTab === 'language' || editingId !== entity.id ? (
+                                                entity.name
+                                            ) : (
                                                 <input
                                                     type="text"
                                                     value={editingName}
@@ -310,12 +345,37 @@ export default function EntitiesManagement({
                                                     disabled={loading}
                                                     autoFocus
                                                 />
-                                            ) : (
-                                                entity.name
                                             )}
                                         </td>
+                                        {activeTab === 'language' && (
+                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                                    (entity as Language).enabled
+                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                }`}>
+                                                    {(entity as Language).enabled ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                            </td>
+                                        )}
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            {editingId === entity.id ? (
+                                            {activeTab === 'language' ? (
+                                                <button
+                                                    onClick={() => handleToggleLanguage(entity.id, (entity as Language).enabled)}
+                                                    disabled={loading}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                                        (entity as Language).enabled
+                                                            ? 'bg-indigo-600'
+                                                            : 'bg-gray-300 dark:bg-gray-600'
+                                                    } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                            (entity as Language).enabled ? 'translate-x-6' : 'translate-x-1'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            ) : editingId === entity.id ? (
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         onClick={() => handleUpdate(entity.id)}

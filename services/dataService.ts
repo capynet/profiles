@@ -13,6 +13,7 @@ export const DataService = {
     async getAllLanguages() {
         try {
             return await prisma.language.findMany({
+                where: {enabled: true},
                 select: {id: true, name: true},
                 orderBy: {name: Prisma.SortOrder.asc}
             });
