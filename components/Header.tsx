@@ -60,16 +60,6 @@ export default function Header({user}: HeaderProps) {
                         {t('profiles')}
                     </Link>
 
-                    {/* Main Navigation */}
-                    {/*<nav className="hidden md:flex items-center space-x-6">*/}
-                    {/*    <Link href="/" className="text-gray-700 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400">*/}
-                    {/*        {t('home')}*/}
-                    {/*    </Link>*/}
-                    {/*    <Link href="/search" className="text-gray-700 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400">*/}
-                    {/*        {t('search')}*/}
-                    {/*    </Link>*/}
-                    {/*</nav>*/}
-
                     {/* User Section */}
                     <div className="flex items-center">
                         {/* Theme Toggle */}

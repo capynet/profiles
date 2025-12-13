@@ -1,8 +1,6 @@
 // lib/logger.ts
 import pino from 'pino';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
-
 // Create base logger
 // Use JSON logging to avoid pino-pretty worker issues in Next.js dev mode
 export const logger = pino({
@@ -17,11 +15,6 @@ export const logger = pino({
     },
 });
 
-// Helper to create a child logger with context
-export function createLogger(context: Record<string, any>) {
-    return logger.child(context);
-}
-
 // Helper for API routes
 export function createApiLogger(route: string, method: string) {
     return logger.child({
@@ -30,13 +23,3 @@ export function createApiLogger(route: string, method: string) {
         method,
     });
 }
-
-// Helper for server actions
-export function createActionLogger(action: string) {
-    return logger.child({
-        type: 'action',
-        action,
-    });
-}
-
-export default logger;
