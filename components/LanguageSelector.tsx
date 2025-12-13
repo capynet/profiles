@@ -1,7 +1,7 @@
 // components/LanguageSelector.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { useTranslations } from 'next-intl';
 
 interface Language {
@@ -15,41 +15,25 @@ interface LanguageSelectorProps {
     error?: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function LanguageSelector({
                                              selectedLanguages,
                                              onChange,
                                              error
                                          }: LanguageSelectorProps) {
     const t = useTranslations('LanguageSelector');
-    const [languages, setLanguages] = useState<Language[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [loadError, setLoadError] = useState<string | null>(null);
 
-    // Fetch languages on component mount
-    useEffect(() => {
-        const fetchLanguages = async () => {
-            setIsLoading(true);
-            setLoadError(null);
-
-            try {
-                const response = await fetch('/api/languages');
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch languages');
-                }
-
-                const data = await response.json();
-                setLanguages(data);
-            } catch (error) {
-                console.error('Error fetching languages:', error);
-                setLoadError(t('failedToLoad'));
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchLanguages();
-    }, [t]);
+    // Use SWR for automatic caching and revalidation
+    const { data: languages = [], error: loadError, isLoading, mutate } = useSWR<Language[]>(
+        '/api/languages',
+        fetcher,
+        {
+            revalidateOnFocus: true, // Refresh when window regains focus
+            revalidateOnReconnect: true, // Refresh when reconnecting
+            dedupingInterval: 10000, // Dedupe requests within 10 seconds
+        }
+    );
 
     // Handle language selection/deselection
     const handleLanguageChange = (languageId: number) => {
@@ -65,17 +49,28 @@ export default function LanguageSelector({
 
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('title')}
-            </label>
+            <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('title')}
+                </label>
+                <button
+                    type="button"
+                    onClick={() => mutate()}
+                    disabled={isLoading}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
+                    title="Refresh list"
+                >
+                    {isLoading ? '⟳' : '↻'} Refresh
+                </button>
+            </div>
 
-            {isLoading ? (
+            {isLoading && languages.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
                     {t('loading')}
                 </div>
             ) : loadError ? (
                 <div className="p-3 text-sm text-red-500 dark:text-red-400">
-                    {loadError}
+                    {t('failedToLoad')}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">

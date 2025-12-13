@@ -1,7 +1,7 @@
 // components/EthnicitySelector.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { useTranslations } from 'next-intl';
 
 interface Ethnicity {
@@ -15,49 +15,46 @@ interface EthnicitySelectorProps {
     error?: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function EthnicitySelector({
                                               selectedEthnicity,
                                               onChange,
                                               error
                                           }: EthnicitySelectorProps) {
     const t = useTranslations('EthnicitySelector');
-    const [ethnicities, setEthnicities] = useState<Ethnicity[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [loadError, setLoadError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchEthnicities = async () => {
-            setIsLoading(true);
-            setLoadError(null);
-
-            try {
-                const response = await fetch('/api/ethnicities');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch ethnicities');
-                }
-                const data = await response.json();
-                setEthnicities(data);
-            } catch (error) {
-                console.error('Error fetching ethnicities:', error);
-                setLoadError(t('failedToLoad'));
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchEthnicities();
-    }, [t]);
+    const { data: ethnicities = [], error: loadError, isLoading, mutate } = useSWR<Ethnicity[]>(
+        '/api/ethnicities',
+        fetcher,
+        {
+            revalidateOnFocus: true,
+            revalidateOnReconnect: true,
+            dedupingInterval: 10000,
+        }
+    );
 
     // CSS classes
     const radioClassName = "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300";
 
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t('title')}
-            </label>
+            <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('title')}
+                </label>
+                <button
+                    type="button"
+                    onClick={() => mutate()}
+                    disabled={isLoading}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
+                    title="Refresh list"
+                >
+                    {isLoading ? '⟳' : '↻'} Refresh
+                </button>
+            </div>
 
-            {isLoading ? (
+            {isLoading && ethnicities.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
                     {t('loading')}
                 </div>

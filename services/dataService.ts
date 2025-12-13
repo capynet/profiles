@@ -2,7 +2,7 @@
 import {Prisma, ProfileImage, Profile} from "@prisma/client";
 import {prisma} from "@/prisma";
 import {ImageService, ProcessedImage} from "./imageService";
-import {unstable_cache} from 'next/cache';
+import {applyEntityReplacements} from "@/lib/entity-replacement";
 
 // Enhanced interface for processed images with order information
 interface ProcessedImageWithOrder extends ProcessedImage {
@@ -11,45 +11,27 @@ interface ProcessedImageWithOrder extends ProcessedImage {
 
 export const DataService = {
     async getAllLanguages() {
-        return unstable_cache(
-            async () => {
-                try {
-                    return await prisma.language.findMany({
-                        select: {id: true, name: true},
-                        orderBy: {name: Prisma.SortOrder.asc}
-                    });
-                } catch (error) {
-                    console.error('Error fetching languages:', error);
-                    return [];
-                }
-            },
-            ['languages'],
-            {
-                tags: ['languages', 'reference-data'],
-                revalidate: 86400
-            }
-        )();
+        try {
+            return await prisma.language.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching languages:', error);
+            return [];
+        }
     },
 
     async getAllPaymentMethods() {
-        return unstable_cache(
-            async () => {
-                try {
-                    return await prisma.paymentMethod.findMany({
-                        select: {id: true, name: true},
-                        orderBy: {name: Prisma.SortOrder.asc}
-                    });
-                } catch (error) {
-                    console.error('Error fetching payment methods:', error);
-                    return [];
-                }
-            },
-            ['payment-methods'],
-            {
-                tags: ['payment-methods', 'reference-data'],
-                revalidate: 86400
-            }
-        )();
+        try {
+            return await prisma.paymentMethod.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching payment methods:', error);
+            return [];
+        }
     },
 
     async getProfiles(where?: Prisma.ProfileWhereInput, includeDrafts: boolean = false, userContext?: { userId?: string, isAdmin?: boolean }) {
@@ -880,7 +862,14 @@ export const DataService = {
                     }
                 });
 
-                return publishedProfile;
+                // Apply entity replacements to this newly published profile too
+                const appliedReplacements = await applyEntityReplacements(draftId, tx);
+                console.log(`✓ Applied ${appliedReplacements.length} entity replacements to newly published profile ${draftId}`);
+
+                return {
+                    profile: publishedProfile,
+                    appliedReplacements
+                };
             }
 
             // Regular approval process for standard drafts
@@ -1021,6 +1010,10 @@ export const DataService = {
                 });
             }
 
+            // Apply entity replacements to the now-active profile
+            const appliedReplacements = await applyEntityReplacements(originalProfileId, tx);
+            console.log(`✓ Applied ${appliedReplacements.length} entity replacements to profile ${originalProfileId}`);
+
             // Delete all relationships for the draft before deleting the profile
             await tx.profileLanguage.deleteMany({
                 where: {profileId: draftId}
@@ -1051,7 +1044,10 @@ export const DataService = {
                 where: {id: draftId}
             });
 
-            return updatedProfile;
+            return {
+                profile: updatedProfile,
+                appliedReplacements
+            };
         });
     },
 
@@ -1439,65 +1435,38 @@ export const DataService = {
     },
 
     async getAllNationalities() {
-        return unstable_cache(
-            async () => {
-                try {
-                    return await prisma.nationality.findMany({
-                        select: {id: true, name: true},
-                        orderBy: {name: Prisma.SortOrder.asc}
-                    });
-                } catch (error) {
-                    console.error('Error fetching nationalities:', error);
-                    return [];
-                }
-            },
-            ['nationalities'],
-            {
-                tags: ['nationalities', 'reference-data'],
-                revalidate: 86400
-            }
-        )();
+        try {
+            return await prisma.nationality.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching nationalities:', error);
+            return [];
+        }
     },
 
     async getAllEthnicities() {
-        return unstable_cache(
-            async () => {
-                try {
-                    return await prisma.ethnicity.findMany({
-                        select: {id: true, name: true},
-                        orderBy: {name: Prisma.SortOrder.asc}
-                    });
-                } catch (error) {
-                    console.error('Error fetching ethnicities:', error);
-                    return [];
-                }
-            },
-            ['ethnicities'],
-            {
-                tags: ['ethnicities', 'reference-data'],
-                revalidate: 86400
-            }
-        )();
+        try {
+            return await prisma.ethnicity.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching ethnicities:', error);
+            return [];
+        }
     },
     
     async getAllServices() {
-        return unstable_cache(
-            async () => {
-                try {
-                    return await prisma.service.findMany({
-                        select: {id: true, name: true},
-                        orderBy: {name: Prisma.SortOrder.asc}
-                    });
-                } catch (error) {
-                    console.error('Error fetching services:', error);
-                    return [];
-                }
-            },
-            ['services'],
-            {
-                tags: ['services', 'reference-data'],
-                revalidate: 86400
-            }
-        )();
+        try {
+            return await prisma.service.findMany({
+                select: {id: true, name: true},
+                orderBy: {name: Prisma.SortOrder.asc}
+            });
+        } catch (error) {
+            console.error('Error fetching services:', error);
+            return [];
+        }
     }
 };

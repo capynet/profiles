@@ -270,18 +270,29 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                 throw new Error('Failed to approve draft');
             }
 
+            const data = await response.json();
+            const replacements = data.appliedReplacements || [];
+
+            let message = 'Draft approved successfully';
+            if (replacements.length > 0) {
+                const replacementList = replacements.map((r: any) =>
+                    `${r.entityType}: "${r.oldName}" ${r.action === 'replaced' ? `→ "${r.newName}"` : '(removed)'}`
+                ).join(', ');
+                message += `. Replacements: ${replacementList}`;
+            }
+
             setStatusMessage({
                 type: 'success',
-                text: 'Draft approved successfully'
+                text: message
             });
 
             // Refresh the page data
             router.refresh();
 
-            // Clear the message after 3 seconds
+            // Clear the message after 5 seconds (longer if replacements shown)
             setTimeout(() => {
                 setStatusMessage(null);
-            }, 3000);
+            }, replacements.length > 0 ? 8000 : 3000);
         } catch (error) {
             console.error('Error approving draft:', error);
             setStatusMessage({

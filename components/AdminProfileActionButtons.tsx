@@ -30,6 +30,17 @@ export default function AdminProfileActionButtons({ profileId, isDraft, hasOrigi
                 throw new Error('Failed to approve draft');
             }
 
+            const data = await response.json();
+            const replacements = data.appliedReplacements || [];
+
+            // Show replacements if any were applied
+            if (replacements.length > 0) {
+                const replacementMessages = replacements.map((r: any) =>
+                    `${r.entityType}: "${r.oldName}" ${r.action === 'replaced' ? `was replaced with "${r.newName}"` : 'was removed'}`
+                ).join('\n');
+                alert(`Draft approved!\n\nThe following entity values were automatically updated:\n\n${replacementMessages}`);
+            }
+
             // Redirect to admin dashboard
             router.push('/admin');
             router.refresh();

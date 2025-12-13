@@ -327,3 +327,19 @@ model ProfileVersionService {
 
   @@id([versionId, serviceId])
 }
+
+// Entity Replacement Tracking
+// Tracks when entities (Language, Service, etc.) are deleted and optionally replaced
+model EntityReplacement {
+  id           Int       @id @default(autoincrement())
+  entityType   String    // 'Language', 'Service', 'PaymentMethod', 'Nationality', 'Ethnicity'
+  oldEntityId  Int       // The ID of the deleted entity
+  newEntityId  Int?      // The ID of the replacement entity (null if deleted without replacement)
+  oldEntityName String   // Store the name for reference
+  newEntityName String?  // Store the replacement name for reference
+  createdBy    String    // User ID of the admin who made the change
+  createdAt    DateTime  @default(now())
+
+  @@index([entityType, oldEntityId])
+  @@index([createdAt])
+}

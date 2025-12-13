@@ -1,7 +1,8 @@
 // components/PaymentMethodSelector.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
+import { useTranslations } from 'next-intl';
 
 interface PaymentMethod {
     id: number;
@@ -14,40 +15,24 @@ interface PaymentMethodSelectorProps {
     error?: string;
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function PaymentMethodSelector({
                                                   selectedPaymentMethods,
                                                   onChange,
                                                   error
                                               }: PaymentMethodSelectorProps) {
-    const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [loadError, setLoadError] = useState<string | null>(null);
+    const t = useTranslations('PaymentMethodSelector');
 
-    // Fetch payment methods on component mount
-    useEffect(() => {
-        const fetchPaymentMethods = async () => {
-            setIsLoading(true);
-            setLoadError(null);
-
-            try {
-                const response = await fetch('/api/payment-methods');
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch payment methods');
-                }
-
-                const data = await response.json();
-                setPaymentMethods(data);
-            } catch (error) {
-                console.error('Error fetching payment methods:', error);
-                setLoadError('Failed to load payment methods. Please try again.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchPaymentMethods();
-    }, []);
+    const { data: paymentMethods = [], error: loadError, isLoading, mutate } = useSWR<PaymentMethod[]>(
+        '/api/payment-methods',
+        fetcher,
+        {
+            revalidateOnFocus: true,
+            revalidateOnReconnect: true,
+            dedupingInterval: 10000,
+        }
+    );
 
     // Handle payment method selection/deselection
     const handlePaymentMethodChange = (paymentMethodId: number) => {
@@ -63,17 +48,28 @@ export default function PaymentMethodSelector({
 
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Payment Methods
-            </label>
+            <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('title')}
+                </label>
+                <button
+                    type="button"
+                    onClick={() => mutate()}
+                    disabled={isLoading}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
+                    title="Refresh list"
+                >
+                    {isLoading ? '⟳' : '↻'} Refresh
+                </button>
+            </div>
 
-            {isLoading ? (
+            {isLoading && paymentMethods.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
-                    Loading payment methods...
+                    {t('loading')}
                 </div>
             ) : loadError ? (
                 <div className="p-3 text-sm text-red-500 dark:text-red-400">
-                    {loadError}
+                    {t('failedToLoad')}
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto p-2 border border-gray-300 dark:border-gray-600 rounded-md">
@@ -97,7 +93,7 @@ export default function PaymentMethodSelector({
                         ))
                     ) : (
                         <div className="text-sm text-gray-500 dark:text-gray-400 col-span-2 py-2">
-                            No payment methods available
+                            {t('noPaymentMethods')}
                         </div>
                     )}
                 </div>
@@ -109,11 +105,9 @@ export default function PaymentMethodSelector({
 
             {selectedPaymentMethods.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                    {selectedPaymentMethods.length > 0 && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-              {selectedPaymentMethods.length} payment method(s) selected
-            </span>
-                    )}
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {t('selected', { count: selectedPaymentMethods.length })}
+                    </span>
                 </div>
             )}
         </div>

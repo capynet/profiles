@@ -25,7 +25,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
             );
         }
 
-        await DataService.approveProfileDraft(draftId, session.user.id);
+        const result = await DataService.approveProfileDraft(draftId, session.user.id);
 
         // Revalidate relevant paths and cache tags
         revalidatePath('/admin');
@@ -34,7 +34,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         revalidateTag('profile-list', 'default');
         revalidateTag('profile-drafts', 'default');
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({
+            success: true,
+            appliedReplacements: result.appliedReplacements || []
+        });
     } catch (error) {
         console.error('Error approving draft:', error);
         return NextResponse.json(

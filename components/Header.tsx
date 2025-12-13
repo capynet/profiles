@@ -77,13 +77,22 @@ export default function Header({user}: HeaderProps) {
                         </div>
 
                         {user && user.role === 'admin' && (
-                            <Link
-                                href="/admin"
-                                className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                {t('adminDashboard')}
-                            </Link>
+                            <>
+                                <Link
+                                    href="/admin"
+                                    className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {t('adminDashboard')}
+                                </Link>
+                                <Link
+                                    href="/admin/entities"
+                                    className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    {t('manageEntities')}
+                                </Link>
+                            </>
                         )}
 
                         {user ? (
