@@ -4,6 +4,7 @@
 import {useState} from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import {usePathname} from 'next/navigation';
 import {handleSignOut} from '@/app/auth-actions';
 import {toggleProfilePublication} from '@/app/profile/actions';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -26,9 +27,14 @@ interface HeaderProps {
 
 export default function Header({user}: HeaderProps) {
     const t = useTranslations('Header');
+    const pathname = usePathname();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isToggling, setIsToggling] = useState(false);
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+    // Detect if we're on a profile page and extract profile ID
+    const profileMatch = pathname?.match(/^\/profile\/(\d+)/);
+    const currentProfileId = profileMatch ? profileMatch[1] : null;
 
     const handleTogglePublication = async () => {
         setIsToggling(true);
@@ -85,6 +91,15 @@ export default function Header({user}: HeaderProps) {
                                 >
                                     {t('adminDashboard')}
                                 </Link>
+                                {currentProfileId && (
+                                    <Link
+                                        href={`/admin/profiles/${currentProfileId}/edit`}
+                                        className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Edit Profile
+                                    </Link>
+                                )}
                                 <Link
                                     href="/admin/entities"
                                     className="block mr-4 px-4 py-2 text-sm text-primary hover:bg-muted rounded-md transition-colors"

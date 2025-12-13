@@ -227,7 +227,6 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
                 <div className="mt-20 px-8 py-6">
                     {/* Actions */}
                     <div className="flex justify-end mb-6 space-x-4">
-
                         {isOwner && (
                             <Link
                                 href="/profile/edit"

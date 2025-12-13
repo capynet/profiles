@@ -208,16 +208,24 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    // Go back to the previous page
-                    router.back();
+                    // If admin, redirect to draft-compare page, otherwise go back
+                    if (isAdminMode && result.profileId) {
+                        router.push(`/admin/profiles/${result.profileId}/draft-compare`);
+                    } else {
+                        router.back();
+                    }
                 }
             } else {
                 const result = await createProfile(updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    // Go back to the previous page
-                    router.back();
+                    // If admin, redirect to draft-compare page, otherwise go back
+                    if (isAdminMode && result.profileId) {
+                        router.push(`/admin/profiles/${result.profileId}/draft-compare`);
+                    } else {
+                        router.back();
+                    }
                 }
             }
         } catch (error) {

@@ -9,6 +9,10 @@ export const metadata = {
     description: 'Edit user profile as administrator',
 };
 
+// Disable caching for admin pages
+export const revalidate = 0;
+export const dynamic = 'force-dynamic';
+
 interface AdminEditProfilePageProps {
     params: Promise<{
         id: string;
@@ -27,7 +31,7 @@ export default async function AdminEditProfilePage(props: AdminEditProfilePagePr
     }
 
     // Get profile with all needed related data
-    const profile = await prisma.profile.findUnique({
+    let profile = await prisma.profile.findUnique({
         where: {id: profileId},
         include: {
             languages: true,
@@ -44,6 +48,30 @@ export default async function AdminEditProfilePage(props: AdminEditProfilePagePr
 
     if (!profile) {
         redirect('/admin');
+    }
+
+    // If there's a draft for this profile, load the draft instead
+    const draft = await prisma.profile.findFirst({
+        where: {
+            isDraft: true,
+            originalProfileId: profileId,
+        },
+        include: {
+            languages: true,
+            paymentMethods: true,
+            nationalities: true,
+            ethnicities: true,
+            services: true,
+            images: true,
+            user: {
+                select: {name: true, email: true, id: true}
+            },
+        },
+    });
+
+    // If a draft exists, use it instead of the original profile
+    if (draft) {
+        profile = draft;
     }
 
     return (
