@@ -551,7 +551,7 @@ export default function AdminUserTable({ users }: AdminUserTableProps) {
                                                 ✕
                                             </button>
                                             <Link
-                                                href={`/admin/profiles/${user.draft!.id}/versions`}
+                                                href={`/admin/profiles/${user.draft!.id}/draft-compare`}
                                                 className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium inline-flex items-center"
                                                 title="View draft"
                                             >

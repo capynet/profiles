@@ -208,24 +208,16 @@ export default function ProfileForm({profile, isEditing = false, isAdminMode = f
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    // Redirect to appropriate page based on mode
-                    // If result.profileId is different from profile.id, it means a draft was created
-                    if (isAdminMode) {
-                        // Redirect to the updated/created profile (could be a draft)
-                        window.location.href = `/admin/profiles/${result.profileId}/edit`;
-                    } else {
-                        window.location.href = '/profile/' + result.profileId;
-                    }
+                    // Go back to the previous page
+                    router.back();
                 }
             } else {
                 const result = await createProfile(updatedFormData);
                 if (result && !result.success) {
                     setErrors(result.errors || {});
                 } else {
-                    // Redirect to appropriate page based on mode
-                    window.location.href = isAdminMode
-                        ? '/admin'
-                        : '/profile/' + result.profileId;
+                    // Go back to the previous page
+                    router.back();
                 }
             }
         } catch (error) {

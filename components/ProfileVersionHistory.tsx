@@ -197,6 +197,9 @@ export default function ProfileVersionHistory({ profileId, currentVersion }: Pro
                                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Comment
                                         </th>
+                                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Compare
+                                        </th>
                                         <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                             Actions
                                         </th>
@@ -237,6 +240,28 @@ export default function ProfileVersionHistory({ profileId, currentVersion }: Pro
                                                 </td>
                                                 <td className="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
                                                     {version.comment || '-'}
+                                                </td>
+                                                <td className="px-4 py-4 whitespace-nowrap text-center text-sm">
+                                                    <select
+                                                        className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        onChange={(e) => {
+                                                            const compareWithId = e.target.value;
+                                                            if (compareWithId) {
+                                                                window.location.href = `/admin/profiles/${profileId}/compare?from=${version.id}&to=${compareWithId}`;
+                                                            }
+                                                        }}
+                                                        defaultValue=""
+                                                    >
+                                                        <option value="">Compare with...</option>
+                                                        {versions
+                                                            .filter(v => v.id !== version.id)
+                                                            .map(v => (
+                                                                <option key={v.id} value={v.id}>
+                                                                    v{v.version} - {v.name}
+                                                                </option>
+                                                            ))
+                                                        }
+                                                    </select>
                                                 </td>
                                                 <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <button
