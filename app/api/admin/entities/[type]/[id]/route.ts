@@ -196,6 +196,14 @@ export async function DELETE(
             return NextResponse.json({error: 'Invalid parameters'}, {status: 400});
         }
 
+        // Languages are immutable and cannot be deleted
+        if (type === 'language') {
+            log.warn({type, entityId}, 'Attempted to delete a language - languages are immutable');
+            return NextResponse.json({
+                error: 'Languages cannot be deleted. They are immutable. Use the enable/disable toggle instead.'
+            }, {status: 403});
+        }
+
         // Get entity info before deletion
         let entity: {id: number; name: string} | null = null;
 

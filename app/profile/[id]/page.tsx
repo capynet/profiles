@@ -118,7 +118,12 @@ export default async function ProfileDetailPage(props: ProfilePageProps) {
     const profile = await prisma.profile.findUnique({
         where: {id: profileId},
         include: {
-            languages: {include: {language: true}},
+            languages: {
+                where: {
+                    language: {enabled: true}
+                },
+                include: {language: true}
+            },
             paymentMethods: {include: {paymentMethod: true}},
             nationalities: {include: {nationality: true}},
             ethnicities: {include: {ethnicity: true}},

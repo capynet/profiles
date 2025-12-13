@@ -71,7 +71,12 @@ export const DataService = {
             return await prisma.profile.findMany({
                 where: baseWhere,
                 include: {
-                    languages: {include: {language: true}},
+                    languages: {
+                        where: {
+                            language: {enabled: true}
+                        },
+                        include: {language: true}
+                    },
                     paymentMethods: {include: {paymentMethod: true}},
                     user: {select: {id: true, name: true, email: true}},
                     images: {
