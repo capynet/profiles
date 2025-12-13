@@ -321,8 +321,8 @@ export default function HomeClient({
             if (filters.maxAge) params.set('maxAge', filters.maxAge);
             if (filters.selectedLanguages?.length > 0) params.set('languages', filters.selectedLanguages.join(','));
             if (filters.selectedPaymentMethods?.length > 0) params.set('paymentMethods', filters.selectedPaymentMethods.join(','));
-            if (filters.selectedNationality) params.set('nationality', filters.selectedNationality.toString());
-            if (filters.selectedEthnicity) params.set('ethnicity', filters.selectedEthnicity.toString());
+            if (filters.selectedNationalities?.length > 0) params.set('nationalities', filters.selectedNationalities.join(','));
+            if (filters.selectedEthnicities?.length > 0) params.set('ethnicities', filters.selectedEthnicities.join(','));
             if (filters.selectedServices?.length > 0) params.set('services', filters.selectedServices.join(','));
 
             const response = await fetch(`/api/profiles?${params.toString()}`);
@@ -408,7 +408,8 @@ export default function HomeClient({
                         const filters = savedFilters ? JSON.parse(savedFilters) : {};
                         const hasFilters = filters.minPrice || filters.maxPrice || filters.minAge || filters.maxAge ||
                             filters.selectedLanguages?.length > 0 || filters.selectedPaymentMethods?.length > 0 ||
-                            filters.selectedNationality || filters.selectedEthnicity || filters.selectedServices?.length > 0;
+                            filters.selectedNationalities?.length > 0 || filters.selectedEthnicities?.length > 0 ||
+                            filters.selectedServices?.length > 0;
 
                         if (!hasFilters) {
                             // Only show mobile filter button without container
@@ -427,6 +428,45 @@ export default function HomeClient({
                             );
                         }
 
+                        const removeFilter = (filterType: string, value?: any) => {
+                            const savedFilters = localStorage.getItem('profileFilters');
+                            const currentFilters = savedFilters ? JSON.parse(savedFilters) : {};
+
+                            switch (filterType) {
+                                case 'minPrice':
+                                    delete currentFilters.minPrice;
+                                    break;
+                                case 'maxPrice':
+                                    delete currentFilters.maxPrice;
+                                    break;
+                                case 'minAge':
+                                    delete currentFilters.minAge;
+                                    break;
+                                case 'maxAge':
+                                    delete currentFilters.maxAge;
+                                    break;
+                                case 'languages':
+                                    currentFilters.selectedLanguages = [];
+                                    break;
+                                case 'paymentMethods':
+                                    currentFilters.selectedPaymentMethods = [];
+                                    break;
+                                case 'nationalities':
+                                    currentFilters.selectedNationalities = [];
+                                    break;
+                                case 'ethnicities':
+                                    currentFilters.selectedEthnicities = [];
+                                    break;
+                                case 'services':
+                                    currentFilters.selectedServices = [];
+                                    break;
+                            }
+
+                            localStorage.setItem('profileFilters', JSON.stringify(currentFilters));
+                            setFiltersKey(prev => prev + 1);
+                            window.dispatchEvent(new CustomEvent('filtersChanged', { detail: currentFilters }));
+                        };
+
                         return (
                             <div className="flex flex-wrap justify-between items-center gap-4 mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
                                 {/* Active Filters - Left side */}
@@ -442,49 +482,103 @@ export default function HomeClient({
                                         Limpiar filtros
                                     </button>
                                     {filters.minPrice && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                        <button
+                                            onClick={() => removeFilter('minPrice')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                             Mín: {filters.minPrice}€
-                                        </span>
+                                        </button>
                                     )}
                                     {filters.maxPrice && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                        <button
+                                            onClick={() => removeFilter('maxPrice')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                             Máx: {filters.maxPrice}€
-                                        </span>
+                                        </button>
                                     )}
                                     {filters.minAge && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                        <button
+                                            onClick={() => removeFilter('minAge')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                             Edad mín: {filters.minAge}
-                                        </span>
+                                        </button>
                                     )}
                                     {filters.maxAge && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                        <button
+                                            onClick={() => removeFilter('maxAge')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
                                             Edad máx: {filters.maxAge}
-                                        </span>
+                                        </button>
                                     )}
                                     {filters.selectedLanguages?.length > 0 && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm">
-                                            {filters.selectedLanguages.length} idioma(s)
-                                        </span>
+                                        <button
+                                            onClick={() => removeFilter('languages')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            {filters.selectedLanguages.length} {filters.selectedLanguages.length === 1 ? 'Idioma' : 'Idiomas'}
+                                        </button>
                                     )}
                                     {filters.selectedPaymentMethods?.length > 0 && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm">
-                                            {filters.selectedPaymentMethods.length} método(s) de pago
-                                        </span>
+                                        <button
+                                            onClick={() => removeFilter('paymentMethods')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            {filters.selectedPaymentMethods.length} {filters.selectedPaymentMethods.length === 1 ? 'Método de pago' : 'Métodos de pago'}
+                                        </button>
                                     )}
-                                    {filters.selectedNationality && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm">
-                                            Nacionalidad seleccionada
-                                        </span>
+                                    {filters.selectedNationalities?.length > 0 && (
+                                        <button
+                                            onClick={() => removeFilter('nationalities')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            {filters.selectedNationalities.length} {filters.selectedNationalities.length === 1 ? 'Nacionalidad' : 'Nacionalidades'}
+                                        </button>
                                     )}
-                                    {filters.selectedEthnicity && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-sm">
-                                            Etnia seleccionada
-                                        </span>
+                                    {filters.selectedEthnicities?.length > 0 && (
+                                        <button
+                                            onClick={() => removeFilter('ethnicities')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-sm hover:bg-yellow-200 dark:hover:bg-yellow-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            {filters.selectedEthnicities.length} {filters.selectedEthnicities.length === 1 ? 'Etnia' : 'Etnias'}
+                                        </button>
                                     )}
                                     {filters.selectedServices?.length > 0 && (
-                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-sm">
-                                            {filters.selectedServices.length} servicio(s)
-                                        </span>
+                                        <button
+                                            onClick={() => removeFilter('services')}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-sm hover:bg-pink-200 dark:hover:bg-pink-800 transition-colors"
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            {filters.selectedServices.length} {filters.selectedServices.length === 1 ? 'Servicio' : 'Servicios'}
+                                        </button>
                                     )}
                                 </div>
 
@@ -544,7 +638,8 @@ export default function HomeClient({
                                     const filters = savedFilters ? JSON.parse(savedFilters) : {};
                                     const hasFilters = filters.minPrice || filters.maxPrice || filters.minAge || filters.maxAge ||
                                         filters.selectedLanguages?.length > 0 || filters.selectedPaymentMethods?.length > 0 ||
-                                        filters.selectedNationality || filters.selectedEthnicity || filters.selectedServices?.length > 0;
+                                        filters.selectedNationalities?.length > 0 || filters.selectedEthnicities?.length > 0 ||
+                                        filters.selectedServices?.length > 0;
 
                                     return hasFilters && (
                                         <p className="mt-1 text-xs italic">

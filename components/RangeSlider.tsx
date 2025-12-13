@@ -50,7 +50,7 @@ export default function RangeSlider({
     return (
         <div className="space-y-2 mb-6">
             <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">{label}</label>
                 {showInputs && (
                     <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
                         <span>{minVal}</span>

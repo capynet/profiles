@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
         const maxAge = searchParams.get('maxAge');
         const languages = searchParams.get('languages');
         const paymentMethods = searchParams.get('paymentMethods');
-        const nationality = searchParams.get('nationality');
-        const ethnicity = searchParams.get('ethnicity');
+        const nationalities = searchParams.get('nationalities');
+        const ethnicities = searchParams.get('ethnicities');
         const services = searchParams.get('services');
         
         // New location-based parameters
@@ -94,25 +94,29 @@ export async function GET(request: NextRequest) {
             }
         }
         
-        // Nationality filter
-        if (nationality) {
-            const nationalityId = parseInt(nationality);
-            if (!isNaN(nationalityId)) {
+        // Nationalities filter
+        if (nationalities) {
+            const nationalityIds = nationalities.split(',').map(Number);
+            if (nationalityIds.length > 0) {
                 whereConditions.nationalities = {
                     some: {
-                        nationalityId: nationalityId
+                        nationalityId: {
+                            in: nationalityIds
+                        }
                     }
                 };
             }
         }
-        
-        // Ethnicity filter
-        if (ethnicity) {
-            const ethnicityId = parseInt(ethnicity);
-            if (!isNaN(ethnicityId)) {
+
+        // Ethnicities filter
+        if (ethnicities) {
+            const ethnicityIds = ethnicities.split(',').map(Number);
+            if (ethnicityIds.length > 0) {
                 whereConditions.ethnicities = {
                     some: {
-                        ethnicityId: ethnicityId
+                        ethnicityId: {
+                            in: ethnicityIds
+                        }
                     }
                 };
             }
@@ -168,7 +172,7 @@ export async function GET(request: NextRequest) {
 
         const cacheKey = JSON.stringify({
             minPrice, maxPrice, minAge, maxAge, languages, paymentMethods,
-            nationality, ethnicity, services, lat, lng, radius
+            nationalities, ethnicities, services, lat, lng, radius
         });
         const cacheHash = Buffer.from(cacheKey).toString('base64').slice(0, 32);
         

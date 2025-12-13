@@ -85,8 +85,8 @@ export default function SidebarFilters({
     const [maxAge, setMaxAge] = useState<string>('');
     const [selectedLanguages, setSelectedLanguages] = useState<number[]>([]);
     const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<number[]>([]);
-    const [selectedNationality, setSelectedNationality] = useState<number | null>(null);
-    const [selectedEthnicity, setSelectedEthnicity] = useState<number | null>(null);
+    const [selectedNationalities, setSelectedNationalities] = useState<number[]>([]);
+    const [selectedEthnicities, setSelectedEthnicities] = useState<number[]>([]);
     const [selectedServices, setSelectedServices] = useState<number[]>([]);
 
     // Track if this is the first render and if we're resetting from external event
@@ -111,8 +111,8 @@ export default function SidebarFilters({
                 setMaxAge(filters.maxAge || '');
                 setSelectedLanguages(filters.selectedLanguages || []);
                 setSelectedPaymentMethods(filters.selectedPaymentMethods || []);
-                setSelectedNationality(filters.selectedNationality || null);
-                setSelectedEthnicity(filters.selectedEthnicity || null);
+                setSelectedNationalities(filters.selectedNationalities || []);
+                setSelectedEthnicities(filters.selectedEthnicities || []);
                 setSelectedServices(filters.selectedServices || []);
             } catch (e) {
                 console.error('Error loading filters from localStorage:', e);
@@ -132,7 +132,8 @@ export default function SidebarFilters({
             const isEmpty = !filters.minPrice && !filters.maxPrice && !filters.minAge && !filters.maxAge &&
                 (!filters.selectedLanguages || filters.selectedLanguages.length === 0) &&
                 (!filters.selectedPaymentMethods || filters.selectedPaymentMethods.length === 0) &&
-                !filters.selectedNationality && !filters.selectedEthnicity &&
+                (!filters.selectedNationalities || filters.selectedNationalities.length === 0) &&
+                (!filters.selectedEthnicities || filters.selectedEthnicities.length === 0) &&
                 (!filters.selectedServices || filters.selectedServices.length === 0);
 
             if (isEmpty) {
@@ -146,8 +147,8 @@ export default function SidebarFilters({
                 setMaxAge('');
                 setSelectedLanguages([]);
                 setSelectedPaymentMethods([]);
-                setSelectedNationality(null);
-                setSelectedEthnicity(null);
+                setSelectedNationalities([]);
+                setSelectedEthnicities([]);
                 setSelectedServices([]);
 
                 // Reset the flag after state updates
@@ -175,8 +176,8 @@ export default function SidebarFilters({
             maxAge,
             selectedLanguages,
             selectedPaymentMethods,
-            selectedNationality,
-            selectedEthnicity,
+            selectedNationalities,
+            selectedEthnicities,
             selectedServices
         };
 
@@ -189,39 +190,7 @@ export default function SidebarFilters({
         }, 300); // Debounce
 
         return () => clearTimeout(timeoutId);
-    }, [minPrice, maxPrice, minAge, maxAge, selectedLanguages, selectedPaymentMethods, selectedNationality, selectedEthnicity, selectedServices]);
-
-    const handleReset = () => {
-        // Mark that we're resetting to avoid triggering the event
-        isResettingFromEvent.current = true;
-
-        // Reset state
-        setMinPrice('');
-        setMaxPrice('');
-        setMinAge('');
-        setMaxAge('');
-        setSelectedLanguages([]);
-        setSelectedPaymentMethods([]);
-        setSelectedNationality(null);
-        setSelectedEthnicity(null);
-        setSelectedServices([]);
-
-        // Clear localStorage
-        localStorage.removeItem('profileFilters');
-
-        // Dispatch event to notify HomeClient
-        window.dispatchEvent(new CustomEvent('filtersChanged', { detail: {} }));
-
-        // Reset the flag after state updates
-        setTimeout(() => {
-            isResettingFromEvent.current = false;
-        }, 100);
-
-        // Close sidebar on mobile after resetting filters
-        if (window.innerWidth < 768) {
-            onClose();
-        }
-    };
+    }, [minPrice, maxPrice, minAge, maxAge, selectedLanguages, selectedPaymentMethods, selectedNationalities, selectedEthnicities, selectedServices]);
 
     const toggleLanguage = (id: number) => {
         setSelectedLanguages(prev =>
@@ -235,6 +204,22 @@ export default function SidebarFilters({
         setSelectedPaymentMethods(prev =>
             prev.includes(id)
                 ? prev.filter(methodId => methodId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const toggleNationality = (id: number) => {
+        setSelectedNationalities(prev =>
+            prev.includes(id)
+                ? prev.filter(natId => natId !== id)
+                : [...prev, id]
+        );
+    };
+
+    const toggleEthnicity = (id: number) => {
+        setSelectedEthnicities(prev =>
+            prev.includes(id)
+                ? prev.filter(ethId => ethId !== id)
                 : [...prev, id]
         );
     };
@@ -253,7 +238,7 @@ export default function SidebarFilters({
             {/* Sidebar */}
             <aside
                 className={`
-          fixed md:sticky top-0 left-0 h-full md:h-auto md:max-h-[calc(100vh-4rem)] overflow-y-auto
+          fixed md:relative top-0 left-0 h-full md:h-auto overflow-y-auto
           w-80 max-w-[80vw] z-50 md:z-10 bg-white dark:bg-gray-800 shadow-lg md:shadow-md transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
@@ -380,140 +365,10 @@ export default function SidebarFilters({
                         showInputs={false}
                     />
 
-                    {/* Languages */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('languages')}</h3>
-                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
-                            {languages.map(language => (
-                                <div key={language.id} className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id={`lang-${language.id}`}
-                                        checked={selectedLanguages.includes(language.id)}
-                                        onChange={() => toggleLanguage(language.id)}
-                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                    />
-                                    <label
-                                        htmlFor={`lang-${language.id}`}
-                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {languageT(language.name)}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Payment Methods */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('paymentMethods')}</h3>
-                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
-                            {paymentMethods.map(method => (
-                                <div key={method.id} className="flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        id={`method-${method.id}`}
-                                        checked={selectedPaymentMethods.includes(method.id)}
-                                        onChange={() => togglePaymentMethod(method.id)}
-                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                                    />
-                                    <label
-                                        htmlFor={`method-${method.id}`}
-                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {paymentMethodT(method.name)}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Nationalities */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('nationality')}</h3>
-                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
-                            <div className="flex items-center mb-2">
-                                <input
-                                    type="radio"
-                                    id="nationality-none"
-                                    name="nationality"
-                                    checked={selectedNationality === null}
-                                    onChange={() => setSelectedNationality(null)}
-                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                                />
-                                <label
-                                    htmlFor="nationality-none"
-                                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-                                >
-                                    {t('any')}
-                                </label>
-                            </div>
-                            {nationalities.map(nationality => (
-                                <div key={nationality.id} className="flex items-center">
-                                    <input
-                                        type="radio"
-                                        id={`nationality-${nationality.id}`}
-                                        name="nationality"
-                                        checked={selectedNationality === nationality.id}
-                                        onChange={() => setSelectedNationality(nationality.id)}
-                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                                    />
-                                    <label
-                                        htmlFor={`nationality-${nationality.id}`}
-                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {nationalityT(nationality.name)}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    {/* Ethnicities */}
-                    <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('ethnicity')}</h3>
-                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
-                            <div className="flex items-center mb-2">
-                                <input
-                                    type="radio"
-                                    id="ethnicity-none"
-                                    name="ethnicity"
-                                    checked={selectedEthnicity === null}
-                                    onChange={() => setSelectedEthnicity(null)}
-                                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                                />
-                                <label
-                                    htmlFor="ethnicity-none"
-                                    className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-                                >
-                                    {t('any')}
-                                </label>
-                            </div>
-                            {ethnicities.map(ethnicity => (
-                                <div key={ethnicity.id} className="flex items-center">
-                                    <input
-                                        type="radio"
-                                        id={`ethnicity-${ethnicity.id}`}
-                                        name="ethnicity"
-                                        checked={selectedEthnicity === ethnicity.id}
-                                        onChange={() => setSelectedEthnicity(ethnicity.id)}
-                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                                    />
-                                    <label
-                                        htmlFor={`ethnicity-${ethnicity.id}`}
-                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {ethnicityT(ethnicity.name)}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
                     {/* Services */}
                     <div>
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('services')}</h3>
-                        <div className="max-h-40 overflow-y-auto pr-2 space-y-1">
+                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('services')}</h3>
+                        <div className="space-y-1">
                             {services.map(service => (
                                 <div key={service.id} className="flex items-center">
                                     <input
@@ -540,14 +395,100 @@ export default function SidebarFilters({
                         </div>
                     </div>
 
-                    {/* Filter Actions */}
-                    <div className="pt-2">
-                        <button
-                            onClick={handleReset}
-                            className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                        >
-                            {t('reset')}
-                        </button>
+                    {/* Languages */}
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('languages')}</h3>
+                        <div className="space-y-1">
+                            {languages.map(language => (
+                                <div key={language.id} className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id={`lang-${language.id}`}
+                                        checked={selectedLanguages.includes(language.id)}
+                                        onChange={() => toggleLanguage(language.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <label
+                                        htmlFor={`lang-${language.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {languageT(language.name)}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Payment Methods */}
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('paymentMethods')}</h3>
+                        <div className="space-y-1">
+                            {paymentMethods.map(method => (
+                                <div key={method.id} className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id={`method-${method.id}`}
+                                        checked={selectedPaymentMethods.includes(method.id)}
+                                        onChange={() => togglePaymentMethod(method.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <label
+                                        htmlFor={`method-${method.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {paymentMethodT(method.name)}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Nationalities */}
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('nationality')}</h3>
+                        <div className="space-y-1">
+                            {nationalities.map(nationality => (
+                                <div key={nationality.id} className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id={`nationality-${nationality.id}`}
+                                        checked={selectedNationalities.includes(nationality.id)}
+                                        onChange={() => toggleNationality(nationality.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <label
+                                        htmlFor={`nationality-${nationality.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {nationalityT(nationality.name)}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Ethnicities */}
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">{t('ethnicity')}</h3>
+                        <div className="space-y-1">
+                            {ethnicities.map(ethnicity => (
+                                <div key={ethnicity.id} className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        id={`ethnicity-${ethnicity.id}`}
+                                        checked={selectedEthnicities.includes(ethnicity.id)}
+                                        onChange={() => toggleEthnicity(ethnicity.id)}
+                                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                    />
+                                    <label
+                                        htmlFor={`ethnicity-${ethnicity.id}`}
+                                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                        {ethnicityT(ethnicity.name)}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </aside>
