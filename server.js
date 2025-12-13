@@ -1,5 +1,4 @@
 import { createServer } from 'https'
-import { parse } from 'url'
 import next from 'next'
 import fs from 'fs'
 import path from 'path'
@@ -25,8 +24,7 @@ const httpsOptions = {
 app.prepare().then(() => {
   createServer(httpsOptions, async (req, res) => {
     try {
-      const parsedUrl = parse(req.url, true)
-      await handle(req, res, parsedUrl)
+      await handle(req, res)
     } catch (err) {
       console.error('Error occurred handling', req.url, err)
       res.statusCode = 500

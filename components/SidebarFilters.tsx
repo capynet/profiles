@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import RangeSlider from './RangeSlider';
@@ -40,6 +40,17 @@ interface SidebarFiltersProps {
     onClose: () => void;
 }
 
+interface SidebarFiltersPropsExtended extends SidebarFiltersProps {
+    showMap: boolean;
+    setShowMap: (value: boolean) => void;
+    isNearMeActive: boolean;
+    isLocating: boolean;
+    handleNearMeClick: () => void;
+    radiusValue: number;
+    radiusOptions: Array<{value: number, label: string, className?: string}>;
+    handleRadiusChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
 export default function SidebarFilters({
                                            languages,
                                            paymentMethods,
@@ -47,9 +58,18 @@ export default function SidebarFilters({
                                            ethnicities,
                                            services,
                                            isOpen,
-                                           onClose
-                                       }: SidebarFiltersProps) {
+                                           onClose,
+                                           showMap,
+                                           setShowMap,
+                                           isNearMeActive,
+                                           isLocating,
+                                           handleNearMeClick,
+                                           radiusValue,
+                                           radiusOptions,
+                                           handleRadiusChange
+                                       }: SidebarFiltersPropsExtended) {
     const t = useTranslations('SidebarFilters');
+    const searchT = useTranslations('Search');
     const nationalityT = useTranslations('ProfileEntities.Nationalities');
     const ethnicityT = useTranslations('ProfileEntities.Ethnicities');
     const languageT = useTranslations('ProfileEntities.Languages');
@@ -69,100 +89,112 @@ export default function SidebarFilters({
     const [selectedEthnicity, setSelectedEthnicity] = useState<number | null>(null);
     const [selectedServices, setSelectedServices] = useState<number[]>([]);
 
+    // Track if this is the first render and if we're resetting from external event
+    const isFirstRender = useRef(true);
+    const isResettingFromEvent = useRef(false);
+
     // Price and age limits for sliders
     const priceMin = 0;
     const priceMax = 500;
     const ageMin = 18;
     const ageMax = 100;
 
-    // Initialize filters from URL params
+    // Load filters from localStorage on mount
     useEffect(() => {
-        if (!searchParams) return;
-        
-        const minPriceParam = searchParams.get('minPrice');
-        const maxPriceParam = searchParams.get('maxPrice');
-        const minAgeParam = searchParams.get('minAge');
-        const maxAgeParam = searchParams.get('maxAge');
-        const languagesParam = searchParams.get('languages');
-        const paymentMethodsParam = searchParams.get('paymentMethods');
-        const nationalityParam = searchParams.get('nationality');
-        const ethnicityParam = searchParams.get('ethnicity');
-        const servicesParam = searchParams.get('services');
-
-        if (minPriceParam) setMinPrice(minPriceParam);
-        if (maxPriceParam) setMaxPrice(maxPriceParam);
-        if (minAgeParam) setMinAge(minAgeParam);
-        if (maxAgeParam) setMaxAge(maxAgeParam);
-
-        if (languagesParam) {
-            setSelectedLanguages(languagesParam.split(',').map(Number));
+        const savedFilters = localStorage.getItem('profileFilters');
+        if (savedFilters) {
+            try {
+                const filters = JSON.parse(savedFilters);
+                setMinPrice(filters.minPrice || '');
+                setMaxPrice(filters.maxPrice || '');
+                setMinAge(filters.minAge || '');
+                setMaxAge(filters.maxAge || '');
+                setSelectedLanguages(filters.selectedLanguages || []);
+                setSelectedPaymentMethods(filters.selectedPaymentMethods || []);
+                setSelectedNationality(filters.selectedNationality || null);
+                setSelectedEthnicity(filters.selectedEthnicity || null);
+                setSelectedServices(filters.selectedServices || []);
+            } catch (e) {
+                console.error('Error loading filters from localStorage:', e);
+            }
         }
 
-        if (paymentMethodsParam) {
-            setSelectedPaymentMethods(paymentMethodsParam.split(',').map(Number));
-        }
-        
-        if (nationalityParam) {
-            setSelectedNationality(Number(nationalityParam));
-        }
-        
-        if (ethnicityParam) {
-            setSelectedEthnicity(Number(ethnicityParam));
-        }
-        
-        if (servicesParam) {
-            setSelectedServices(servicesParam.split(',').map(Number));
-        }
-    }, [searchParams]);
+        // Mark first render as complete
+        isFirstRender.current = false;
+    }, []);
 
-    const handleFilter = () => {
-        // Start with current URL params to preserve location params (lat, lng, radius)
-        const params = new URLSearchParams(searchParams?.toString() || '');
-        
-        // Preserve only location params (lat, lng, radius) and remove any existing filter params
-        const locationParams = new URLSearchParams();
-        if (params.has('lat')) locationParams.append('lat', params.get('lat')!);
-        if (params.has('lng')) locationParams.append('lng', params.get('lng')!);
-        if (params.has('radius')) locationParams.append('radius', params.get('radius')!);
-        
-        // Create new params object starting with preserved location params
-        const newParams = new URLSearchParams(locationParams.toString());
-        
-        // Add filter params
-        if (minPrice) newParams.append('minPrice', minPrice);
-        if (maxPrice) newParams.append('maxPrice', maxPrice);
-        if (minAge) newParams.append('minAge', minAge);
-        if (maxAge) newParams.append('maxAge', maxAge);
+    // Listen for external filter clear events
+    useEffect(() => {
+        const handleFiltersChanged = (event: any) => {
+            const filters = event.detail;
 
-        if (selectedLanguages.length > 0) {
-            newParams.append('languages', selectedLanguages.join(','));
-        }
+            // Check if filters were cleared (empty object)
+            const isEmpty = !filters.minPrice && !filters.maxPrice && !filters.minAge && !filters.maxAge &&
+                (!filters.selectedLanguages || filters.selectedLanguages.length === 0) &&
+                (!filters.selectedPaymentMethods || filters.selectedPaymentMethods.length === 0) &&
+                !filters.selectedNationality && !filters.selectedEthnicity &&
+                (!filters.selectedServices || filters.selectedServices.length === 0);
 
-        if (selectedPaymentMethods.length > 0) {
-            newParams.append('paymentMethods', selectedPaymentMethods.join(','));
-        }
+            if (isEmpty) {
+                // Mark that we're resetting from external event to avoid triggering another event
+                isResettingFromEvent.current = true;
 
-        if (selectedNationality) {
-            newParams.append('nationality', selectedNationality.toString());
-        }
+                // Reset all filter states
+                setMinPrice('');
+                setMaxPrice('');
+                setMinAge('');
+                setMaxAge('');
+                setSelectedLanguages([]);
+                setSelectedPaymentMethods([]);
+                setSelectedNationality(null);
+                setSelectedEthnicity(null);
+                setSelectedServices([]);
 
-        if (selectedEthnicity) {
-            newParams.append('ethnicity', selectedEthnicity.toString());
-        }
-        
-        if (selectedServices.length > 0) {
-            newParams.append('services', selectedServices.join(','));
+                // Reset the flag after state updates
+                setTimeout(() => {
+                    isResettingFromEvent.current = false;
+                }, 100);
+            }
+        };
+
+        window.addEventListener('filtersChanged', handleFiltersChanged);
+        return () => window.removeEventListener('filtersChanged', handleFiltersChanged);
+    }, []);
+
+    // Save filters to localStorage and trigger a custom event
+    useEffect(() => {
+        // Skip on first render or when resetting from external event
+        if (isFirstRender.current || isResettingFromEvent.current) {
+            return;
         }
 
-        router.push(`/?${newParams.toString()}`);
+        const filters = {
+            minPrice,
+            maxPrice,
+            minAge,
+            maxAge,
+            selectedLanguages,
+            selectedPaymentMethods,
+            selectedNationality,
+            selectedEthnicity,
+            selectedServices
+        };
 
-        // Close sidebar on mobile after applying filters
-        if (window.innerWidth < 768) {
-            onClose();
-        }
-    };
+        // Save to localStorage
+        localStorage.setItem('profileFilters', JSON.stringify(filters));
+
+        // Dispatch custom event to notify HomeClient
+        const timeoutId = setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('filtersChanged', { detail: filters }));
+        }, 300); // Debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [minPrice, maxPrice, minAge, maxAge, selectedLanguages, selectedPaymentMethods, selectedNationality, selectedEthnicity, selectedServices]);
 
     const handleReset = () => {
+        // Mark that we're resetting to avoid triggering the event
+        isResettingFromEvent.current = true;
+
         // Reset state
         setMinPrice('');
         setMaxPrice('');
@@ -173,21 +205,17 @@ export default function SidebarFilters({
         setSelectedNationality(null);
         setSelectedEthnicity(null);
         setSelectedServices([]);
-        
-        // Preserve location parameters if they exist
-        const currentParams = new URLSearchParams(searchParams?.toString() || '');
-        const locationParams = new URLSearchParams();
-        
-        if (currentParams.has('lat')) locationParams.append('lat', currentParams.get('lat')!);
-        if (currentParams.has('lng')) locationParams.append('lng', currentParams.get('lng')!);
-        if (currentParams.has('radius')) locationParams.append('radius', currentParams.get('radius')!);
-        
-        // If we have location params, keep them in the URL
-        if (locationParams.toString()) {
-            router.push(`/?${locationParams.toString()}`);
-        } else {
-            router.push('/');
-        }
+
+        // Clear localStorage
+        localStorage.removeItem('profileFilters');
+
+        // Dispatch event to notify HomeClient
+        window.dispatchEvent(new CustomEvent('filtersChanged', { detail: {} }));
+
+        // Reset the flag after state updates
+        setTimeout(() => {
+            isResettingFromEvent.current = false;
+        }, 100);
 
         // Close sidebar on mobile after resetting filters
         if (window.innerWidth < 768) {
@@ -211,14 +239,6 @@ export default function SidebarFilters({
         );
     };
 
-    // Active filters count
-    const activeFiltersCount = [
-        minPrice, maxPrice, minAge, maxAge,
-        ...selectedLanguages, ...selectedPaymentMethods,
-        ...selectedServices,
-        selectedNationality, selectedEthnicity
-    ].filter(Boolean).length;
-
     return (
         <>
             {/* Mobile overlay */}
@@ -238,24 +258,99 @@ export default function SidebarFilters({
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
             >
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h2 className="text-lg font-medium text-gray-900 dark:text-white">
-                        {t('title')}
-                        {activeFiltersCount > 0 && (
-                            <span className="ml-2 px-2 py-0.5 bg-indigo-600 text-white text-xs rounded-full">
-                                {activeFiltersCount}
-                            </span>
-                        )}
-                    </h2>
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-end items-center md:hidden">
                     <button
                         onClick={onClose}
-                        className="p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 md:hidden"
+                        className="p-1 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                         aria-label="Cerrar"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
+                </div>
+
+                {/* Map and Near Me controls */}
+                <div className="p-4 space-y-3 border-b border-gray-200 dark:border-gray-700">
+                    {/* Map toggle button */}
+                    <button
+                        onClick={() => setShowMap(!showMap)}
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                            showMap
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                        }`}
+                        aria-label={showMap ? searchT('hideMap') : searchT('showMap')}
+                        title={showMap ? searchT('hideMap') : searchT('showMap')}
+                    >
+                        <div className="flex items-center justify-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                            </svg>
+                            <span>{showMap ? searchT('hideMap') : searchT('showMap')}</span>
+                        </div>
+                    </button>
+
+                    {/* Near Me button */}
+                    <button
+                        onClick={() => handleNearMeClick()}
+                        disabled={isLocating}
+                        className={`w-full px-3 py-2 text-sm rounded-md border ${
+                            isNearMeActive
+                                ? 'bg-green-600 text-white border-green-600'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
+                        }`}
+                        aria-label={searchT('nearMe')}
+                        title={searchT('nearMe')}
+                    >
+                        <div className="flex items-center justify-center space-x-2">
+                            {isLocating ? (
+                                <>
+                                    <div className="h-5 w-5 border-t-2 border-green-500 rounded-full animate-spin"></div>
+                                    <span>{searchT('locating')}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>{searchT('nearMe')}</span>
+                                </>
+                            )}
+                        </div>
+                    </button>
+
+                    {/* Radius button group - visible when Near Me is active */}
+                    {isNearMeActive && (
+                        <div className="flex flex-wrap gap-2">
+                            {radiusOptions.map((option, index, arr) => {
+                                const isLastOptionForDesktop = option.value === 100 && option.label === "Sin límite";
+                                const isLastOptionForMobile = option.value === 100 && option.label === "∞";
+
+                                // Skip the mobile-only option in sidebar
+                                if (isLastOptionForMobile) return null;
+
+                                return (
+                                    <button
+                                        key={`${option.value}-${option.label}`}
+                                        onClick={() => handleRadiusChange({ target: { value: option.value.toString() }} as React.ChangeEvent<HTMLSelectElement>)}
+                                        className={`
+                                            flex-1 px-2 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-md
+                                            ${radiusValue === option.value
+                                                ? 'bg-green-600 text-white border-green-600 dark:bg-green-600 dark:text-white dark:border-green-700'
+                                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                                            }
+                                            focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500
+                                        `}
+                                        title={option.value === 100 ? searchT('noLimitLong') : `${searchT('searchRadius')}: ${option.label}`}
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-4 space-y-6">
@@ -446,75 +541,15 @@ export default function SidebarFilters({
                     </div>
 
                     {/* Filter Actions */}
-                    <div className="flex space-x-2 pt-2">
-                        <button
-                            onClick={handleFilter}
-                            className="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            {t('applyFilters')}
-                        </button>
+                    <div className="pt-2">
                         <button
                             onClick={handleReset}
-                            className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                            className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
                         >
                             {t('reset')}
                         </button>
                     </div>
                 </div>
-
-                {/* Active filters summary */}
-                {activeFiltersCount > 0 && (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
-                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('activeFilters')}</h3>
-                        <div className="flex flex-wrap gap-2">
-                            {minPrice && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    {t('minPrice', { value: minPrice })}
-                                </span>
-                            )}
-                            {maxPrice && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    {t('maxPrice', { value: maxPrice })}
-                                </span>
-                            )}
-                            {minAge && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    {t('minAge', { value: minAge })}
-                                </span>
-                            )}
-                            {maxAge && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs">
-                                    {t('maxAge', { value: maxAge })}
-                                </span>
-                            )}
-                            {selectedLanguages.length > 0 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-xs">
-                                    {t('languagesCount', { count: selectedLanguages.length })}
-                                </span>
-                            )}
-                            {selectedPaymentMethods.length > 0 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">
-                                    {t('paymentMethodsCount', { count: selectedPaymentMethods.length })}
-                                </span>
-                            )}
-                            {selectedNationality && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs">
-                                    {t('nationalityLabel', { name: nationalityT(nationalities.find(n => n.id === selectedNationality)?.name || '') })}
-                                </span>
-                            )}
-                            {selectedEthnicity && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs">
-                                    {t('ethnicityLabel', { name: ethnicityT(ethnicities.find(e => e.id === selectedEthnicity)?.name || '') })}
-                                </span>
-                            )}
-                            {selectedServices.length > 0 && (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-xs">
-                                    {t('servicesCount', { count: selectedServices.length })}
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                )}
             </aside>
         </>
     );

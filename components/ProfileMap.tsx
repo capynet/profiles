@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect, memo } from 'react';
 import { GoogleMap, useLoadScript, InfoWindow, Marker } from '@react-google-maps/api';
 import ProfileMapCard from './ProfileMapCard';
 
@@ -41,10 +41,11 @@ const mapContainerStyle = {
 // This prevents React from reloading the script unnecessarily
 const libraries: ("marker")[] = ["marker"];
 
-export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radius = 10 }: ProfileMapProps) {
+function ProfileMap({ profiles, apiKey, mapId, userLocation, radius = 10 }: ProfileMapProps) {
     const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
     const mapRef = useRef<google.maps.Map | null>(null);
     const circleRef = useRef<google.maps.Circle | null>(null);
+    const hasInitialized = useRef(false);
 
     // Load the Google Maps script using the hook with static libraries array
     const { isLoaded, loadError } = useLoadScript({
@@ -52,13 +53,13 @@ export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radi
         libraries
     });
 
-    // Calculate center of map based on user location or profile locations
-    const center = useMemo(() => {
+    // Calculate initial center of map - this only sets the initial position
+    const initialCenter = useMemo(() => {
         // If user location is provided, use that as center
         if (userLocation) {
             return userLocation;
         }
-        
+
         // If no profiles, use default center
         if (profiles.length === 0) {
             // Default center (e.g., Madrid, Spain)
@@ -73,24 +74,37 @@ export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radi
             lat: sumLat / profiles.length,
             lng: sumLng / profiles.length
         };
-    }, [profiles, userLocation]);
+    }, []); // Empty deps - only calculate once on mount
+
+    // Calculate appropriate zoom level based on radius
+    const getZoomLevel = () => {
+        if (!userLocation) return 12;
+
+        // For smaller radiuses, use higher zoom levels
+        if (radius <= 0.2) return 17; // 200m - very close
+        if (radius <= 0.5) return 16; // 500m - close
+        if (radius <= 1) return 15;   // 1km
+        if (radius <= 3) return 14;   // 2-3km
+        if (radius <= 5) return 13;   // 5km
+        return 12;                    // Default for larger areas
+    };
 
     // Create or update the circle when the map or user location changes
     useEffect(() => {
         console.log('Circle effect running with radius:', radius, 'type:', typeof radius);
-        
+
         // Clear existing circle first
         if (circleRef.current) {
             circleRef.current.setMap(null);
             circleRef.current = null;
         }
-        
+
         // Only create circle if map is loaded, user location is set, google is available, and radius is not "No limit" (100)
         if (isLoaded && mapRef.current && userLocation && window.google && Number(radius) !== 100) {
             // Convert radius to meters and ensure it's a valid number
             const radiusInMeters = Number(radius) * 1000;
             console.log('Creating circle with radius in meters:', radiusInMeters);
-            
+
             // Create new circle with explicit numerical values
             circleRef.current = new window.google.maps.Circle({
                 map: mapRef.current,
@@ -105,7 +119,7 @@ export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radi
                 zIndex: 1
             });
         }
-        
+
         // Clean up on unmount
         return () => {
             if (circleRef.current) {
@@ -115,24 +129,59 @@ export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radi
         };
     }, [isLoaded, userLocation, radius, mapRef]);
 
+    // Smooth pan and zoom when userLocation or radius change (not on profile changes)
+    useEffect(() => {
+        if (!mapRef.current || !isLoaded || !hasInitialized.current) return;
+
+        const map = mapRef.current;
+        const newZoom = getZoomLevel();
+
+        // Only animate to user location if it exists
+        if (userLocation) {
+            map.panTo(userLocation);
+        }
+
+        // Smoothly transition zoom when radius changes
+        const currentZoom = map.getZoom() || 12;
+        if (currentZoom !== newZoom) {
+            // Animate zoom gradually
+            const zoomDiff = newZoom - currentZoom;
+            const steps = Math.abs(zoomDiff);
+            const direction = zoomDiff > 0 ? 1 : -1;
+            let step = 0;
+
+            const zoomInterval = setInterval(() => {
+                step++;
+                if (step <= steps) {
+                    map.setZoom(currentZoom + (direction * step));
+                } else {
+                    clearInterval(zoomInterval);
+                }
+            }, 100); // 100ms per zoom level
+
+            return () => clearInterval(zoomInterval);
+        }
+    }, [userLocation, radius, isLoaded]); // Only depend on userLocation and radius, NOT profiles
+
     const onLoad = useCallback((map: google.maps.Map) => {
         console.log('Map loaded, setting mapRef');
         mapRef.current = map;
-        
+        hasInitialized.current = true; // Mark map as initialized
+
         // Initialize the circle if we already have user location and radius is not "No limit" (100)
         if (userLocation && window.google && Number(radius) !== 100) {
             console.log('User location available on map load, creating circle with radius:', radius, 'type:', typeof radius);
-            
+
             // Clear existing circle if any
             if (circleRef.current) {
                 circleRef.current.setMap(null);
                 circleRef.current = null;
             }
-            
+
             // Convert radius to meters using Number for consistent conversion
             const radiusInMeters = Number(radius) * 1000;
             console.log('Creating circle on map load with radius in meters:', radiusInMeters);
-            
+
             // Create circle immediately on map load
             circleRef.current = new window.google.maps.Circle({
                 map,
@@ -170,23 +219,10 @@ export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radi
         );
     }
 
-    // Calculate appropriate zoom level based on radius
-    const getZoomLevel = () => {
-        if (!userLocation) return 12;
-        
-        // For smaller radiuses, use higher zoom levels
-        if (radius <= 0.2) return 17; // 200m - very close
-        if (radius <= 0.5) return 16; // 500m - close
-        if (radius <= 1) return 15;   // 1km
-        if (radius <= 3) return 14;   // 2-3km
-        if (radius <= 5) return 13;   // 5km
-        return 12;                    // Default for larger areas
-    };
-
     return (
         <GoogleMap
             mapContainerStyle={mapContainerStyle}
-            center={center}
+            center={initialCenter}
             zoom={getZoomLevel()}
             onLoad={onLoad}
             onUnmount={onUnmount}
@@ -255,3 +291,6 @@ export default function ProfileMap({ profiles, apiKey, mapId, userLocation, radi
         </GoogleMap>
     );
 }
+
+// Memoize to prevent unnecessary re-renders when props haven't changed
+export default memo(ProfileMap);

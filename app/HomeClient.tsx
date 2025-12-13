@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useMemo} from 'react';
 import {useSearchParams, useRouter} from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import ProfileCard from '@/components/ProfileCard';
@@ -98,11 +98,12 @@ export default function HomeClient({
     const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
     const [loading, setLoading] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [showMap, setShowMap] = useState(false);
+    const [showMap, setShowMap] = useState(true);
     const [mapInitialized, setMapInitialized] = useState(false);
     const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
     const [isNearMeActive, setIsNearMeActive] = useState(false);
     const [isLocating, setIsLocating] = useState(false);
+    const [filtersKey, setFiltersKey] = useState(0); // Force re-render when filters change
     const searchParams = useSearchParams();
 
     // Initialize map once when it's first shown
@@ -295,39 +296,76 @@ export default function HomeClient({
     };
 
     // Fetch profiles based on filters
-    useEffect(() => {
-        const fetchProfiles = async () => {
-            try {
-                setLoading(true);
-                const params = new URLSearchParams(searchParams ? searchParams.toString() : '');
-                const response = await fetch(`/api/profiles?${params.toString()}`);
+    const fetchProfiles = async () => {
+        try {
+            setLoading(true);
 
-                if (!response.ok) {
-                    throw new Error('Failed to fetch profiles');
-                }
+            // Get filters from localStorage
+            const savedFilters = localStorage.getItem('profileFilters');
+            const filters = savedFilters ? JSON.parse(savedFilters) : {};
 
-                const data = await response.json();
-                setProfiles(data);
-                
-                // Check if near me filter is active based on URL params
-                if (params.has('lat') && params.has('lng')) {
-                    setIsNearMeActive(true);
-                    setUserLocation({
-                        lat: parseFloat(params.get('lat') || '0'), 
-                        lng: parseFloat(params.get('lng') || '0')
-                    });
-                } else {
-                    setIsNearMeActive(false);
-                    setUserLocation(null);
-                }
-            } catch (error) {
-                console.error('Error fetching profiles:', error);
-            } finally {
-                setLoading(false);
+            // Build query params with location data from URL
+            const params = new URLSearchParams();
+
+            // Add location params from URL
+            if (searchParams) {
+                if (searchParams.has('lat')) params.set('lat', searchParams.get('lat')!);
+                if (searchParams.has('lng')) params.set('lng', searchParams.get('lng')!);
+                if (searchParams.has('radius')) params.set('radius', searchParams.get('radius')!);
             }
+
+            // Add filter params from localStorage
+            if (filters.minPrice) params.set('minPrice', filters.minPrice);
+            if (filters.maxPrice) params.set('maxPrice', filters.maxPrice);
+            if (filters.minAge) params.set('minAge', filters.minAge);
+            if (filters.maxAge) params.set('maxAge', filters.maxAge);
+            if (filters.selectedLanguages?.length > 0) params.set('languages', filters.selectedLanguages.join(','));
+            if (filters.selectedPaymentMethods?.length > 0) params.set('paymentMethods', filters.selectedPaymentMethods.join(','));
+            if (filters.selectedNationality) params.set('nationality', filters.selectedNationality.toString());
+            if (filters.selectedEthnicity) params.set('ethnicity', filters.selectedEthnicity.toString());
+            if (filters.selectedServices?.length > 0) params.set('services', filters.selectedServices.join(','));
+
+            const response = await fetch(`/api/profiles?${params.toString()}`);
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch profiles');
+            }
+
+            const data = await response.json();
+            setProfiles(data);
+
+            // Check if near me filter is active based on URL params
+            if (searchParams && searchParams.has('lat') && searchParams.has('lng')) {
+                setIsNearMeActive(true);
+                setUserLocation({
+                    lat: parseFloat(searchParams.get('lat') || '0'),
+                    lng: parseFloat(searchParams.get('lng') || '0')
+                });
+            } else {
+                setIsNearMeActive(false);
+                setUserLocation(null);
+            }
+        } catch (error) {
+            console.error('Error fetching profiles:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Fetch profiles when URL params change (location)
+    useEffect(() => {
+        fetchProfiles();
+    }, [searchParams]);
+
+    // Listen for filter changes from localStorage
+    useEffect(() => {
+        const handleFiltersChanged = () => {
+            setFiltersKey(prev => prev + 1); // Trigger re-render of filter badges
+            fetchProfiles();
         };
 
-        fetchProfiles();
+        window.addEventListener('filtersChanged', handleFiltersChanged);
+        return () => window.removeEventListener('filtersChanged', handleFiltersChanged);
     }, [searchParams]);
 
     return (
@@ -342,109 +380,6 @@ export default function HomeClient({
                 <PublishProfileBanner className="mb-8" />
             )}
 
-            {/* Header with toggle for map */}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{t('searchProfiles')}</h1>
-
-                <div className="flex items-center flex-wrap gap-2 sm:flex-nowrap sm:space-x-2">
-                    {/* Map toggle button */}
-                    <button
-                        onClick={() => setShowMap(!showMap)}
-                        className={`px-3 py-2 text-sm rounded-md border ${
-                            showMap
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
-                        }`}
-                        aria-label={showMap ? t('hideMap') : t('showMap')}
-                        title={showMap ? t('hideMap') : t('showMap')}
-                    >
-                        <div className="flex items-center space-x-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                            </svg>
-                            <span>{showMap ? t('hideMap') : t('showMap')}</span>
-                        </div>
-                    </button>
-                    
-                    {/* Near Me button */}
-                    <button
-                        onClick={() => handleNearMeClick()}
-                        disabled={isLocating}
-                        className={`px-3 py-2 text-sm rounded-md border ${
-                            isNearMeActive
-                                ? 'bg-green-600 text-white border-green-600'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
-                        }`}
-                        aria-label={t('nearMe')}
-                        title={t('nearMe')}
-                    >
-                        <div className="flex items-center space-x-1">
-                            {isLocating ? (
-                                <>
-                                    <div className="h-5 w-5 border-t-2 border-green-500 rounded-full animate-spin"></div>
-                                    <span>{t('locating')}</span>
-                                </>
-                            ) : (
-                                <>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <span>{t('nearMe')}</span>
-                                </>
-                            )}
-                        </div>
-                    </button>
-                    
-                    {/* Radius button group - visible when Near Me is active */}
-                    {isNearMeActive && (
-                        <div className="flex ml-2 rounded-md shadow-sm h-full">
-                            {radiusOptions.map((option, index, arr) => {
-                                // Filter out duplicates (the "Sin límite" and "∞" options both have value 100)
-                                const isLastOptionForDesktop = option.value === 100 && option.label === "Sin límite";
-                                const isLastOptionForMobile = option.value === 100 && option.label === "∞";
-                                
-                                // Calculate if this is the first or last visible button in the group
-                                const isFirst = index === 0;
-                                const isLast = index === arr.length - 2 && isLastOptionForDesktop || index === arr.length - 1 && isLastOptionForMobile;
-                                
-                                return (
-                                    <button
-                                        key={`${option.value}-${option.label}`}
-                                        onClick={() => handleRadiusChange({ target: { value: option.value.toString() }} as React.ChangeEvent<HTMLSelectElement>)}
-                                        className={`
-                                            px-2 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600
-                                            ${isFirst ? 'rounded-l-md' : ''} ${isLast ? 'rounded-r-md' : ''}
-                                            ${index > 0 ? '-ml-px' : ''}
-                                            ${radiusValue === option.value 
-                                                ? 'bg-green-600 text-white border-green-600 dark:bg-green-600 dark:text-white dark:border-green-700 z-10' 
-                                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                                            }
-                                            focus:z-10 focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500
-                                            ${option.className || ''}
-                                        `}
-                                        title={option.value === 100 ? t('noLimitLong') : `${t('searchRadius')}: ${option.label}`}
-                                    >
-                                        {option.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* Mobile filter toggle */}
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="md:hidden px-3 py-2 bg-indigo-600 text-white rounded-md flex items-center space-x-2 hover:bg-indigo-700 transition-colors"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
-                        </svg>
-                        <span>{t('filters')}</span>
-                    </button>
-                </div>
-            </div>
-
             <div className="flex flex-col md:flex-row gap-6">
                 {/* Sidebar Filters */}
                 <SidebarFilters
@@ -455,10 +390,118 @@ export default function HomeClient({
                     services={services}
                     isOpen={sidebarOpen}
                     onClose={() => setSidebarOpen(false)}
+                    showMap={showMap}
+                    setShowMap={setShowMap}
+                    isNearMeActive={isNearMeActive}
+                    isLocating={isLocating}
+                    handleNearMeClick={handleNearMeClick}
+                    radiusValue={radiusValue}
+                    radiusOptions={radiusOptions}
+                    handleRadiusChange={handleRadiusChange}
                 />
 
                 {/* Main Content */}
                 <div className="flex-1">
+                    {/* Active filters and mobile button */}
+                    {(() => {
+                        const savedFilters = typeof window !== 'undefined' ? localStorage.getItem('profileFilters') : null;
+                        const filters = savedFilters ? JSON.parse(savedFilters) : {};
+                        const hasFilters = filters.minPrice || filters.maxPrice || filters.minAge || filters.maxAge ||
+                            filters.selectedLanguages?.length > 0 || filters.selectedPaymentMethods?.length > 0 ||
+                            filters.selectedNationality || filters.selectedEthnicity || filters.selectedServices?.length > 0;
+
+                        if (!hasFilters) {
+                            // Only show mobile filter button without container
+                            return (
+                                <div className="flex justify-end mb-6 md:hidden">
+                                    <button
+                                        onClick={() => setSidebarOpen(true)}
+                                        className="px-3 py-2 bg-indigo-600 text-white rounded-md flex items-center space-x-2 hover:bg-indigo-700 transition-colors"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                        </svg>
+                                        <span>{t('filters')}</span>
+                                    </button>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div className="flex flex-wrap justify-between items-center gap-4 mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+                                {/* Active Filters - Left side */}
+                                <div key={filtersKey} className="flex flex-wrap gap-2 items-center">
+                                    <button
+                                        onClick={() => {
+                                            localStorage.removeItem('profileFilters');
+                                            setFiltersKey(prev => prev + 1);
+                                            window.dispatchEvent(new CustomEvent('filtersChanged', { detail: {} }));
+                                        }}
+                                        className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                    >
+                                        Limpiar filtros
+                                    </button>
+                                    {filters.minPrice && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                            Mín: {filters.minPrice}€
+                                        </span>
+                                    )}
+                                    {filters.maxPrice && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                            Máx: {filters.maxPrice}€
+                                        </span>
+                                    )}
+                                    {filters.minAge && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                            Edad mín: {filters.minAge}
+                                        </span>
+                                    )}
+                                    {filters.maxAge && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-sm">
+                                            Edad máx: {filters.maxAge}
+                                        </span>
+                                    )}
+                                    {filters.selectedLanguages?.length > 0 && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 text-sm">
+                                            {filters.selectedLanguages.length} idioma(s)
+                                        </span>
+                                    )}
+                                    {filters.selectedPaymentMethods?.length > 0 && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm">
+                                            {filters.selectedPaymentMethods.length} método(s) de pago
+                                        </span>
+                                    )}
+                                    {filters.selectedNationality && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-sm">
+                                            Nacionalidad seleccionada
+                                        </span>
+                                    )}
+                                    {filters.selectedEthnicity && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-sm">
+                                            Etnia seleccionada
+                                        </span>
+                                    )}
+                                    {filters.selectedServices?.length > 0 && (
+                                        <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200 text-sm">
+                                            {filters.selectedServices.length} servicio(s)
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Mobile filter toggle - Right side */}
+                                <button
+                                    onClick={() => setSidebarOpen(true)}
+                                    className="md:hidden px-3 py-2 bg-indigo-600 text-white rounded-md flex items-center space-x-2 hover:bg-indigo-700 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                                    </svg>
+                                    <span>{t('filters')}</span>
+                                </button>
+                            </div>
+                        );
+                    })()}
+
                     {/* Map (rendered once then kept in DOM) */}
                     <div
                         className={`mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out ${
@@ -466,7 +509,7 @@ export default function HomeClient({
                         }`}
                     >
                         {/* No longer needed as radius control has been moved */}
-                        
+
                         {mapInitialized && (profiles.length > 0 || userLocation) && (
                             <ProfileMap
                                 profiles={profiles}
@@ -474,7 +517,6 @@ export default function HomeClient({
                                 mapId={googleMapsId}
                                 userLocation={userLocation}
                                 radius={radiusValue}
-                                key={`map-${radiusValue}-${userLocation?.lat}-${userLocation?.lng}`} // Force re-render on radius or location change
                             />
                         )}
                     </div>
@@ -497,15 +539,19 @@ export default function HomeClient({
                                     )}
                                 </p>
                                 {/* Active filters message */}
-                                {(searchParams && (searchParams.has('minPrice') || searchParams.has('maxPrice') || 
-                                  searchParams.has('minAge') || searchParams.has('maxAge') || 
-                                  searchParams.has('languages') || searchParams.has('paymentMethods') ||
-                                  searchParams.has('nationality') || searchParams.has('ethnicity') ||
-                                  searchParams.has('services'))) && (
-                                    <p className="mt-1 text-xs italic">
-                                        {t('filteredResults')}
-                                    </p>
-                                )}
+                                {(() => {
+                                    const savedFilters = typeof window !== 'undefined' ? localStorage.getItem('profileFilters') : null;
+                                    const filters = savedFilters ? JSON.parse(savedFilters) : {};
+                                    const hasFilters = filters.minPrice || filters.maxPrice || filters.minAge || filters.maxAge ||
+                                        filters.selectedLanguages?.length > 0 || filters.selectedPaymentMethods?.length > 0 ||
+                                        filters.selectedNationality || filters.selectedEthnicity || filters.selectedServices?.length > 0;
+
+                                    return hasFilters && (
+                                        <p className="mt-1 text-xs italic">
+                                            {t('filteredResults')}
+                                        </p>
+                                    );
+                                })()}
                                 {!showMap && (
                                     <button 
                                         onClick={() => setShowMap(true)}

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -26,7 +27,7 @@ interface ProfileCardProps {
     priority?: boolean;
 }
 
-export default function ProfileCard({
+function ProfileCard({
                                         id,
                                         name,
                                         age,
@@ -185,3 +186,6 @@ export default function ProfileCard({
         </div>
     );
 }
+
+// Memoize to prevent unnecessary re-renders when props haven't changed
+export default memo(ProfileCard);
