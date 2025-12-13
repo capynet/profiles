@@ -208,9 +208,6 @@ export async function DELETE(
         let entity: {id: number; name: string} | null = null;
 
         switch (type) {
-            case 'language':
-                entity = await prisma.language.findUnique({where: {id: entityId}});
-                break;
             case 'service':
                 entity = await prisma.service.findUnique({where: {id: entityId}});
                 break;
@@ -233,16 +230,6 @@ export async function DELETE(
         let profilesUsing: Array<{id: number; name: string}> = [];
 
         switch (type) {
-            case 'language':
-                profilesUsing = await prisma.profile.findMany({
-                    where: {
-                        published: true,
-                        isDraft: false,
-                        languages: { some: { languageId: entityId } },
-                    },
-                    select: {id: true, name: true},
-                });
-                break;
             case 'service':
                 profilesUsing = await prisma.profile.findMany({
                     where: {
@@ -318,9 +305,6 @@ export async function DELETE(
             let replacementEntity: {id: number; name: string} | null = null;
 
             switch (type) {
-                case 'language':
-                    replacementEntity = await prisma.language.findUnique({where: {id: replacementEntityId}});
-                    break;
                 case 'service':
                     replacementEntity = await prisma.service.findUnique({where: {id: replacementEntityId}});
                     break;
@@ -360,37 +344,6 @@ export async function DELETE(
             if (profilesUsing.length > 0) {
                 for (const profile of profilesUsing) {
                     switch (type) {
-                        case 'language':
-                            // Delete old relation
-                            await tx.profileLanguage.deleteMany({
-                                where: {
-                                    profileId: profile.id,
-                                    languageId: entityId,
-                                },
-                            });
-
-                            // Add new relation if replacement specified
-                            if (replacementEntityId !== null) {
-                                const existing = await tx.profileLanguage.findUnique({
-                                    where: {
-                                        profileId_languageId: {
-                                            profileId: profile.id,
-                                            languageId: replacementEntityId,
-                                        },
-                                    },
-                                });
-
-                                if (!existing) {
-                                    await tx.profileLanguage.create({
-                                        data: {
-                                            profileId: profile.id,
-                                            languageId: replacementEntityId,
-                                        },
-                                    });
-                                }
-                            }
-                            break;
-
                         case 'service':
                             await tx.profileService.deleteMany({
                                 where: {
@@ -513,11 +466,6 @@ export async function DELETE(
             // Delete relations in profile VERSION tables (historical data)
             // This is necessary because these tables also have foreign keys to the entities
             switch (type) {
-                case 'language':
-                    await tx.profileVersionLanguage.deleteMany({
-                        where: {languageId: entityId},
-                    });
-                    break;
                 case 'service':
                     await tx.profileVersionService.deleteMany({
                         where: {serviceId: entityId},
@@ -542,9 +490,6 @@ export async function DELETE(
 
             // Finally, delete the entity itself
             switch (type) {
-                case 'language':
-                    await tx.language.delete({where: {id: entityId}});
-                    break;
                 case 'service':
                     await tx.service.delete({where: {id: entityId}});
                     break;
