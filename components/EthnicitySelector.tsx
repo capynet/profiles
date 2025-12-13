@@ -39,20 +39,9 @@ export default function EthnicitySelector({
 
     return (
         <div className="space-y-2">
-            <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {t('title')}
-                </label>
-                <button
-                    type="button"
-                    onClick={() => mutate()}
-                    disabled={isLoading}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
-                    title="Refresh list"
-                >
-                    {isLoading ? '⟳' : '↻'} Refresh
-                </button>
-            </div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('title')}
+            </label>
 
             {isLoading && ethnicities.length === 0 ? (
                 <div className="p-3 text-sm text-gray-500 dark:text-gray-400">

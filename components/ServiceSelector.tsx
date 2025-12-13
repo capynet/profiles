@@ -41,20 +41,9 @@ export default function ServiceSelector({ selectedServices, onChange, error }: S
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          {t('title')}
-        </label>
-        <button
-          type="button"
-          onClick={() => mutate()}
-          disabled={isLoading}
-          className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
-          title="Refresh list"
-        >
-          {isLoading ? '⟳' : '↻'} Refresh
-        </button>
-      </div>
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {t('title')}
+      </label>
 
       {isLoading && services.length === 0 ? (
         <div className="mt-1 h-10 w-full bg-gray-100 dark:bg-gray-700 animate-pulse rounded-md"></div>
