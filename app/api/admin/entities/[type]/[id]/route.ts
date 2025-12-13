@@ -62,13 +62,19 @@ export async function PUT(
     request: NextRequest,
     {params}: {params: Promise<{type: string; id: string}>}
 ) {
+    const log = createApiLogger('/api/admin/entities/[type]/[id]', 'PUT');
+
     try {
         await requireAdmin();
+        const session = await auth();
 
         const {type, id} = await params;
         const entityId = parseInt(id);
 
+        log.info({type, entityId, userId: session?.user?.id}, 'Attempting to update entity');
+
         if (!isValidEntityType(type) || isNaN(entityId)) {
+            log.warn({type, id}, 'Invalid parameters');
             return NextResponse.json({error: 'Invalid parameters'}, {status: 400});
         }
 
@@ -76,6 +82,7 @@ export async function PUT(
         const {name} = body;
 
         if (!name || typeof name !== 'string' || !name.trim()) {
+            log.warn({type, entityId, name}, 'Invalid name provided');
             return NextResponse.json({error: 'Name is required'}, {status: 400});
         }
 
@@ -88,6 +95,7 @@ export async function PUT(
                     where: {name: name.trim(), id: {not: entityId}},
                 });
                 if (existingLang) {
+                    log.warn({type, entityId, name: name.trim(), existingId: existingLang.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.language.update({
@@ -101,6 +109,7 @@ export async function PUT(
                     where: {name: name.trim(), id: {not: entityId}},
                 });
                 if (existingService) {
+                    log.warn({type, entityId, name: name.trim(), existingId: existingService.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.service.update({
@@ -114,6 +123,7 @@ export async function PUT(
                     where: {name: name.trim(), id: {not: entityId}},
                 });
                 if (existingPM) {
+                    log.warn({type, entityId, name: name.trim(), existingId: existingPM.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.paymentMethod.update({
@@ -127,6 +137,7 @@ export async function PUT(
                     where: {name: name.trim(), id: {not: entityId}},
                 });
                 if (existingNat) {
+                    log.warn({type, entityId, name: name.trim(), existingId: existingNat.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.nationality.update({
@@ -140,6 +151,7 @@ export async function PUT(
                     where: {name: name.trim(), id: {not: entityId}},
                 });
                 if (existingEth) {
+                    log.warn({type, entityId, name: name.trim(), existingId: existingEth.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.ethnicity.update({
@@ -149,9 +161,17 @@ export async function PUT(
                 break;
         }
 
+        log.info({type, entityId, oldName: entity?.name, newName: name.trim()}, 'Entity updated successfully');
+
         return NextResponse.json(entity);
     } catch (error) {
-        console.error('Error updating entity:', error);
+        log.error({
+            type: await params.then(p => p.type),
+            entityId: await params.then(p => parseInt(p.id)),
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        }, 'Failed to update entity');
+
         return NextResponse.json({error: 'Failed to update entity'}, {status: 500});
     }
 }
@@ -546,9 +566,10 @@ export async function DELETE(
             replacedInProfiles: profilesUsing.length,
         });
     } catch (error) {
+        const errorParams = await params;
         log.error({
-            type,
-            entityId,
+            type: errorParams.type,
+            entityId: parseInt(errorParams.id),
             error: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
         }, 'Failed to delete entity');

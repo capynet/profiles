@@ -2,6 +2,8 @@
 import {NextRequest, NextResponse} from 'next/server';
 import {prisma} from '@/prisma';
 import {requireAdmin} from '@/lib/auth-utils';
+import {createApiLogger} from '@/lib/logger';
+import {auth} from '@/auth';
 
 type EntityType = 'language' | 'service' | 'paymentMethod' | 'nationality' | 'ethnicity';
 
@@ -27,11 +29,18 @@ export async function POST(
     request: NextRequest,
     {params}: {params: Promise<{type: string}>}
 ) {
+    const log = createApiLogger('/api/admin/entities/[type]', 'POST');
+
     try {
         await requireAdmin();
+        const session = await auth();
 
         const {type} = await params;
+
+        log.info({type, userId: session?.user?.id}, 'Attempting to create entity');
+
         if (!isValidEntityType(type)) {
+            log.warn({type}, 'Invalid entity type');
             return NextResponse.json({error: 'Invalid entity type'}, {status: 400});
         }
 
@@ -39,6 +48,7 @@ export async function POST(
         const {name} = body;
 
         if (!name || typeof name !== 'string' || !name.trim()) {
+            log.warn({type, name}, 'Invalid name provided');
             return NextResponse.json({error: 'Name is required'}, {status: 400});
         }
 
@@ -50,6 +60,7 @@ export async function POST(
                     where: {name: name.trim()},
                 });
                 if (existingLang) {
+                    log.warn({type, name: name.trim(), existingId: existingLang.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.language.create({
@@ -62,6 +73,7 @@ export async function POST(
                     where: {name: name.trim()},
                 });
                 if (existingService) {
+                    log.warn({type, name: name.trim(), existingId: existingService.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.service.create({
@@ -74,6 +86,7 @@ export async function POST(
                     where: {name: name.trim()},
                 });
                 if (existingPM) {
+                    log.warn({type, name: name.trim(), existingId: existingPM.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.paymentMethod.create({
@@ -86,6 +99,7 @@ export async function POST(
                     where: {name: name.trim()},
                 });
                 if (existingNat) {
+                    log.warn({type, name: name.trim(), existingId: existingNat.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.nationality.create({
@@ -98,6 +112,7 @@ export async function POST(
                     where: {name: name.trim()},
                 });
                 if (existingEth) {
+                    log.warn({type, name: name.trim(), existingId: existingEth.id}, 'Entity with this name already exists');
                     return NextResponse.json({error: 'An entity with this name already exists'}, {status: 409});
                 }
                 entity = await prisma.ethnicity.create({
@@ -106,9 +121,16 @@ export async function POST(
                 break;
         }
 
+        log.info({type, entityId: entity?.id, entityName: entity?.name}, 'Entity created successfully');
+
         return NextResponse.json(entity, {status: 201});
     } catch (error) {
-        console.error('Error creating entity:', error);
+        log.error({
+            type: await params.then(p => p.type),
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        }, 'Failed to create entity');
+
         return NextResponse.json({error: 'Failed to create entity'}, {status: 500});
     }
 }
