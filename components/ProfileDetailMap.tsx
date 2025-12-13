@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, Marker } from '@react-google-maps/api';
 
 interface ProfileDetailMapProps {
@@ -11,18 +11,32 @@ interface ProfileDetailMapProps {
     mapId?: string;
 }
 
-const mapContainerStyle = {
+// Map container style will be applied via className for responsive design
+const getMapContainerStyle = (isMobile: boolean) => ({
     width: '100%',
-    height: '300px',
+    height: isMobile ? '100vw' : '450px', // Square on mobile, 450px on desktop
+    maxHeight: isMobile ? 'calc(100vw - 2rem)' : '450px', // Account for padding on mobile
     borderRadius: '0.5rem',
-};
+});
 
 // Define libraries as a static constant outside the component
 const libraries: ("marker")[] = ["marker"];
 
 export default function ProfileDetailMap({ latitude, longitude, name, apiKey, mapId }: ProfileDetailMapProps) {
     const mapRef = useRef<google.maps.Map | null>(null);
-    
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Detect mobile screen size
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 1024); // lg breakpoint
+        };
+
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     // Load the Google Maps script
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: apiKey,
@@ -53,16 +67,16 @@ export default function ProfileDetailMap({ latitude, longitude, name, apiKey, ma
     
     if (!isLoaded) {
         return (
-            <div className="flex justify-center items-center h-64">
+            <div className="flex justify-center items-center aspect-square lg:h-[450px] lg:aspect-auto">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
             </div>
         );
     }
-    
+
     return (
         <div className="space-y-3">
             <GoogleMap
-                mapContainerStyle={mapContainerStyle}
+                mapContainerStyle={getMapContainerStyle(isMobile)}
                 center={center}
                 zoom={15}
                 onLoad={onLoad}
